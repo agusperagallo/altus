@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altus — Ingresar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:   #1A1F2E;
+      --accent: #1D9E75;
+      --ice2:   #F0F2F5;
+      --line:   #E0E4EA;
+      --silver: #8090A8;
+      --muted:  #4A5568;
+      --white:  #FFFFFF;
+      --danger: #E24B4A;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--ice2);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 36px;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--navy);
+      letter-spacing: 0.14em;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--silver);
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 0 0 28px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--navy);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .btn-login {
+      width: 100%;
+      height: 44px;
+      background: var(--navy);
+      color: var(--white);
+      border: none;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 24px;
+      letter-spacing: 0.04em;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-login:hover { background: #2C3550; }
+    .btn-login:disabled { background: var(--line); color: var(--silver); cursor: default; }
+
+    .error-msg {
+      display: none;
+      background: #FEE2E2;
+      color: var(--danger);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .footer-txt {
+      text-align: center;
+      font-size: 11px;
+      color: var(--silver);
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="brand">
+    <div class="brand-name">ALTUS</div>
+    <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
+  </div>
+  <hr class="divider">
+
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="correo@ejemplo.com" autocomplete="email">
+  </div>
+  <div class="form-group">
+    <label>Contraseña</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
+  </div>
+
+  <button class="btn-login" id="btn-login" onclick="login()">
+    <span id="btn-text">Ingresar</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <div class="footer-txt">Sistema interno &mdash; Temporada 2025</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://pngtxnpywchizyyynuyb.supabase.co',
+    'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
+  );
+
+  async function login() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('btn-login');
+    const spinner  = document.getElementById('spinner');
+    const btnText  = document.getElementById('btn-text');
+    const errorMsg = document.getElementById('error-msg');
+
+    if (!email || !password) {
+      mostrarError('Ingresá tu email y contraseña');
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Ingresando...';
+    errorMsg.style.display = 'none';
+
+    // Login con Supabase Auth
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      mostrarError('Email o contraseña incorrectos');
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Ingresar';
+      return;
+    }
+
+    // Obtener rol del usuario
+    const { data: usuario } = await sb
+      .from('usuarios')
+      .select('rol, instructor_id')
+      .eq('id', data.user.id)
+      .single();
+
+    if (!usuario) {
+      mostrarError('Usuario sin rol asignado. Contactá al administrador.');
+      await sb.auth.signOut();
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Ingresar';
+      return;
+    }
+
+    // Guardar sesión en localStorage
+    localStorage.setItem('altus_rol', usuario.rol);
+    localStorage.setItem('altus_user_id', data.user.id);
+    localStorage.setItem('altus_email', email);
+    if (usuario.instructor_id) {
+      localStorage.setItem('altus_instructor_id', usuario.instructor_id);
+    }
+
+    // Redirigir según rol
+    if (usuario.rol === 'instructor') {
+      window.location.href = 'altus_instructor.html';
+    } else {
+      window.location.href = 'altus_panel.html';
+    }
+  }
+
+  function mostrarError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // Si ya hay sesión activa, redirigir directamente
+  sb.auth.getSession().then(({ data }) => {
+    if (data?.session) {
+      const rol = localStorage.getItem('altus_rol');
+      if (rol === 'instructor') {
+        window.location.href = 'altus_instructor.html';
+      } else if (rol) {
+        window.location.href = 'altus_panel.html';
+      }
+    }
+  });
+</script>
+</body>
+</html>

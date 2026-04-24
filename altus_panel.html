@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altus — Panel de Asignación</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #1A1F2E;
+      --navy2:   #222840;
+      --slate:   #2E3650;
+      --ice:     #EBF0F0;
+      --ice2:    #F0F2F5;
+      --line:    #E0E4EA;
+      --silver:  #8090A8;
+      --accent:  #1D9E75;
+      --accent2: #0F6E56;
+      --white:   #FFFFFF;
+      --text:    #1A1F2E;
+      --muted:   #4A5568;
+      --success: #0F6E56;
+      --success-bg: #E1F5EE;
+      --warn:    #B45309;
+      --warn-bg: #FEF3C7;
+      --danger:  #E24B4A;
+      --danger-bg: #FEE2E2;
+      --sidebar-w: 240px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--ice2);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    body.modal-open { overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      transition: transform 0.25s ease;
+    }
+
+    .sidebar-brand {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.1em;
+      margin-top: 3px;
+      font-weight: 300;
+    }
+
+    .sidebar-nav {
+      padding: 16px 0;
+      flex: 1;
+    }
+
+    .nav-section {
+      padding: 8px 16px 4px;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      text-decoration: none;
+      font-weight: 400;
+    }
+
+    .nav-item:hover {
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .nav-item.active {
+      color: var(--white);
+      border-left-color: var(--accent);
+      background: rgba(29,158,117,0.12);
+    }
+
+    .nav-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-icon { opacity: 1; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--line);
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-date {
+      font-size: 12px;
+      color: var(--silver);
+      font-weight: 300;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      background: var(--navy);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      color: var(--white);
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 32px;
+      flex: 1;
+    }
+
+    .content-full {
+      padding: 32px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--silver);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      color: var(--navy);
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--silver);
+      margin-top: 4px;
+    }
+
+    /* MAIN GRID */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+    }
+
+    /* PANEL */
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .panel-body { padding: 24px; }
+
+    /* FORM */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    input, select {
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 0 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A90A8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+
+    input:focus, select:focus { border-color: var(--accent); }
+
+    .nivel-toggle {
+      display: flex;
+      gap: 6px;
+    }
+
+    .nivel-btn {
+      flex: 1;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      background: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .nivel-btn.active {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+
+    .btn {
+      height: 40px;
+      padding: 0 20px;
+      border: none;
+      border-radius: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 400;
+    }
+
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+      letter-spacing: 0.04em;
+    }
+
+    .btn-primary:hover { background: var(--slate); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--line);
+    }
+
+    .btn-outline:hover { border-color: var(--silver); color: var(--text); }
+
+    .btn-danger-outline {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid #FECACA;
+      font-size: 12px;
+      height: 32px;
+      padding: 0 12px;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: var(--white);
+      font-size: 12px;
+      height: 32px;
+      padding: 0 12px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      padding-top: 4px;
+    }
+
+    /* DIVIDER */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 20px 0;
+    }
+
+    /* RANKING LIST */
+    .ranking-header {
+      display: grid;
+      grid-template-columns: 28px 1fr 80px 80px 80px;
+      gap: 8px;
+      padding: 0 0 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--silver);
+      font-weight: 500;
+    }
+
+    .ranking-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    .instructor-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 80px 80px 80px;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--ice);
+      cursor: pointer;
+      transition: background 0.1s;
+      border-radius: 4px;
+    }
+
+    .instructor-row:hover { background: #F0FBF7; }
+    .instructor-row:last-child { border-bottom: none; }
+
+    .rank-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: var(--silver);
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .rank-num.top { color: var(--navy); }
+
+    .inst-info {}
+    .inst-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .inst-meta { font-size: 11px; color: var(--silver); margin-top: 2px; }
+
+    .score-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .score-high { background: #E1F5EE; color: #0F6E56; }
+    .score-mid  { background: var(--warn-bg); color: var(--warn); }
+    .score-low  { background: var(--danger-bg); color: #A32D2D; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-emerg { background: #FEE2E2; color: #991B1B; }
+    .badge-calib { background: var(--ice); color: var(--silver); }
+
+    /* SIDE PANEL */
+    .side-panel { display: flex; flex-direction: column; gap: 20px; }
+
+    /* CLASES HOY */
+    .clase-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--ice);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .clase-item:last-child { border-bottom: none; }
+
+    .clase-hora {
+      font-size: 11px;
+      color: var(--silver);
+      min-width: 36px;
+      padding-top: 2px;
+    }
+
+    .clase-info { flex: 1; }
+    .clase-nombre { font-size: 13px; font-weight: 500; color: var(--text); }
+    .clase-detalle { font-size: 11px; color: var(--silver); margin-top: 2px; }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .dot-ok { background: #22C55E; }
+    .dot-pending { background: #F59E0B; }
+    .dot-absent { background: #EF4444; }
+
+    /* QUICK ACTIONS */
+    .quick-actions { display: flex; flex-direction: column; gap: 8px; }
+
+    .quick-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+      text-align: left;
+    }
+
+    .quick-btn:hover {
+      border-color: var(--accent);
+      background: #F0FBF7;
+    }
+
+    .quick-btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--ice);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .quick-btn-text { font-size: 13px; color: var(--text); font-weight: 400; }
+    .quick-btn-sub { font-size: 11px; color: var(--silver); margin-top: 1px; }
+
+    /* EMERGENCY BANNER */
+    .emerg-banner {
+      background: #FFF5F5;
+      border: 1px solid #FECACA;
+      border-radius: 6px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .emerg-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      flex-shrink: 0;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .emerg-text { font-size: 13px; color: var(--danger); flex: 1; }
+    .emerg-text span { font-weight: 500; }
+
+    /* MOBILE MENU TOGGLE */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 200;
+      background: var(--navy);
+      border: none;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .menu-toggle span {
+      display: block;
+      width: 18px;
+      height: 1.5px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 90;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .side-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .menu-toggle { display: flex; }
+      .overlay.open { display: block; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .content { padding: 20px 16px; }
+      .topbar { padding: 0 16px 0 56px; }
+      .side-panel { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .ranking-header { grid-template-columns: 24px 1fr 64px; }
+      .instructor-row { grid-template-columns: 24px 1fr 64px; }
+      .col-asist, .col-fidel { display: none; }
+    }
+
+    /* ANIMATIONS */
+    .panel { animation: fadeUp 0.3s ease both; }
+    .stat-card:nth-child(1) { animation: fadeUp 0.2s ease both; }
+    .stat-card:nth-child(2) { animation: fadeUp 0.25s ease both; }
+    .stat-card:nth-child(3) { animation: fadeUp 0.3s ease both; }
+    .stat-card:nth-child(4) { animation: fadeUp 0.35s ease both; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(22,37,58,0.55);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 480px;
+      margin: 16px;
+      overflow: hidden;
+      animation: fadeUp 0.2s ease;
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title { font-size: 15px; font-weight: 500; }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--silver);
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .modal-body { padding: 24px; }
+
+    .instructor-result {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .instructor-result:hover {
+      border-color: var(--accent);
+      background: #F0F7FF;
+    }
+
+    .instructor-result.recommended {
+      border-color: var(--accent);
+      background: #F0FBF7;
+    }
+
+    .inst-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .inst-score-big {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-left: auto;
+    }
+
+    .rec-badge {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+</script>
+
+<button class="menu-toggle" onclick="toggleSidebar()" id="menuBtn">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Altus</div>
+    <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <a class="nav-item active" onclick="setPage('asignacion', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/>
+        <rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/>
+      </svg>
+      Panel de asignación
+    </a>
+    <a class="nav-item" onclick="setPage('clases', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="1" y="3" width="14" height="11" rx="1.5"/>
+        <path d="M5 3V1M11 3V1M1 7h14"/>
+      </svg>
+      Clases del día
+    </a>
+    <a class="nav-item" onclick="setPage('ranking', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/>
+      </svg>
+      Ranking
+    </a>
+    <div class="nav-section">Gestión</div>
+    <a class="nav-item" onclick="setPage('instructores', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+      </svg>
+      Instructores
+    </a>
+    <a class="nav-item" onclick="setPage('clientes', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/>
+        <circle cx="12" cy="5" r="2"/><path d="M12 10c1.7.3 3 1.8 3 3.5"/>
+      </svg>
+      Clientes
+    </a>
+    <a class="nav-item" onclick="setPage('asistencia', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/>
+      </svg>
+      Asistencia
+    </a>
+    <div class="nav-section">Sistema</div>
+    <a class="nav-item" onclick="setPage('resenas', this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.1 5.2l4-.6z"/>
+      </svg>
+      Reseñas
+    </a>
+    <a class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/>
+      </svg>
+      Configuración
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    Temporada 2025 &mdash; v1.0
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="page-title">Panel de asignación</span>
+    <div class="topbar-right">
+      <span class="badge-date" id="fecha-hoy"></span>
+      <div class="avatar" title="Cerrar sesión" onclick="cerrarSesion()" style="cursor:pointer" id="user-avatar">AD</div>
+    </div>
+  </div>
+
+  <!-- SECCION ASIGNACION -->
+  <div id="seccion-asignacion">
+  <div class="content">
+
+    <!-- EMERGENCIA BANNER -->
+    <div class="emerg-banner" id="emerg-banner" style="display:none">
+      <div class="emerg-dot"></div>
+      <div class="emerg-text"><span>Modo emergencia activo</span> — Mostrando instructores fuera de perfil habitual</div>
+      <button class="btn btn-outline" style="height:30px;font-size:11px;padding:0 10px" onclick="toggleEmergencia(false)">Desactivar</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Clases hoy</div>
+        <div class="stat-value">8</div>
+        <div class="stat-sub">3 pendientes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Instructores activos</div>
+        <div class="stat-value">12</div>
+        <div class="stat-sub">2 ausentes hoy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Reseñas este mes</div>
+        <div class="stat-value">47</div>
+        <div class="stat-sub">Promedio 4.3 / 5</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Período</div>
+        <div class="stat-value" style="font-size:18px;padding-top:4px">Calibración</div>
+        <div class="stat-sub">Ranking en formación</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+      <!-- ASIGNACION -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Nueva asignación</span>
+            <button class="btn btn-outline" style="height:30px;font-size:11px;padding:0 12px" onclick="toggleEmergencia(true)">Modo emergencia</button>
+          </div>
+          <div class="panel-body">
+
+            <!-- CLIENTE -->
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);margin-bottom:12px;font-weight:500">Datos del cliente</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" placeholder="Nombre del cliente" id="cliente-nombre">
+              </div>
+              <div class="form-group">
+                <label>Teléfono</label>
+                <input type="text" placeholder="+54 9 ...">
+              </div>
+              <div class="form-group">
+                <label>Disciplina</label>
+                <select id="cliente-disciplina">
+                  <option value="">Seleccionar...</option>
+                  <option>Esquí</option>
+                  <option>Snowboard</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Rango etario</label>
+                <select>
+                  <option value="">Seleccionar...</option>
+                  <option>Niños (4-12)</option>
+                  <option>Adolescentes (13-17)</option>
+                  <option>Adultos (18-60)</option>
+                  <option>Adultos mayores (60+)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <label style="display:block;margin-bottom:8px">Nivel del cliente</label>
+              <div class="nivel-toggle">
+                <button class="nivel-btn" onclick="setNivel(this,1)">1</button>
+                <button class="nivel-btn" onclick="setNivel(this,2)">2</button>
+                <button class="nivel-btn" onclick="setNivel(this,3)">3</button>
+                <button class="nivel-btn" onclick="setNivel(this,4)">4</button>
+                <button class="nivel-btn" onclick="setNivel(this,5)">5</button>
+              </div>
+              <div style="font-size:11px;color:var(--silver);margin-top:6px">Nivel declarado por el cliente — ajustá si es necesario</div>
+            </div>
+
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);margin-bottom:12px;margin-top:4px;font-weight:500">Horario de la clase</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="clase-fecha">
+              </div>
+              <div class="form-group">
+                <label>Hora de inicio</label>
+                <select id="clase-hora" onchange="actualizarHoraFin()">
+                  <option value="">Seleccionar...</option>
+                  <option>09:00</option><option>09:30</option>
+                  <option>10:00</option><option>10:30</option>
+                  <option>11:00</option><option>11:30</option>
+                  <option>12:00</option><option>12:30</option>
+                  <option>13:00</option><option>13:30</option>
+                  <option>14:00</option><option>14:30</option>
+                  <option>15:00</option><option>15:30</option>
+                  <option>16:00</option><option>16:30</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Duración</label>
+                <select id="clase-duracion" onchange="actualizarHoraFin()">
+                  <option value="1">1 hora</option>
+                  <option value="1.5">1 hora 30 min</option>
+                  <option value="2">2 horas</option>
+                  <option value="2.5">2 horas 30 min</option>
+                  <option value="3">3 horas</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Hora de fin</label>
+                <input type="text" id="clase-hora-fin" placeholder="—" readonly style="background:var(--ice2);color:var(--muted)">
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-outline" onclick="checkClienteAnterior()">Verificar cliente</button>
+              <button class="btn btn-primary" onclick="buscarInstructores()">Buscar instructores</button>
+            </div>
+
+            <hr class="divider">
+
+            <!-- RANKING RESULTADO -->
+            <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);margin-bottom:14px;font-weight:500">Instructores disponibles</div>
+
+            <div class="ranking-header">
+              <div>#</div>
+              <div>Instructor</div>
+              <div style="text-align:center">Puntaje</div>
+              <div style="text-align:center" class="col-asist">Asist.</div>
+              <div style="text-align:center" class="col-fidel">Fidel.</div>
+            </div>
+
+            <div class="ranking-list" id="ranking-list">
+              <!-- Instructores de ejemplo -->
+              <div class="instructor-row" onclick="abrirAsignar('Valentina Ríos', '9.2')">
+                <div class="rank-num top">1</div>
+                <div class="inst-info">
+                  <div class="inst-name">Valentina Ríos</div>
+                  <div class="inst-meta">Esquí &middot; Niv. 3 &middot; Adultos &middot; <span style="color:var(--success);font-weight:500">Disponible</span></div>
+                </div>
+                <div style="text-align:center"><span class="score-pill score-high">9.2</span></div>
+                <div style="text-align:center" class="col-asist"><span class="score-pill score-high">95%</span></div>
+                <div style="text-align:center" class="col-fidel"><span class="score-pill score-high">4</span></div>
+              </div>
+              <div class="instructor-row" onclick="abrirAsignar('Martín Godoy', '8.7')">
+                <div class="rank-num top">2</div>
+                <div class="inst-info">
+                  <div class="inst-name">Martín Godoy</div>
+                  <div class="inst-meta">Esquí &middot; Niv. 3 &middot; Adultos, Niños &middot; <span style="color:var(--success);font-weight:500">Disponible</span></div>
+                </div>
+                <div style="text-align:center"><span class="score-pill score-high">8.7</span></div>
+                <div style="text-align:center" class="col-asist"><span class="score-pill score-high">90%</span></div>
+                <div style="text-align:center" class="col-fidel"><span class="score-pill score-mid">2</span></div>
+              </div>
+              <div class="instructor-row" onclick="abrirAsignar('Lucas Pereyra', '7.4')">
+                <div class="rank-num">3</div>
+                <div class="inst-info">
+                  <div class="inst-name">Lucas Pereyra</div>
+                  <div class="inst-meta">Esquí &middot; Niv. 2 &middot; Adultos</div>
+                </div>
+                <div style="text-align:center"><span class="score-pill score-mid">7.4</span></div>
+                <div style="text-align:center" class="col-asist"><span class="score-pill score-mid">78%</span></div>
+                <div style="text-align:center" class="col-fidel"><span class="score-pill score-mid">1</span></div>
+              </div>
+              <div class="instructor-row" onclick="abrirAsignar('Sofía Aguirre', '6.1')">
+                <div class="rank-num">4</div>
+                <div class="inst-info">
+                  <div class="inst-name">Sofía Aguirre</div>
+                  <div class="inst-meta">Esquí &middot; Niv. 2 &middot; Niños, Adolescentes</div>
+                </div>
+                <div style="text-align:center"><span class="score-pill score-low">6.1</span></div>
+                <div style="text-align:center" class="col-asist"><span class="score-pill score-low">65%</span></div>
+                <div style="text-align:center" class="col-fidel"><span class="score-pill score-low">0</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE -->
+      <div class="side-panel">
+
+        <!-- CLASES HOY -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Clases de hoy</span>
+            <span style="font-size:11px;color:var(--silver)">8 total</span>
+          </div>
+          <div class="panel-body" style="padding:12px 20px">
+            <div class="clase-item">
+              <div class="clase-hora">09:00</div>
+              <div class="clase-info">
+                <div class="clase-nombre">Ana Castillo</div>
+                <div class="clase-detalle">V. Ríos &middot; Esquí Niv. 2</div>
+              </div>
+              <div class="status-dot dot-ok"></div>
+            </div>
+            <div class="clase-item">
+              <div class="clase-hora">10:30</div>
+              <div class="clase-info">
+                <div class="clase-nombre">Pedro Sánchez</div>
+                <div class="clase-detalle">M. Godoy &middot; Snowboard Niv. 1</div>
+              </div>
+              <div class="status-dot dot-ok"></div>
+            </div>
+            <div class="clase-item">
+              <div class="clase-hora">11:00</div>
+              <div class="clase-info">
+                <div class="clase-nombre">Familia Torres</div>
+                <div class="clase-detalle">S. Aguirre &middot; Esquí Niv. 1</div>
+              </div>
+              <div class="status-dot dot-pending"></div>
+            </div>
+            <div class="clase-item">
+              <div class="clase-hora">14:00</div>
+              <div class="clase-info">
+                <div class="clase-nombre">Roberto Díaz</div>
+                <div class="clase-detalle">L. Pereyra &middot; Esquí Niv. 3</div>
+              </div>
+              <div class="status-dot dot-pending"></div>
+            </div>
+            <div class="clase-item">
+              <div class="clase-hora">15:30</div>
+              <div class="clase-info">
+                <div class="clase-nombre">Sin asignar</div>
+                <div class="clase-detalle">Snowboard &middot; Niv. 2</div>
+              </div>
+              <div class="status-dot dot-absent"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRESENCIA HOY -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Presencia de hoy</span>
+            <span style="font-size:11px;color:var(--silver)" id="presencia-resumen">Cargando...</span>
+          </div>
+          <div class="panel-body" style="padding:0" id="lista-presencia">
+            <div style="padding:20px;text-align:center;font-size:13px;color:var(--silver)">Cargando presencias...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION RANKING -->
+  <div id="seccion-ranking" style="display:none;padding:32px">
+
+    <!-- FILTROS -->
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+      <div style="flex:1;min-width:140px">
+        <div style="font-size:10px;color:var(--silver);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;font-weight:500">Disciplina</div>
+        <select id="filtro-disciplina" onchange="cargarPaginaRanking()" style="width:100%;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="">Todas</option>
+          <option value="Esquí">Esquí</option>
+          <option value="Snowboard">Snowboard</option>
+          <option value="Freestyle">Freestyle</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <div style="font-size:10px;color:var(--silver);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;font-weight:500">Nivel</div>
+        <select id="filtro-nivel" onchange="cargarPaginaRanking()" style="width:100%;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="">Todos</option>
+          <option value="1">Nivel 1</option>
+          <option value="2">Nivel 2</option>
+          <option value="3">Nivel 3</option>
+          <option value="4">Nivel 4</option>
+          <option value="5">Nivel 5</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:140px">
+        <div style="font-size:10px;color:var(--silver);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;font-weight:500">Rango etario</div>
+        <select id="filtro-rango" onchange="cargarPaginaRanking()" style="width:100%;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="">Todos</option>
+          <option value="ninos">Niños</option>
+          <option value="adolescentes">Adolescentes</option>
+          <option value="adultos">Adultos</option>
+          <option value="mayores">Adultos mayores</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TABLA -->
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500;color:var(--text)">Ranking de instructores</span>
+        <span style="font-size:11px;color:var(--silver)" id="ranking-count">Cargando...</span>
+      </div>
+      <div style="display:grid;grid-template-columns:44px 1fr repeat(6,90px);gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);font-weight:500">
+        <div style="text-align:center">#</div>
+        <div>Instructor</div>
+        <div style="text-align:center">Opinión</div>
+        <div style="text-align:center">Asistencia</div>
+        <div style="text-align:center">Fideliz.</div>
+        <div style="text-align:center">Historial</div>
+        <div style="text-align:center">Perfil</div>
+        <div style="text-align:center">Total</div>
+      </div>
+      <div id="ranking-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando ranking...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECCION CLASES DEL DÍA -->
+  <div id="seccion-clases" style="display:none;padding:32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <input type="date" id="filtro-fecha-clases" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+      </div>
+      <div style="display:flex;gap:8px">
+        <select id="filtro-estado-clases" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="">Todos los estados</option>
+          <option value="asignada">Asignada</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="completada">Completada</option>
+        </select>
+        <button onclick="cargarPaginaClases()" style="height:36px;padding:0 16px;background:var(--navy);color:white;border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">Filtrar</button>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500">Clases del día</span>
+        <span style="font-size:11px;color:var(--silver)" id="clases-count">Cargando...</span>
+      </div>
+      <div style="display:grid;grid-template-columns:80px 80px 1fr 1fr 1fr 120px;gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);font-weight:500">
+        <div>Hora</div>
+        <div>Duración</div>
+        <div>Cliente</div>
+        <div>Instructor</div>
+        <div>Detalle</div>
+        <div style="text-align:center">Estado</div>
+      </div>
+      <div id="clases-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando clases...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION INSTRUCTORES -->
+  <div id="seccion-instructores" style="display:none;padding:32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <input type="text" id="filtro-buscar-instructor" placeholder="Buscar instructor..." oninput="cargarPaginaInstructores()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none;width:260px">
+      <div style="display:flex;gap:8px">
+        <select id="filtro-activo-instructor" onchange="cargarPaginaInstructores()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="">Todos</option>
+          <option value="true">Activos</option>
+          <option value="false">Inactivos</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500">Instructores</span>
+        <span style="font-size:11px;color:var(--silver)" id="instructores-count">Cargando...</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 80px 120px 160px 100px 80px;gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);font-weight:500">
+        <div>Nombre</div>
+        <div style="text-align:center">Nivel</div>
+        <div>Disciplinas</div>
+        <div>Rangos etarios</div>
+        <div>Teléfono</div>
+        <div style="text-align:center">Estado</div>
+      </div>
+      <div id="instructores-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando instructores...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION CLIENTES -->
+  <div id="seccion-clientes" style="display:none;padding:32px">
+    <div style="margin-bottom:20px">
+      <input type="text" id="filtro-buscar-cliente" placeholder="Buscar cliente..." oninput="cargarPaginaClientes()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none;width:260px">
+    </div>
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500">Clientes</span>
+        <span style="font-size:11px;color:var(--silver)" id="clientes-count">Cargando...</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 100px 100px 120px 100px;gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);font-weight:500">
+        <div>Nombre</div>
+        <div style="text-align:center">Disciplina</div>
+        <div style="text-align:center">Nivel</div>
+        <div>Teléfono</div>
+        <div style="text-align:center">Clases</div>
+      </div>
+      <div id="clientes-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando clientes...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION ASISTENCIA -->
+  <div id="seccion-asistencia" style="display:none;padding:32px">
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end">
+      <div>
+        <div style="font-size:10px;color:var(--silver);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;font-weight:500">Mes</div>
+        <select id="filtro-mes-asistencia" onchange="cargarPaginaAsistencia()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+          <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+          <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--silver);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;font-weight:500">Año</div>
+        <select id="filtro-anio-asistencia" onchange="cargarPaginaAsistencia()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500">Asistencia mensual</span>
+        <span style="font-size:11px;color:var(--silver)" id="asistencia-count"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 80px 80px 80px 100px 120px;gap:8px;padding:10px 20px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);font-weight:500">
+        <div>Instructor</div>
+        <div style="text-align:center">Presentes</div>
+        <div style="text-align:center">Ausentes</div>
+        <div style="text-align:center">Clases</div>
+        <div style="text-align:center">Hs. trabajadas</div>
+        <div style="text-align:center">% Asistencia</div>
+      </div>
+      <div id="asistencia-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando asistencia...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCION RESEÑAS -->
+  <div id="seccion-resenas" style="display:none;padding:32px">
+    <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end">
+      <div style="flex:1">
+        <input type="text" id="filtro-buscar-resena" placeholder="Buscar por instructor o cliente..." oninput="cargarPaginaResenas()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none;width:100%">
+      </div>
+      <select id="filtro-puntaje-resena" onchange="cargarPaginaResenas()" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--white);outline:none">
+        <option value="">Todos los puntajes</option>
+        <option value="5">5 estrellas</option>
+        <option value="4">4 estrellas</option>
+        <option value="3">3 o menos</option>
+      </select>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden">
+      <div style="padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:500">Reseñas</span>
+        <span style="font-size:11px;color:var(--silver)" id="resenas-count">Cargando...</span>
+      </div>
+      <div id="resenas-pagina-lista">
+        <div style="padding:40px;text-align:center;color:var(--silver);font-size:13px">Cargando reseñas...</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL CORREGIR PRESENCIA -->
+<div class="modal-overlay" id="modal-corregir">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Corregir presencia</span>
+      <button class="modal-close" onclick="cerrarModalAdmin('modal-corregir')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        Estás corrigiendo manualmente la presencia de <strong id="corregir-nombre"></strong>. Esta acción queda registrada.
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:8px">
+        <button style="flex:1;height:40px;border:1px solid #E1F5EE;border-radius:6px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer" onclick="aplicarCorreccion('presente')">Marcar presente</button>
+        <button style="flex:1;height:40px;border:1px solid #FEE2E2;border-radius:6px;background:#FEE2E2;color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer" onclick="aplicarCorreccion('ausente')">Marcar ausente</button>
+      </div>
+      <div style="font-size:11px;color:var(--silver);text-align:center">La corrección manual queda registrada en el historial</div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB ACCIONES RÁPIDAS -->
+<div id="fab-container" style="position:fixed;bottom:28px;right:28px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+
+  <!-- Opciones desplegables -->
+  <div id="fab-menu" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;opacity:0;pointer-events:none;transform:translateY(8px);transition:all 0.2s ease">
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="background:var(--navy);color:white;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)">Registrar asistencia</span>
+      <button class="fab-item" onclick="fabAccion('asistencia')" title="Registrar asistencia">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/>
+        </svg>
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="background:var(--navy);color:white;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)">Ver ranking completo</span>
+      <button class="fab-item" onclick="fabAccion('ranking')" title="Ver ranking">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="background:var(--navy);color:white;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)">Nuevo instructor</span>
+      <button class="fab-item" onclick="fabAccion('instructor')" title="Nuevo instructor">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/>
+          <path d="M11 7l2 2 3-3"/>
+        </svg>
+      </button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="background:var(--navy);color:white;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.18)">Modo emergencia</span>
+      <button class="fab-item" onclick="fabAccion('emergencia')" title="Modo emergencia">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 1l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9l-3.1 1.5.6-3.5L3 4.5l3.5-.5z"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Botón principal -->
+  <button id="fab-main" onclick="toggleFab()" style="width:52px;height:52px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(29,158,117,0.4);transition:all 0.2s ease">
+    <svg id="fab-icon-plus" width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+      <path d="M8 2v12M2 8h12"/>
+    </svg>
+    <svg id="fab-icon-close" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" style="display:none">
+      <path d="M3 3l10 10M13 3L3 13"/>
+    </svg>
+  </button>
+
+</div>
+
+<style>
+  .fab-item {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .fab-item:hover {
+    background: var(--navy);
+    color: white;
+    border-color: var(--navy);
+    transform: scale(1.08);
+  }
+</style>
+<div class="modal-overlay" id="modal-asignar">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Confirmar asignación</span>
+      <button class="modal-close" onclick="cerrarModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--silver);margin-bottom:14px">Instructor seleccionado</div>
+        <div class="instructor-result recommended" id="modal-instructor">
+        <div class="inst-avatar" id="modal-avatar">VR</div>
+        <div>
+          <div style="font-size:14px;font-weight:500" id="modal-nombre">Valentina Ríos</div>
+          <div style="font-size:12px;color:var(--silver);margin-top:2px">Esquí &middot; Nivel 3 &middot; Adultos</div>
+        </div>
+        <div class="inst-score-big" id="modal-score">9.2</div>
+      </div>
+      <div style="font-size:12px;color:var(--silver);margin-bottom:10px;margin-top:18px">Detalles de la clase</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="modal-fecha">
+        </div>
+        <div class="form-group">
+          <label>Horario</label>
+          <div style="height:38px;border:1px solid var(--line);border-radius:5px;padding:0 12px;display:flex;align-items:center;font-size:13px;background:var(--ice2);color:var(--muted)">
+            <span id="modal-hora-inicio">—</span>&nbsp;a&nbsp;<span id="modal-hora-fin-label">—</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarAsignacion()">Confirmar asignación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE ANTERIOR -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Cliente registrado</span>
+      <button class="modal-close" onclick="cerrarModalAdmin('modal-cliente')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--ice);border-radius:6px;padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:13px;font-weight:500">Juan Martínez</div>
+        <div style="font-size:12px;color:var(--silver);margin-top:4px">3 clases anteriores &middot; Esquí Niv. 2 &middot; Adultos</div>
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:16px">
+        Este cliente tomó clases anteriormente con <strong>Valentina Ríos</strong>. ¿Desea continuar con la misma instructora?
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" onclick="cerrarModalAdmin('modal-cliente')">No, ver ranking</button>
+        <button class="btn btn-primary" style="flex:1" onclick="abrirAsignar('Valentina Ríos','9.2');cerrarModalAdmin('modal-cliente')">Sí, asignar a V. Ríos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO INSTRUCTOR -->
+<div class="modal-overlay" id="modal-nuevo-instructor">
+  <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto">
+    <div class="modal-header" style="position:sticky;top:0;background:var(--white);z-index:10">
+      <span class="modal-title">Nuevo instructor</span>
+      <button class="modal-close" onclick="cerrarNuevoInstructor()">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- PASO INDICATOR -->
+      <div style="display:flex;gap:0;margin-bottom:24px;border:1px solid var(--line);border-radius:6px;overflow:hidden">
+        <div class="paso-tab active" id="tab-1" style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;background:var(--navy);color:white;transition:all 0.15s">1. Datos personales</div>
+        <div class="paso-tab" id="tab-2" style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;background:var(--white);color:var(--muted);transition:all 0.15s" onclick="irPaso(2)">2. Perfil técnico</div>
+        <div class="paso-tab" id="tab-3" style="flex:1;padding:10px;text-align:center;font-size:12px;cursor:pointer;background:var(--white);color:var(--muted);transition:all 0.15s" onclick="irPaso(3)">3. Preferencias</div>
+      </div>
+
+      <!-- PASO 1: DATOS PERSONALES -->
+      <div id="paso-1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="ni-nombre" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="ni-telefono" placeholder="+54 9 ...">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Email</label>
+            <input type="email" id="ni-email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Fecha de ingreso</label>
+            <input type="date" id="ni-fecha">
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="ni-activo">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="irPaso(2)">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- PASO 2: PERFIL TÉCNICO -->
+      <div id="paso-2" style="display:none">
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:8px">Nivel certificado oficial</label>
+          <div style="display:flex;gap:6px" id="ni-nivel-cert">
+            <button class="nivel-btn" onclick="setNivelCert(this,1)">1</button>
+            <button class="nivel-btn" onclick="setNivelCert(this,2)">2</button>
+            <button class="nivel-btn" onclick="setNivelCert(this,3)">3</button>
+            <button class="nivel-btn" onclick="setNivelCert(this,4)">4</button>
+            <button class="nivel-btn" onclick="setNivelCert(this,5)">5</button>
+          </div>
+          <div style="font-size:11px;color:var(--silver);margin-top:6px">Nivel obtenido mediante examen oficial</div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:8px">Disciplinas que puede enseñar</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="tag-btn" onclick="toggleTag(this,'esqui')" data-key="esqui">Esquí</button>
+            <button class="tag-btn" onclick="toggleTag(this,'snowboard')" data-key="snowboard">Snowboard</button>
+            <button class="tag-btn" onclick="toggleTag(this,'freestyle')" data-key="freestyle">Freestyle</button>
+            <button class="tag-btn" onclick="toggleTag(this,'telemark')" data-key="telemark">Telemark</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:8px">Niveles en los que acepta dar clases</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="tag-btn" onclick="toggleTag(this,'niv1')" data-key="niv1">Nivel 1</button>
+            <button class="tag-btn" onclick="toggleTag(this,'niv2')" data-key="niv2">Nivel 2</button>
+            <button class="tag-btn" onclick="toggleTag(this,'niv3')" data-key="niv3">Nivel 3</button>
+            <button class="tag-btn" onclick="toggleTag(this,'niv4')" data-key="niv4">Nivel 4</button>
+            <button class="tag-btn" onclick="toggleTag(this,'niv5')" data-key="niv5">Nivel 5</button>
+          </div>
+          <div style="font-size:11px;color:var(--silver);margin-top:6px">Puede ser menor a su nivel certificado</div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:space-between">
+          <button class="btn btn-outline" onclick="irPaso(1)">Atrás</button>
+          <button class="btn btn-primary" onclick="irPaso(3)">Siguiente</button>
+        </div>
+      </div>
+
+      <!-- PASO 3: PREFERENCIAS -->
+      <div id="paso-3" style="display:none">
+        <div style="margin-bottom:20px">
+          <label style="display:block;margin-bottom:8px">Rangos etarios con los que acepta trabajar</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="tag-btn" onclick="toggleTag(this,'ninos')" data-key="ninos">Niños (4-12)</button>
+            <button class="tag-btn" onclick="toggleTag(this,'adolescentes')" data-key="adolescentes">Adolescentes (13-17)</button>
+            <button class="tag-btn" onclick="toggleTag(this,'adultos')" data-key="adultos">Adultos (18-60)</button>
+            <button class="tag-btn" onclick="toggleTag(this,'mayores')" data-key="mayores">Adultos mayores (60+)</button>
+          </div>
+          <div style="font-size:11px;color:var(--silver);margin-top:6px">Si no tiene experiencia con algún rango pero quiere intentarlo, puede seleccionarlo igual</div>
+        </div>
+
+        <!-- RESUMEN -->
+        <div style="background:var(--ice2);border:1px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:20px" id="resumen-instructor">
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--silver);margin-bottom:10px;font-weight:500">Resumen</div>
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px" id="resumen-nombre">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="resumen-nivel">Nivel certificado: —</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px" id="resumen-disciplinas">Disciplinas: —</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px" id="resumen-rangos">Rangos: —</div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:space-between">
+          <button class="btn btn-outline" onclick="irPaso(2)">Atrás</button>
+          <button class="btn btn-primary" onclick="guardarInstructor()">Guardar instructor</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+  .tag-btn {
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .tag-btn.active {
+    background: var(--navy);
+    color: var(--white);
+    border-color: var(--navy);
+  }
+  .disp-badge { font-weight: 500; font-size: 11px; }
+  .disp-ok    { color: #0F6E56; }
+  .disp-busy  { color: #B91C1C; }
+  .disp-soon  { color: #B45309; }
+  .instructor-row.ocupado { opacity: 0.45; pointer-events: none; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // Verificar sesión al cargar
+  const { createClient: _createClient } = supabase;
+  const _sbCheck = _createClient(
+    'https://pngtxnpywchizyyynuyb.supabase.co',
+    'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
+  );
+  _sbCheck.auth.getSession().then(({ data }) => {
+    if (!data?.session) window.location.href = 'altus_login.html';
+    const rol = localStorage.getItem('altus_rol');
+    if (rol === 'instructor') window.location.href = 'altus_instructor.html';
+  });
+</script>
+<script>
+  // --- SUPABASE ---
+  const { createClient } = supabase;
+  const SUPABASE_URL = 'https://pngtxnpywchizyyynuyb.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-';
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Fecha actual
+  const hoy = new Date();
+  const opciones = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('fecha-hoy').textContent = hoy.toLocaleDateString('es-AR', opciones);
+  document.getElementById('modal-fecha').valueAsDate = hoy;
+  document.getElementById('clase-fecha').valueAsDate = hoy;
+  const fechaISO = hoy.toISOString().split('T')[0];
+
+  let nivelSeleccionado = null;
+  let emergenciaActiva = false;
+  let horaSeleccionada = null;
+  let duracionSeleccionada = 1;
+  let horaFinCalculada = null;
+
+  // Clases ya asignadas hoy — se cargan desde Supabase
+  let clasesHoy = [];
+
+  async function cargarClasesHoy() {
+    const { data } = await sb
+      .from('clases')
+      .select('instructor_id, hora_inicio, hora_fin, instructores(nombre)')
+      .eq('fecha', fechaISO);
+
+    if (data) {
+      clasesHoy = data.map(c => ({
+        instructor: c.instructor_id,
+        nombre: c.instructores?.nombre || '',
+        inicio: c.hora_inicio?.slice(0,5) || '00:00',
+        fin: c.hora_fin?.slice(0,5) || '00:00'
+      }));
+    }
+  }
+
+  async function cargarInstructoresRanking() {
+    const { data: instructores } = await sb
+      .from('instructores')
+      .select('*, ranking_snapshot(*), instructor_preferencias(*)')
+      .eq('activo', true)
+      .order('nombre');
+
+    if (!instructores?.length) return;
+
+    const lista = document.getElementById('ranking-list');
+    lista.innerHTML = '';
+
+    instructores.forEach((inst, i) => {
+      const snap = inst.ranking_snapshot?.[inst.ranking_snapshot.length - 1];
+      const puntaje = snap?.puntaje_total?.toFixed(1) || '—';
+      const iniciales = inst.nombre.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+      const disciplinas = [...new Set(inst.instructor_preferencias?.map(p => p.disciplina))].join(', ');
+      const niveles = [...new Set(inst.instructor_preferencias?.map(p => p.nivel_max))].sort().join(', ');
+
+      lista.innerHTML += `
+        <div class="instructor-row" id="row-${inst.id}" onclick="abrirAsignarConHora('${inst.nombre}', '${puntaje}')">
+          <div class="rank-num ${i < 3 ? 'top' : ''}">${i+1}</div>
+          <div class="inst-info">
+            <div class="inst-name">${inst.nombre}</div>
+            <div class="inst-meta">${disciplinas} · Niv. ${inst.nivel_certificado} · <span id="disp-${inst.id}" class="disp-badge disp-ok">Disponible</span></div>
+          </div>
+          <div style="text-align:center"><span class="score-pill ${puntaje >= 8 ? 'score-high' : puntaje >= 6 ? 'score-mid' : 'score-low'}">${puntaje}</span></div>
+          <div style="text-align:center" class="col-asist"><span class="score-pill score-high">—</span></div>
+          <div style="text-align:center" class="col-fidel"><span class="score-pill score-high">—</span></div>
+        </div>`;
+    });
+
+    // Actualizar stats
+    document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = instructores.length;
+  }
+
+  async function cargarPresenciaHoy() {
+    const { data: instructores } = await sb
+      .from('instructores')
+      .select('id, nombre')
+      .eq('activo', true);
+
+    if (!instructores?.length) return;
+
+    const { data: presencias } = await sb
+      .from('asistencia')
+      .select('*')
+      .eq('tipo', 'presente')
+      .gte('registrado_en', fechaISO + 'T00:00:00')
+      .lte('registrado_en', fechaISO + 'T23:59:59');
+
+    const presenciasIds = new Set(presencias?.map(p => p.clase_id) || []);
+    const lista = document.getElementById('lista-presencia');
+    if (!lista) return;
+
+    lista.innerHTML = '';
+    let confirmados = 0;
+
+    instructores.forEach(inst => {
+      const presente = presenciasIds.has(inst.id);
+      if (presente) confirmados++;
+      lista.innerHTML += `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--ice2)">
+          <div>
+            <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">${presente ? 'Confirmó presencia' : 'Sin confirmar'}</div>
+          </div>
+          ${presente
+            ? `<span style="font-size:11px;font-weight:500;color:#0F6E56;background:#E1F5EE;padding:3px 10px;border-radius:20px">Presente</span>`
+            : `<button onclick="corregirPresencia('${inst.nombre}', this)" style="font-size:11px;font-weight:500;color:var(--warn);background:var(--warn-bg);padding:3px 10px;border-radius:20px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif">Pendiente</button>`
+          }
+        </div>`;
+    });
+
+    document.getElementById('presencia-resumen').textContent = `${confirmados} / ${instructores.length} confirmados`;
+  }
+
+  async function guardarClase(instructorId, instructorNombre) {
+    const fecha = document.getElementById('clase-fecha')?.value || fechaISO;
+    const clienteNombre = document.getElementById('cliente-nombre')?.value;
+    const disciplina = document.getElementById('cliente-disciplina')?.value;
+
+    if (!clienteNombre || !disciplina || !horaSeleccionada || !nivelSeleccionado) {
+      toast('Completá todos los campos antes de asignar');
+      return;
+    }
+
+    // Crear o buscar cliente
+    let clienteId = null;
+    const { data: clienteExist } = await sb
+      .from('clientes')
+      .select('id')
+      .ilike('nombre', clienteNombre)
+      .single();
+
+    if (clienteExist) {
+      clienteId = clienteExist.id;
+    } else {
+      const { data: nuevoCliente } = await sb
+        .from('clientes')
+        .insert({ nombre: clienteNombre, disciplina, nivel_validado: nivelSeleccionado })
+        .select('id')
+        .single();
+      clienteId = nuevoCliente?.id;
+    }
+
+    // Crear clase
+    await sb.from('clases').insert({
+      instructor_id: instructorId,
+      cliente_id: clienteId,
+      fecha,
+      disciplina,
+      nivel: nivelSeleccionado,
+      hora_inicio: horaSeleccionada,
+      duracion_horas: duracionSeleccionada,
+      estado: 'asignada',
+      es_emergencia: emergenciaActiva
+    });
+
+    // Recargar clases
+    await cargarClasesHoy();
+    toast('Clase asignada correctamente');
+  }
+
+  async function cerrarSesion() {
+    await sb.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'altus_login.html';
+  }
+
+  // Mostrar iniciales del usuario logueado
+  const _email = localStorage.getItem('altus_email') || '';
+  const _iniciales = _email.split('@')[0].slice(0,2).toUpperCase();
+  const _avatarEl = document.getElementById('user-avatar');
+  if (_avatarEl && _iniciales) _avatarEl.textContent = _iniciales;
+
+  // INIT
+  document.getElementById('filtro-fecha-clases') && (document.getElementById('filtro-fecha-clases').value = fechaISO);
+  cargarClasesHoy();
+  cargarInstructoresRanking();
+  cargarPresenciaHoy();
+</script>
+</body>
+</html>
