@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altus — Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A1F2E;--navy2:#222840;--ice:#F0F2F5;--line:#E0E4EA;
+  --silver:#8090A8;--accent:#1D9E75;--accent2:#0F6E56;
+  --white:#FFFFFF;--text:#1A1F2E;--muted:#4A5568;
+  --warn:#B45309;--warn-bg:#FEF3C7;--danger:#E24B4A;--danger-bg:#FEE2E2;
+  --success-bg:#E1F5EE;--sidebar:240px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);min-height:100vh;display:flex}
+body.no-scroll{overflow:hidden}
+.sidebar{width:var(--sidebar);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;z-index:100;display:flex;flex-direction:column;transition:transform .25s}
+.brand{padding:24px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.12em}
+.brand-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-top:3px}
+.nav{padding:12px 0;flex:1}
+.nav-sec{padding:8px 16px 4px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.2);margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;border-left:2px solid transparent;transition:all .15s;background:none;border-top:none;border-right:none;border-bottom:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}
+.nav-item.active{color:#fff;border-left-color:var(--accent);background:rgba(29,158,117,.1)}
+.sidebar-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.25)}
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:#fff;border-bottom:1px solid var(--line);height:56px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:14px;font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.badge-date{font-size:12px;color:var(--silver);font-weight:300}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:13px;color:#fff;cursor:pointer}
+.content{padding:28px;flex:1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px}
+.stat-label{font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);line-height:1}
+.stat-sub{font-size:11px;color:var(--silver);margin-top:4px}
+.grid-2{display:grid;grid-template-columns:1fr 340px;gap:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.panel-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:500}
+.panel-meta{font-size:11px;color:var(--silver)}
+.panel-body{padding:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+input,select{height:38px;border:1px solid var(--line);border-radius:5px;padding:0 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:var(--accent)}
+.nivel-row{display:flex;gap:5px}
+.nivel-btn{flex:1;height:36px;border:1px solid var(--line);border-radius:4px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--muted);cursor:pointer;transition:all .12s}
+.nivel-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn{height:38px;padding:0 18px;border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy2)}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-outline:hover{border-color:var(--silver);color:var(--text)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end}
+.disp-ok{color:#0F6E56;font-size:11px;font-weight:500}
+.disp-busy{color:#B91C1C;font-size:11px;font-weight:500}
+.disp-soon{color:var(--warn);font-size:11px;font-weight:500}
+.aviso-franja{background:var(--ice);border:1px solid var(--line);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--muted);margin-bottom:12px;display:none}
+.rk-head{display:grid;grid-template-columns:28px 1fr 70px 70px 80px;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--silver);font-weight:500}
+.rk-row{display:grid;grid-template-columns:28px 1fr 70px 70px 80px;gap:6px;padding:10px 0;border-bottom:1px solid var(--ice);align-items:center;cursor:pointer;transition:background .1s;border-radius:4px;padding:10px 4px}
+.rk-row:hover{background:var(--ice)}
+.rk-row.ocupado{opacity:.4;pointer-events:none}
+.rk-num{font-family:'Cormorant Garamond',serif;font-size:15px;color:var(--silver);text-align:center;font-weight:600}
+.rk-num.top{color:var(--navy)}
+.inst-name{font-size:13px;font-weight:500;color:var(--text)}
+.inst-meta{font-size:11px;color:var(--silver);margin-top:1px}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.pill-ok{background:var(--success-bg);color:var(--accent2)}
+.pill-mid{background:var(--warn-bg);color:var(--warn)}
+.pill-low{background:var(--danger-bg);color:var(--danger)}
+.clase-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--ice)}
+.clase-item:last-child{border-bottom:none}
+.clase-hora{font-size:12px;font-weight:500;color:var(--navy);min-width:36px}
+.clase-dur{font-size:10px;color:var(--silver)}
+.clase-info{flex:1}
+.clase-cliente{font-size:13px;font-weight:500}
+.clase-detalle{font-size:11px;color:var(--silver);margin-top:1px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.dot-ok{background:#22C55E}.dot-pend{background:#F59E0B}.dot-none{background:var(--danger)}
+.pres-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--ice)}
+.pres-item:last-child{border-bottom:none}
+.pres-name{font-size:13px;font-weight:500}
+.pres-sub{font-size:11px;color:var(--silver);margin-top:1px}
+.pres-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:20px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.pres-ok{background:var(--success-bg);color:var(--accent2)}
+.pres-pend{background:var(--warn-bg);color:var(--warn)}
+.pres-aus{background:var(--danger-bg);color:var(--danger)}
+.emerg{background:#FFF5F5;border:1px solid #FECACA;border-radius:6px;padding:11px 14px;display:none;align-items:center;gap:10px;margin-bottom:18px}
+.emerg-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.page-content{padding:28px}
+.page-filters{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.filter-group select,.filter-group input{height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;-webkit-appearance:none;appearance:none}
+.page-table{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.table-head{padding:13px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.t-cols{display:flex;padding:9px 18px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--silver);font-weight:500;gap:8px}
+.t-row{display:flex;padding:12px 18px;border-bottom:1px solid var(--ice);align-items:center;gap:8px;font-size:13px}
+.t-row:last-child{border-bottom:none}
+.t-row:nth-child(even){background:var(--ice)}
+.empty{padding:40px;text-align:center;color:var(--silver);font-size:13px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(22,31,46,.55);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;width:100%;max-width:480px;margin:16px;overflow:hidden;animation:fadeUp .2s ease;max-height:90vh;overflow-y:auto}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10}
+.modal-title{font-size:14px;font-weight:500}
+.modal-close{background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer;line-height:1}
+.modal-body{padding:22px}
+.tag-btn{padding:6px 13px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
+.tag-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.paso-tab{flex:1;padding:9px;text-align:center;font-size:12px;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:'DM Sans',sans-serif;border:none}
+.paso-tab.active{background:var(--navy);color:#fff}
+.btn-save{width:100%;height:40px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:14px}
+.fab-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.fab-menu{display:flex;flex-direction:column;gap:8px;align-items:flex-end;opacity:0;pointer-events:none;transform:translateY(8px);transition:all .2s ease}
+.fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.fab-row{display:flex;align-items:center;gap:10px}
+.fab-label{background:var(--navy);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);font-family:'DM Sans',sans-serif}
+.fab-icon{width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .15s}
+.fab-icon:hover{background:var(--navy);color:#fff}
+.fab-main{width:50px;height:50px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(29,158,117,.4);transition:all .2s}
+.fab-main.open{background:var(--navy)}
+.menu-toggle{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--navy);border:none;border-radius:6px;width:36px;height:36px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.menu-toggle span{display:block;width:18px;height:1.5px;background:#fff;border-radius:2px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90}
+@media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}.menu-toggle{display:flex}.overlay.open{display:block}
+  .stats{grid-template-columns:1fr 1fr}.content,.page-content{padding:16px}
+  .topbar{padding:0 16px 0 54px}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<button class="menu-toggle" id="menuBtn"><span></span><span></span><span></span></button>
+<div class="overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="brand-name">ALTUS</div><div class="brand-sub">Cerro Bayo — Villa La Angostura</div></div>
+  <nav class="nav">
+    <div class="nav-sec">Principal</div>
+    <button class="nav-item active" data-page="asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Panel de asignación</button>
+    <button class="nav-item" data-page="clases"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>Clases del día</button>
+    <button class="nav-item" data-page="ranking"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg>Ranking</button>
+    <div class="nav-sec">Gestión</div>
+    <button class="nav-item" data-page="instructores"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Instructores</button>
+    <button class="nav-item" data-page="clientes"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><circle cx="12" cy="5" r="2"/><path d="M12 10c1.7.3 3 1.8 3 3.5"/></svg>Clientes</button>
+    <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
+    <div class="nav-sec">Sistema</div>
+    <button class="nav-item" data-page="resenas"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.1 5.2l4-.6z"/></svg>Reseñas</button>
+  </nav>
+  <div class="sidebar-footer">Temporada 2026 — v1.0</div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="page-title">Panel de asignación</span>
+    <div class="topbar-right">
+      <span class="badge-date" id="fecha-hoy"></span>
+      <div class="avatar" id="user-avatar" title="Cerrar sesión">AD</div>
+    </div>
+  </div>
+
+  <!-- ASIGNACION -->
+  <div id="pg-asignacion" class="content">
+    <div class="emerg" id="emerg-banner">
+      <div class="emerg-dot"></div>
+      <div style="font-size:13px;color:var(--danger);flex:1"><strong>Modo emergencia activo</strong> — Instructores fuera de perfil habitual</div>
+      <button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-desact-emerg">Desactivar</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Clases hoy</div><div class="stat-val" id="stat-clases">—</div><div class="stat-sub">programadas</div></div>
+      <div class="stat"><div class="stat-label">Instructores activos</div><div class="stat-val" id="stat-inst">—</div><div class="stat-sub">en el sistema</div></div>
+      <div class="stat"><div class="stat-label">Reseñas este mes</div><div class="stat-val" id="stat-res">—</div><div class="stat-sub">acumuladas</div></div>
+      <div class="stat"><div class="stat-label">Período</div><div class="stat-val" style="font-size:18px;padding-top:4px">Calibración</div><div class="stat-sub">Ranking en formación</div></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Nueva asignación</span><button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-emerg">Modo emergencia</button></div>
+          <div class="panel-body">
+            <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Datos del cliente</div>
+            <div class="form-grid">
+              <div class="fg"><label>Nombre</label><input type="text" id="cli-nombre" placeholder="Nombre del cliente"></div>
+              <div class="fg"><label>Teléfono</label><input type="text" id="cli-tel" placeholder="+54 9 ..."></div>
+              <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esquí</option><option>Snowboard</option><option>Freestyle</option></select></div>
+              <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
+            </div>
+            <div style="margin-bottom:16px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
+            <div class="form-grid">
+              <div class="fg"><label>Fecha</label><input type="date" id="cli-fecha"></div>
+              <div class="fg"><label>Hora de inicio</label><select id="cli-hora"><option value="">Seleccionar...</option><option>09:00</option><option>09:30</option><option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option><option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option><option>16:00</option><option>16:30</option></select></div>
+              <div class="fg"><label>Duración</label><select id="cli-dur"><option value="1">1 hora</option><option value="1.5">1:30 hs</option><option value="2">2 horas</option><option value="2.5">2:30 hs</option><option value="3">3 horas</option></select></div>
+              <div class="fg"><label>Hora de fin</label><input type="text" id="cli-horafin" readonly placeholder="—" style="background:var(--ice);color:var(--muted)"></div>
+            </div>
+            <div class="aviso-franja" id="aviso-franja"></div>
+            <div class="form-actions" style="margin-bottom:0">
+              <button class="btn btn-outline" id="btn-verificar">Verificar cliente</button>
+              <button class="btn btn-primary" id="btn-buscar">Buscar instructores</button>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+            <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Instructores disponibles</div>
+            <div class="rk-head"><div>#</div><div>Instructor</div><div style="text-align:center">Puntaje</div><div style="text-align:center">Asist.</div><div style="text-align:center">Estado</div></div>
+            <div id="rk-lista"><div style="padding:18px 0;text-align:center;color:var(--silver);font-size:13px">Completá los datos y buscá instructores</div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Clases de hoy</span><span class="panel-meta" id="clases-hoy-ct">—</span></div>
+          <div style="padding:8px 18px" id="clases-hoy-lista"><div class="empty">Cargando...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Presencia de hoy</span><span class="panel-meta" id="pres-resumen">—</span></div>
+          <div style="padding:0 18px" id="pres-lista"><div class="empty">Cargando...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANKING -->
+  <div id="pg-ranking" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group"><label>Disciplina</label><select id="f-disc"><option value="">Todas</option><option>Esquí</option><option>Snowboard</option><option>Freestyle</option></select></div>
+      <div class="filter-group"><label>Nivel</label><select id="f-nivel"><option value="">Todos</option><option value="principiante">Principiante</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option></select></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Ranking de instructores</span><span class="panel-meta" id="rk-ct">—</span></div>
+      <div class="t-cols"><div style="width:40px;flex-shrink:0">#</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Opinión</div><div style="width:80px;text-align:center;flex-shrink:0">Asistencia</div><div style="width:80px;text-align:center;flex-shrink:0">Fideliz.</div><div style="width:80px;text-align:center;flex-shrink:0">Historial</div><div style="width:80px;text-align:center;flex-shrink:0">Perfil</div><div style="width:90px;text-align:center;flex-shrink:0">Total</div></div>
+      <div id="rk-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- CLASES DEL DIA -->
+  <div id="pg-clases" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group"><label>Fecha</label><input type="date" id="f-fecha-cl"></div>
+      <div class="filter-group"><label>Estado</label><select id="f-estado-cl"><option value="">Todos</option><option value="asignada">Asignada</option><option value="completada">Completada</option><option value="pendiente">Pendiente</option></select></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Clases del día</span><span class="panel-meta" id="cl-ct">—</span></div>
+      <div class="t-cols"><div style="width:70px;flex-shrink:0">Hora</div><div style="width:55px;flex-shrink:0">Dur.</div><div style="flex:1">Cliente</div><div style="flex:1">Instructor</div><div style="width:150px;flex-shrink:0">Detalle</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div></div>
+      <div id="cl-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- INSTRUCTORES -->
+  <div id="pg-instructores" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..."></div>
+      <div class="filter-group"><label>Estado</label><select id="f-activo-inst"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Instructores</span><span class="panel-meta" id="inst-ct">—</span></div>
+      <div class="t-cols"><div style="flex:1">Nombre</div><div style="width:70px;text-align:center;flex-shrink:0">Nivel</div><div style="width:140px;flex-shrink:0">Disciplinas</div><div style="width:130px;flex-shrink:0">Teléfono</div><div style="width:80px;text-align:center;flex-shrink:0">Estado</div></div>
+      <div id="inst-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="pg-clientes" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre..."></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Clientes</span><span class="panel-meta" id="cli-ct">—</span></div>
+      <div class="t-cols"><div style="flex:1">Nombre</div><div style="width:120px;flex-shrink:0">Disciplina</div><div style="width:100px;flex-shrink:0">Nivel</div><div style="width:140px;flex-shrink:0">Teléfono</div></div>
+      <div id="cli-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- ASISTENCIA -->
+  <div id="pg-asistencia" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group"><label>Mes</label><select id="f-mes"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
+      <div class="filter-group"><label>Año</label><select id="f-anio"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Asistencia mensual</span><span class="panel-meta" id="asist-period">—</span></div>
+      <div class="t-cols"><div style="flex:1">Instructor</div><div style="width:90px;text-align:center;flex-shrink:0">Presentes</div><div style="width:90px;text-align:center;flex-shrink:0">Ausentes</div><div style="width:90px;text-align:center;flex-shrink:0">Clases</div><div style="width:110px;text-align:center;flex-shrink:0">Hs. trabajadas</div><div style="width:110px;text-align:center;flex-shrink:0">% Asistencia</div></div>
+      <div id="asist-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- RESENAS -->
+  <div id="pg-resenas" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-res" placeholder="Instructor o cliente..."></div>
+      <div class="filter-group"><label>Puntaje</label><select id="f-punt-res"><option value="">Todos</option><option value="5">5 estrellas</option><option value="4">4 estrellas</option><option value="3">3 o menos</option></select></div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Reseñas</span><span class="panel-meta" id="res-ct">—</span></div>
+      <div id="res-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- FAB -->
+<div class="fab-container">
+  <div class="fab-menu" id="fab-menu">
+    <div class="fab-row"><span class="fab-label">Registrar asistencia</span><button class="fab-icon" id="fab-asist"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/></svg></button></div>
+    <div class="fab-row"><span class="fab-label">Ver ranking</span><button class="fab-icon" id="fab-rk"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg></button></div>
+    <div class="fab-row"><span class="fab-label">Nuevo instructor</span><button class="fab-icon" id="fab-nuevo"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg></button></div>
+    <div class="fab-row"><span class="fab-label">Modo emergencia</span><button class="fab-icon" id="fab-emerg"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9l-3.1 1.5.6-3.5L3 4.5l3.5-.5z"/></svg></button></div>
+  </div>
+  <button class="fab-main" id="fab-btn">
+    <svg id="fab-plus" width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+    <svg id="fab-x" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" style="display:none"><path d="M3 3l10 10M13 3L3 13"/></svg>
+  </button>
+</div>
+
+<!-- MODALES -->
+<div class="modal-overlay" id="modal-asignar">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Confirmar asignación</span><button class="modal-close" id="ma-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--silver);margin-bottom:12px">Instructor seleccionado</div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--accent);background:#F0FBF7;border-radius:7px;margin-bottom:18px">
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:#fff" id="ma-av">VR</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:500" id="ma-nom">—</div><div style="font-size:12px;color:var(--silver);margin-top:2px" id="ma-meta">—</div></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)" id="ma-sc">—</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+        <div class="fg"><label>Fecha</label><input type="date" id="ma-fecha"></div>
+        <div class="fg"><label>Horario</label><div style="height:38px;border:1px solid var(--line);border-radius:5px;padding:0 11px;display:flex;align-items:center;font-size:13px;background:var(--ice);color:var(--muted)" id="ma-horario">—</div></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" id="ma-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="ma-confirm">Confirmar asignación</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Cliente registrado</span><button class="modal-close" id="mc-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="background:var(--ice);border-radius:6px;padding:12px 14px;margin-bottom:16px" id="mc-info"></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">¿Desea continuar con el mismo instructor de su última visita?</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" id="mc-no">No, ver ranking</button>
+        <button class="btn btn-primary" style="flex:1" id="mc-si">Sí, asignar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-presencia">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><span class="modal-title">Corregir presencia</span><button class="modal-close" id="mp-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Corrigiendo presencia de <strong id="mp-nom"></strong>. Queda registrado.</div>
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;height:40px;border:1px solid #E1F5EE;border-radius:5px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" id="mp-presente">Marcar presente</button>
+        <button style="flex:1;height:40px;border:1px solid var(--danger-bg);border-radius:5px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" id="mp-ausente">Marcar ausente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-inst">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head"><span class="modal-title">Nuevo instructor</span><button class="modal-close" id="mi-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:20px">
+        <button class="paso-tab active" data-paso="1">1. Datos</button>
+        <button class="paso-tab" data-paso="2">2. Perfil</button>
+        <button class="paso-tab" data-paso="3">3. Preferencias</button>
+      </div>
+      <div id="inst-p1">
+        <div class="form-grid">
+          <div class="fg"><label>Nombre</label><input type="text" id="ni-nom" placeholder="Nombre completo"></div>
+          <div class="fg"><label>Teléfono</label><input type="text" id="ni-tel" placeholder="+54 9 ..."></div>
+          <div class="fg full"><label>Email</label><input type="email" id="ni-email" placeholder="correo@ejemplo.com"></div>
+          <div class="fg"><label>Fecha de ingreso</label><input type="date" id="ni-fecha"></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="p1-next">Siguiente</button></div>
+      </div>
+      <div id="inst-p2" style="display:none">
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc"><button class="nivel-btn" data-niv="1">1</button><button class="nivel-btn" data-niv="2">2</button><button class="nivel-btn" data-niv="3">3</button><button class="nivel-btn" data-niv="4">4</button><button class="nivel-btn" data-niv="5">5</button></div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esquí">Esquí</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Freestyle">Freestyle</button></div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
+        <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p2-back">Atrás</button><button class="btn btn-primary" id="p2-next">Siguiente</button></div>
+      </div>
+      <div id="inst-p3" style="display:none">
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Rangos etarios</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-rang"><button class="tag-btn" data-val="ninos">Niños (4-12)</button><button class="tag-btn" data-val="adolescentes">Adolescentes (13-17)</button><button class="tag-btn" data-val="adultos">Adultos (18-60)</button><button class="tag-btn" data-val="mayores">Adultos mayores (60+)</button></div></div>
+        <div style="background:var(--ice);border-radius:6px;padding:14px;margin-bottom:16px" id="ni-resumen"></div>
+        <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p3-back">Atrás</button><button class="btn btn-primary" id="ni-save">Guardar instructor</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
+
+// Auth check
+sb.auth.getSession().then(({data}) => {
+  if (!data?.session) { window.location.href='altus_login.html'; return; }
+  const rol = localStorage.getItem('altus_rol');
+  if (rol==='instructor') { window.location.href='altus_instructor.html'; return; }
+  const email = localStorage.getItem('altus_email')||'';
+  const ini = email.split('@')[0].slice(0,2).toUpperCase();
+  if (ini) document.getElementById('user-avatar').textContent = ini;
+});
+
+// Init
+const hoy = new Date();
+const fechaISO = hoy.toISOString().split('T')[0];
+document.getElementById('fecha-hoy').textContent = hoy.toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('cli-fecha').value = fechaISO;
+document.getElementById('ma-fecha').valueAsDate = hoy;
+document.getElementById('f-fecha-cl').value = fechaISO;
+document.getElementById('ni-fecha').valueAsDate = hoy;
+document.getElementById('f-mes').value = String(hoy.getMonth()+1);
+
+let nivelCliente=null, instrSel=null, clasesHoy=[], fabOpen=false, corrBtn=null, nivelCert=null;
+
+// Helpers
+const pill = v => { const n=parseFloat(v); const c=isNaN(n)?'pill-mid':n>=7?'pill-ok':n>=5?'pill-mid':'pill-low'; return `<span class="pill ${c}">${v}</span>`; };
+const badge = (t,c,b) => `<span style="font-size:11px;font-weight:500;color:${c};background:${b};padding:2px 9px;border-radius:20px">${t}</span>`;
+const t2m = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
+const m2t = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+function toast(msg,type='ok') {
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:24px;right:24px;background:${type==='ok'?'#0F6E56':'#B91C1C'};color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:999;font-family:'DM Sans',sans-serif`;
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2800);
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.classList.add('no-scroll'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.classList.remove('no-scroll'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
+
+// Sidebar navigation
+const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas'];
+const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas'};
+const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas};
+
+function setPage(page) {
+  PAGES.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
+  document.getElementById('page-title').textContent = TITLES[page]||page;
+  if (LOADERS[page]) LOADERS[page]();
+  if (window.innerWidth<768) toggleSidebar();
+}
+document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page)));
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
+document.getElementById('overlay').addEventListener('click', toggleSidebar);
+document.getElementById('user-avatar').addEventListener('click', async()=>{ await sb.auth.signOut(); localStorage.clear(); window.location.href='altus_login.html'; });
+
+// Nivel cliente
+document.querySelectorAll('.nivel-btn[data-nivel]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.nivel-btn[data-nivel]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); nivelCliente=btn.dataset.nivel;
+}));
+
+// Hora fin auto
+function updateHoraFin() {
+  const hora=document.getElementById('cli-hora').value;
+  const dur=parseFloat(document.getElementById('cli-dur').value)||1;
+  if (!hora) { document.getElementById('cli-horafin').value=''; return; }
+  const fin=m2t(t2m(hora)+dur*60);
+  document.getElementById('cli-horafin').value=fin;
+  const av=document.getElementById('aviso-franja');
+  av.style.display='block'; av.textContent=`Franja: ${hora} — ${fin}`;
+  updateDisp(hora,fin);
+}
+document.getElementById('cli-hora').addEventListener('change',updateHoraFin);
+document.getElementById('cli-dur').addEventListener('change',updateHoraFin);
+
+function updateDisp(ini,fin) {
+  if (!ini||!fin) return;
+  const im=t2m(ini), fm=t2m(fin);
+  document.querySelectorAll('.rk-row').forEach(row=>{
+    const cls=clasesHoy.filter(c=>c.instructor_id===row.dataset.instid);
+    let st='ok';
+    for (const c of cls) {
+      const ci=t2m(c.hora_inicio?.slice(0,5)||'00:00'), cf=t2m(c.hora_fin?.slice(0,5)||'00:00');
+      if (im<cf&&fm>ci) { st='busy'; break; }
+      if (cf>im-30&&cf<=im) st='soon';
+    }
+    const el=row.querySelector('.disp-st');
+    if (el) {
+      if (st==='busy') { el.textContent='Ocupado'; el.className='disp-st disp-busy'; row.classList.add('ocupado'); }
+      else if (st==='soon') { el.textContent='Por terminar'; el.className='disp-st disp-soon'; row.classList.remove('ocupado'); }
+      else { el.textContent='Disponible'; el.className='disp-st disp-ok'; row.classList.remove('ocupado'); }
+    }
+  });
+}
+
+// Buscar instructores
+document.getElementById('btn-buscar').addEventListener('click', async()=>{
+  const disc=document.getElementById('cli-disc').value;
+  const lista=document.getElementById('rk-lista');
+  lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">Buscando...</div>';
+  const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
+  if (!insts?.length) { lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">No hay instructores</div>'; return; }
+  let filtrados=insts.filter(i=>{
+    if (!disc) return true;
+    return (i.instructor_preferencias||[]).some(p=>p.disciplina===disc);
+  });
+  filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
+  lista.innerHTML=filtrados.map((inst,i)=>{
+    const s=inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
+    const total=s?.puntaje_total?.toFixed(1)||'—';
+    const asist=s?.puntaje_asistencia?.toFixed(1)||'—';
+    const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
+    return `<div class="rk-row" data-instid="${inst.id}" data-nom="${inst.nombre}" data-sc="${total}" data-meta="Niv.${inst.nivel_certificado} · ${discs}">
+      <div class="rk-num ${i<3?'top':''}">${i+1}</div>
+      <div><div class="inst-name">${inst.nombre}</div><div class="inst-meta">Niv.${inst.nivel_certificado} · ${discs}</div></div>
+      <div style="text-align:center">${pill(total)}</div>
+      <div style="text-align:center">${pill(asist)}</div>
+      <div style="text-align:center"><span class="disp-st disp-ok">Disponible</span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.rk-row').forEach(row=>row.addEventListener('click',()=>{
+    if (row.classList.contains('ocupado')) return;
+    instrSel={id:row.dataset.instid,nombre:row.dataset.nom,score:row.dataset.sc,meta:row.dataset.meta};
+    openModalAsignar(instrSel);
+  }));
+  const hora=document.getElementById('cli-hora').value, fin=document.getElementById('cli-horafin').value;
+  if (hora&&fin) updateDisp(hora,fin);
+});
+
+document.getElementById('btn-verificar').addEventListener('click', async()=>{
+  const nom=document.getElementById('cli-nombre').value.trim();
+  if (!nom) { toast('Ingresá el nombre del cliente','err'); return; }
+  const {data}=await sb.from('clientes').select('*').ilike('nombre',`%${nom}%`).limit(1);
+  if (!data?.length) { toast('Cliente nuevo — sin historial'); return; }
+  const cli=data[0];
+  document.getElementById('mc-info').innerHTML=`<div style="font-size:13px;font-weight:500">${cli.nombre}</div><div style="font-size:12px;color:var(--silver);margin-top:3px">${cli.disciplina||'—'} · Nivel ${cli.nivel_validado||cli.nivel_declarado||'—'}</div>`;
+  openModal('modal-cliente');
+});
+document.getElementById('mc-close').addEventListener('click',()=>closeModal('modal-cliente'));
+document.getElementById('mc-no').addEventListener('click',()=>closeModal('modal-cliente'));
+document.getElementById('mc-si').addEventListener('click',()=>closeModal('modal-cliente'));
+
+// Modal asignar
+function openModalAsignar(inst) {
+  const ini=inst.nombre.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('ma-av').textContent=ini;
+  document.getElementById('ma-nom').textContent=inst.nombre;
+  document.getElementById('ma-meta').textContent=inst.meta||'';
+  document.getElementById('ma-sc').textContent=inst.score||'—';
+  const hora=document.getElementById('cli-hora').value, fin=document.getElementById('cli-horafin').value;
+  document.getElementById('ma-horario').textContent=hora&&fin?`${hora} — ${fin}`:'—';
+  openModal('modal-asignar');
+}
+document.getElementById('ma-close').addEventListener('click',()=>closeModal('modal-asignar'));
+document.getElementById('ma-cancel').addEventListener('click',()=>closeModal('modal-asignar'));
+document.getElementById('ma-confirm').addEventListener('click', async()=>{
+  if (!instrSel) return;
+  const nom=document.getElementById('cli-nombre').value.trim();
+  const disc=document.getElementById('cli-disc').value;
+  const hora=document.getElementById('cli-hora').value;
+  const dur=parseFloat(document.getElementById('cli-dur').value)||1;
+  const fecha=document.getElementById('ma-fecha').value||fechaISO;
+  let cliId=null;
+  const {data:ce}=await sb.from('clientes').select('id').ilike('nombre',nom).limit(1);
+  if (ce?.length) { cliId=ce[0].id; }
+  else { const {data:nc}=await sb.from('clientes').insert({nombre:nom,disciplina:disc,nivel_validado:nivelCliente}).select('id').single(); cliId=nc?.id; }
+  await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente||'principiante',hora_inicio:hora,duracion_horas:dur,estado:'asignada'});
+  closeModal('modal-asignar');
+  toast('Clase asignada correctamente');
+  initClasesHoy(); initInstStats();
+});
+
+// Emergencia
+document.getElementById('btn-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='flex'; });
+document.getElementById('btn-desact-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='none'; });
+
+// FAB
+document.getElementById('fab-btn').addEventListener('click',()=>{
+  fabOpen=!fabOpen;
+  document.getElementById('fab-menu').classList.toggle('open',fabOpen);
+  document.getElementById('fab-btn').classList.toggle('open',fabOpen);
+  document.getElementById('fab-plus').style.display=fabOpen?'none':'block';
+  document.getElementById('fab-x').style.display=fabOpen?'block':'none';
+});
+const closeFab=()=>{ fabOpen=false; document.getElementById('fab-menu').classList.remove('open'); document.getElementById('fab-btn').classList.remove('open'); document.getElementById('fab-plus').style.display='block'; document.getElementById('fab-x').style.display='none'; };
+document.getElementById('fab-nuevo').addEventListener('click',()=>{ closeFab(); openModal('modal-inst'); });
+document.getElementById('fab-rk').addEventListener('click',()=>{ closeFab(); setPage('ranking'); });
+document.getElementById('fab-emerg').addEventListener('click',()=>{ closeFab(); document.getElementById('emerg-banner').style.display='flex'; });
+document.getElementById('fab-asist').addEventListener('click',()=>{ closeFab(); setPage('asistencia'); });
+
+// Presencia modal
+document.getElementById('mp-close').addEventListener('click',()=>closeModal('modal-presencia'));
+document.getElementById('mp-presente').addEventListener('click',()=>{ applyCorr('presente'); });
+document.getElementById('mp-ausente').addEventListener('click',()=>{ applyCorr('ausente'); });
+function openCorr(nom,btn) { corrBtn=btn; document.getElementById('mp-nom').textContent=nom; openModal('modal-presencia'); }
+function applyCorr(st) {
+  closeModal('modal-presencia');
+  if (!corrBtn) return;
+  if (st==='presente') { corrBtn.textContent='Presente'; corrBtn.className='pres-badge pres-ok'; corrBtn.onclick=null; }
+  else { corrBtn.textContent='Ausente'; corrBtn.className='pres-badge pres-aus'; corrBtn.onclick=null; }
+  toast('Presencia actualizada'); corrBtn=null;
+}
+
+// Nuevo instructor
+document.getElementById('mi-close').addEventListener('click',()=>closeModal('modal-inst'));
+function irPaso(n) {
+  [1,2,3].forEach(i=>{
+    document.getElementById(`inst-p${i}`).style.display=i===n?'block':'none';
+    document.querySelector(`.paso-tab[data-paso="${i}"]`)?.classList.toggle('active',i===n);
+  });
+}
+document.getElementById('p1-next').addEventListener('click',()=>irPaso(2));
+document.getElementById('p2-back').addEventListener('click',()=>irPaso(1));
+document.getElementById('p3-back').addEventListener('click',()=>irPaso(2));
+document.getElementById('p2-next').addEventListener('click',()=>{ updateResumen(); irPaso(3); });
+document.querySelectorAll('#ni-nc .nivel-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('#ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); nivelCert=btn.dataset.niv;
+}));
+['ni-disc','ni-niv','ni-rang'].forEach(id=>document.querySelectorAll(`#${id} .tag-btn`).forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active'))));
+function updateResumen() {
+  const nom=document.getElementById('ni-nom').value||'—';
+  const discs=[...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  const niv=[...document.querySelectorAll('#ni-niv .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  const rang=[...document.querySelectorAll('#ni-rang .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  document.getElementById('ni-resumen').innerHTML=`<div style="font-size:13px;font-weight:500;margin-bottom:5px">${nom}</div><div style="font-size:12px;color:var(--muted)">Nivel: ${nivelCert||'—'} · Disciplinas: ${discs}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Rangos: ${rang}</div>`;
+}
+document.getElementById('ni-save').addEventListener('click', async()=>{
+  const nom=document.getElementById('ni-nom').value.trim();
+  if (!nom||!nivelCert) { toast('Completá nombre y nivel','err'); return; }
+  const {data:inst,error}=await sb.from('instructores').insert({nombre:nom,email:document.getElementById('ni-email').value,telefono:document.getElementById('ni-tel').value,nivel_certificado:parseInt(nivelCert),fecha_ingreso:document.getElementById('ni-fecha').value,activo:true}).select('id').single();
+  if (error) { toast('Error al guardar','err'); return; }
+  const discs=[...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val);
+  const nivs=[...document.querySelectorAll('#ni-niv .tag-btn.active')].map(b=>b.dataset.val);
+  const rangs=[...document.querySelectorAll('#ni-rang .tag-btn.active')].map(b=>b.dataset.val);
+  const prefs=[];
+  discs.forEach(d=>rangs.forEach(r=>prefs.push({instructor_id:inst.id,disciplina:d,nivel_min:1,nivel_max:parseInt(nivelCert),rango_etario:r})));
+  if (prefs.length) await sb.from('instructor_preferencias').insert(prefs);
+  const {data:snaps}=await sb.from('ranking_snapshot').select('puntaje_total');
+  const prom=snaps?.length?snaps.reduce((s,r)=>s+(r.puntaje_total||0),0)/snaps.length:5;
+  await sb.from('ranking_snapshot').insert({instructor_id:inst.id,puntaje_opinion:prom,puntaje_asistencia:prom,puntaje_fidelizacion:prom,puntaje_historico:prom,puntaje_perfil:prom,puntaje_total:prom});
+  closeModal('modal-inst'); irPaso(1); toast(`${nom} agregado`);
+  initInstStats();
+});
+
+// ── CARGA INICIAL ──────────────────────────────────────
+async function initClasesHoy() {
+  const {data:cd}=await sb.from('clases').select('instructor_id, hora_inicio, hora_fin').eq('fecha',fechaISO);
+  clasesHoy=cd||[];
+  document.getElementById('stat-clases').textContent=clasesHoy.length;
+  const {data:cf}=await sb.from('clases').select('*, instructores(nombre), clientes(nombre)').eq('fecha',fechaISO).order('hora_inicio');
+  document.getElementById('clases-hoy-ct').textContent=`${cf?.length||0} total`;
+  const lista=document.getElementById('clases-hoy-lista');
+  if (!cf?.length) { lista.innerHTML='<div style="font-size:12px;color:var(--silver);text-align:center;padding:12px 0">Sin clases hoy</div>'; return; }
+  lista.innerHTML=cf.map(c=>`<div class="clase-item">
+    <div><div class="clase-hora">${c.hora_inicio?.slice(0,5)||'—'}</div><div class="clase-dur">${c.duracion_horas}h</div></div>
+    <div class="clase-info"><div class="clase-cliente">${c.clientes?.nombre||'Sin asignar'}</div><div class="clase-detalle">${c.instructores?.nombre||'—'} · ${c.disciplina} Niv. ${c.nivel}</div></div>
+    <div class="dot ${c.estado==='completada'?'dot-ok':c.estado==='asignada'?'dot-pend':'dot-none'}"></div>
+  </div>`).join('');
+}
+
+async function initInstStats() {
+  const {data}=await sb.from('instructores').select('id').eq('activo',true);
+  document.getElementById('stat-inst').textContent=data?.length||0;
+}
+
+async function initPresencia() {
+  const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
+  const {data:pres}=await sb.from('asistencia').select('*').eq('tipo','presente').gte('registrado_en',fechaISO+'T00:00:00').lte('registrado_en',fechaISO+'T23:59:59');
+  const presIds=new Set((pres||[]).map(p=>p.clase_id));
+  const lista=document.getElementById('pres-lista');
+  if (!insts?.length) { lista.innerHTML='<div class="empty">Sin instructores</div>'; return; }
+  let conf=0;
+  lista.innerHTML=insts.map(inst=>{
+    const ok=presIds.has(inst.id); if(ok) conf++;
+    return `<div class="pres-item">
+      <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${ok?'Confirmó presencia':'Sin confirmar'}</div></div>
+      ${ok?`<span class="pres-badge pres-ok">Presente</span>`:`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.nombre}',this)">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`}
+    </div>`;
+  }).join('');
+  document.getElementById('pres-resumen').textContent=`${conf} / ${insts.length} confirmados`;
+}
+
+async function initResStat() {
+  const inicio=new Date(hoy.getFullYear(),hoy.getMonth(),1).toISOString().split('T')[0];
+  const {data}=await sb.from('resenas').select('id').gte('creado_en',inicio);
+  document.getElementById('stat-res').textContent=data?.length||0;
+}
+
+// ── PÁGINAS ────────────────────────────────────────────
+async function loadRanking() {
+  const disc=document.getElementById('f-disc').value;
+  const niv=document.getElementById('f-nivel').value;
+  const tabla=document.getElementById('rk-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
+  if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  let filtrados=insts.filter(i=>{
+    const p=i.instructor_preferencias||[];
+    if (!disc&&!niv) return true;
+    return p.some(x=>(!disc||x.disciplina===disc)&&(!niv||x.nivel_max===niv));
+  });
+  filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
+  document.getElementById('rk-ct').textContent=`${filtrados.length} instructores`;
+  tabla.innerHTML=filtrados.map((inst,i)=>{
+    const s=inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
+    const fn=x=>s?.[x]?.toFixed(1)||'—';
+    return `<div class="t-row">
+      <div style="width:40px;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:15px;color:${i<3?'var(--navy)':'var(--silver)'};font-weight:600;text-align:center">${i+1}</div>
+      <div style="flex:1"><div style="font-weight:500">${inst.nombre}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_opinion'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_asistencia'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_fidelizacion'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_historico'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_perfil'))}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0">${pill(fn('puntaje_total'))}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('f-disc').addEventListener('change',loadRanking);
+document.getElementById('f-nivel').addEventListener('change',loadRanking);
+
+async function loadClases() {
+  const fecha=document.getElementById('f-fecha-cl').value||fechaISO;
+  const estado=document.getElementById('f-estado-cl').value;
+  const tabla=document.getElementById('cl-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  let q=sb.from('clases').select('*, instructores(nombre), clientes(nombre)').eq('fecha',fecha).order('hora_inicio');
+  if (estado) q=q.eq('estado',estado);
+  const {data}=await q;
+  document.getElementById('cl-ct').textContent=`${data?.length||0} clases`;
+  if (!data?.length) { tabla.innerHTML='<div class="empty">No hay clases</div>'; return; }
+  tabla.innerHTML=data.map(c=>{
+    const eC=c.estado==='completada'?'#0F6E56':c.estado==='asignada'?'#185FA5':'var(--warn)';
+    const eB=c.estado==='completada'?'#E1F5EE':c.estado==='asignada'?'#E6F1FB':'var(--warn-bg)';
+    return `<div class="t-row">
+      <div style="width:70px;flex-shrink:0;font-weight:500;color:var(--navy)">${c.hora_inicio?.slice(0,5)||'—'}</div>
+      <div style="width:55px;flex-shrink:0;color:var(--muted)">${c.duracion_horas}h</div>
+      <div style="flex:1">${c.clientes?.nombre||'—'}</div>
+      <div style="flex:1">${c.instructores?.nombre||'—'}</div>
+      <div style="width:150px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina} · ${c.nivel}</div>
+      <div style="width:100px;text-align:center;flex-shrink:0">${badge(c.estado||'pendiente',eC,eB)}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('f-fecha-cl').addEventListener('change',loadClases);
+document.getElementById('f-estado-cl').addEventListener('change',loadClases);
+
+async function loadInstructores() {
+  const buscar=document.getElementById('f-buscar-inst').value.toLowerCase();
+  const activo=document.getElementById('f-activo-inst').value;
+  const tabla=document.getElementById('inst-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  let q=sb.from('instructores').select('*, instructor_preferencias(*)').order('nombre');
+  if (activo!=='') q=q.eq('activo',activo==='true');
+  const {data}=await q;
+  const filtrados=buscar?data?.filter(i=>i.nombre.toLowerCase().includes(buscar)):data;
+  document.getElementById('inst-ct').textContent=`${filtrados?.length||0} instructores`;
+  if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  tabla.innerHTML=filtrados.map(inst=>{
+    const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
+    return `<div class="t-row">
+      <div style="flex:1;font-weight:500">${inst.nombre}</div>
+      <div style="width:70px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
+      <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted)">${discs}</div>
+      <div style="width:130px;flex-shrink:0;font-size:12px;color:var(--muted)">${inst.telefono||'—'}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0">${badge(inst.activo?'Activo':'Inactivo',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('f-buscar-inst').addEventListener('input',loadInstructores);
+document.getElementById('f-activo-inst').addEventListener('change',loadInstructores);
+
+async function loadClientes() {
+  const buscar=document.getElementById('f-buscar-cli').value.toLowerCase();
+  const tabla=document.getElementById('cli-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  const {data}=await sb.from('clientes').select('*').order('nombre');
+  const filtrados=buscar?data?.filter(c=>c.nombre.toLowerCase().includes(buscar)):data;
+  document.getElementById('cli-ct').textContent=`${filtrados?.length||0} clientes`;
+  if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay clientes</div>'; return; }
+  tabla.innerHTML=filtrados.map(c=>`<div class="t-row">
+    <div style="flex:1;font-weight:500">${c.nombre}</div>
+    <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina||'—'}</div>
+    <div style="width:100px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.nivel_validado||c.nivel_declarado||'—'}</div>
+    <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.telefono||'—'}</div>
+  </div>`).join('');
+}
+document.getElementById('f-buscar-cli').addEventListener('input',loadClientes);
+
+async function loadAsistencia() {
+  const mes=parseInt(document.getElementById('f-mes').value);
+  const anio=parseInt(document.getElementById('f-anio').value);
+  const desde=`${anio}-${String(mes).padStart(2,'0')}-01`, hasta=`${anio}-${String(mes).padStart(2,'0')}-31`;
+  const mn=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('asist-period').textContent=`${anio} — ${mn[mes-1]}`;
+  const tabla=document.getElementById('asist-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
+  const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas, instructor_confirmo').gte('fecha',desde).lte('fecha',hasta);
+  if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  tabla.innerHTML=insts.map(inst=>{
+    const c=(clases||[]).filter(x=>x.instructor_id===inst.id);
+    const pres=c.filter(x=>x.instructor_confirmo).length, total=c.length;
+    const hs=c.reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
+    const pct=total>0?Math.round((pres/total)*100):0;
+    const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
+    const pB=pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
+    return `<div class="t-row">
+      <div style="flex:1;font-weight:500">${inst.nombre}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:#0F6E56">${pres}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:var(--danger)">${total-pres}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0">${total}</div>
+      <div style="width:110px;text-align:center;flex-shrink:0">${hs.toFixed(1)} hs</div>
+      <div style="width:110px;text-align:center;flex-shrink:0">${badge(pct+'%',pC,pB)}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('f-mes').addEventListener('change',loadAsistencia);
+document.getElementById('f-anio').addEventListener('change',loadAsistencia);
+
+async function loadResenas() {
+  const buscar=document.getElementById('f-buscar-res').value.toLowerCase();
+  const punt=document.getElementById('f-punt-res').value;
+  const tabla=document.getElementById('res-tabla');
+  tabla.innerHTML='<div class="empty">Cargando...</div>';
+  const {data}=await sb.from('resenas').select('*, clases(disciplina, nivel, instructores(nombre), clientes(nombre))').order('creado_en',{ascending:false}).limit(100);
+  let filtradas=data||[];
+  if (buscar) filtradas=filtradas.filter(r=>r.clases?.instructores?.nombre?.toLowerCase().includes(buscar)||r.clases?.clientes?.nombre?.toLowerCase().includes(buscar));
+  if (punt==='5') filtradas=filtradas.filter(r=>r.puntaje_clase===5&&r.puntaje_trato===5);
+  if (punt==='4') filtradas=filtradas.filter(r=>Math.round((r.puntaje_clase+r.puntaje_trato)/2)===4);
+  if (punt==='3') filtradas=filtradas.filter(r=>Math.round((r.puntaje_clase+r.puntaje_trato)/2)<=3);
+  document.getElementById('res-ct').textContent=`${filtradas.length} reseñas`;
+  if (!filtradas.length) { tabla.innerHTML='<div class="empty">No hay reseñas</div>'; return; }
+  tabla.innerHTML=filtradas.map(r=>{
+    const prom=((r.puntaje_clase+r.puntaje_trato)/2).toFixed(1);
+    const fecha=new Date(r.creado_en).toLocaleDateString('es-AR',{day:'numeric',month:'long'});
+    const pC=prom>=4?'#0F6E56':prom>=3?'var(--warn)':'var(--danger)';
+    const pB=prom>=4?'#E1F5EE':prom>=3?'var(--warn-bg)':'var(--danger-bg)';
+    return `<div style="padding:14px 18px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px">
+        <div><div style="font-size:13px;font-weight:500">${r.clases?.clientes?.nombre||'—'} → ${r.clases?.instructores?.nombre||'—'}</div><div style="font-size:11px;color:var(--silver);margin-top:2px">${fecha} · ${r.clases?.disciplina||''} ${r.clases?.nivel||''}</div></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-shrink:0"><span style="font-size:11px;color:var(--muted)">Clase <strong>${r.puntaje_clase}/5</strong> · Trato <strong>${r.puntaje_trato}/5</strong></span>${badge(prom,pC,pB)}</div>
+      </div>
+      ${r.comentario?`<div style="font-size:12px;color:var(--muted);font-style:italic">"${r.comentario}"</div>`:''}
+    </div>`;
+  }).join('');
+}
+document.getElementById('f-buscar-res').addEventListener('input',loadResenas);
+document.getElementById('f-punt-res').addEventListener('change',loadResenas);
+
+// Init
+initClasesHoy();
+initInstStats();
+initPresencia();
+initResStat();
+</script>
+</body>
+</html>
