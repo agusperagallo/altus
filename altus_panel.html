@@ -1007,7 +1007,10 @@ document.getElementById('f-buscar-cli').addEventListener('input',loadClientes);
 async function loadAsistencia() {
   const mes=parseInt(document.getElementById('f-mes').value);
   const anio=parseInt(document.getElementById('f-anio').value);
-  const desde=`${anio}-${String(mes).padStart(2,'0')}-01`, hasta=`${anio}-${String(mes).padStart(2,'0')}-31`;
+  const desde=`${anio}-${String(mes).padStart(2,'0')}-01`;
+  // Calcular último día del mes correctamente
+  const ultimoDia = new Date(anio, mes, 0).getDate();
+  const hasta=`${anio}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
   const mn=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   document.getElementById('asist-period').textContent=`${anio} — ${mn[mes-1]}`;
   const tabla=document.getElementById('asist-tabla');
