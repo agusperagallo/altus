@@ -435,6 +435,55 @@
   </div>
 </div>
 
+<!-- MODAL FINALIZAR CLASE -->
+<div class="modal-overlay" id="modal-finalizar">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Finalizar clase</span>
+      <button class="modal-close" onclick="cerrarModal('modal-finalizar')">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Icono check -->
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:56px;height:56px;border-radius:50%;background:#E1F5EE;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy);line-height:1.2">¿Dar la clase<br>por finalizada?</div>
+        <div style="font-size:12px;color:var(--silver);margin-top:6px">Esta acción no se puede deshacer</div>
+      </div>
+
+      <!-- Detalle -->
+      <div style="background:var(--ice2);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:22px">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:38px;height:38px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;word-break:break-word" id="fin-cliente">—</div>
+            <div style="font-size:12px;color:var(--silver)" id="fin-detalle">—</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)" id="fin-hora">—</div>
+            <div style="font-size:11px;color:var(--silver);margin-top:1px" id="fin-dur">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button id="btn-confirmar-fin" style="width:100%;height:48px;border:none;border-radius:10px;background:var(--accent);color:white;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+          Confirmar finalización
+        </button>
+        <button style="width:100%;height:44px;border:1px solid var(--line);border-radius:10px;background:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--muted)" onclick="cerrarModal('modal-finalizar')">Cancelar</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const { createClient } = supabase;
@@ -541,12 +590,17 @@
     lista.innerHTML = '';
 
     clases.forEach((c, i) => {
-      const horaFin = c.hora_fin?.slice(0,5) || '';
       const confirmado = c.instructor_confirmo;
+      const completada = c.estado === 'completada';
+      const horaInicio = c.hora_inicio?.slice(0,5) || '00:00';
+      const [hh, mm] = horaInicio.split(':').map(Number);
+      const claseInicio = new Date(); claseInicio.setHours(hh, mm, 0, 0);
+      const yaEmpezó = new Date() >= claseInicio;
+
       lista.innerHTML += `
         <div class="clase-item">
           <div class="clase-hora-col">
-            <div class="clase-hora">${c.hora_inicio.slice(0,5)}</div>
+            <div class="clase-hora">${horaInicio}</div>
             <div class="clase-dur">${c.duracion_horas} h</div>
           </div>
           <div class="clase-info">
@@ -554,10 +608,14 @@
             <div class="clase-meta">${c.disciplina} · Nivel ${c.nivel} · ${c.clientes?.rango_etario || ''}</div>
           </div>
           <div class="clase-actions">
-            ${confirmado
-              ? `<span class="chip chip-ok"><span class="chip-dot"></span>Confirmada</span>`
+            ${completada
+              ? `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`
+              : confirmado && yaEmpezó
+              ? `<button class="btn-sm" style="color:var(--accent2);border-color:var(--accent);font-weight:500" onclick="abrirModalFinalizar('${c.id}','${c.clientes?.nombre||'—'}','${c.disciplina} · Nivel ${c.nivel}','${horaInicio}','${c.duracion_horas} h', this)">Finalizar</button>`
+              : confirmado
+              ? `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`
               : `<button class="btn-sm" onclick="confirmarClase('${c.id}', this)">Confirmar</button>
-                 <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('${c.clientes?.nombre}','${c.hora_inicio.slice(0,5)}','${c.id}')">Ausencia</button>`
+                 <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('${c.clientes?.nombre}','${horaInicio}','${c.id}')">Ausencia</button>`
             }
           </div>
         </div>`;
@@ -645,18 +703,49 @@
   // --- CONFIRMAR CLASE ---
   window.confirmarClase = async function(claseId, btn) {
     if (claseId && claseId.includes('-')) {
-      // ID real de Supabase
       await sb.from('clases').update({ instructor_confirmo: true }).eq('id', claseId);
     }
     if (btn) {
       btn.textContent = 'Confirmada';
       btn.classList.add('confirmado');
       btn.nextElementSibling && (btn.nextElementSibling.style.display = 'none');
-    } else {
-      const el = document.getElementById(claseId);
-      if (el) { el.textContent = 'Confirmada'; el.classList.add('confirmado'); }
+      const div = btn.parentElement;
+      div.innerHTML = `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`;
     }
     toast('Asistencia confirmada');
+  };
+
+  let claseAFinalizar = null;
+
+  window.abrirModalFinalizar = function(claseId, cliente, detalle, hora, duracion, btn) {
+    claseAFinalizar = { id: claseId, btn };
+    document.getElementById('fin-cliente').textContent = cliente;
+    document.getElementById('fin-detalle').textContent = detalle;
+    document.getElementById('fin-hora').textContent = hora;
+    document.getElementById('fin-dur').textContent = duracion;
+    abrirModal('modal-finalizar');
+  };
+
+  document.getElementById('btn-confirmar-fin').addEventListener('click', async() => {
+    if (!claseAFinalizar) return;
+    const btn = document.getElementById('btn-confirmar-fin');
+    btn.textContent = 'Finalizando...';
+    btn.disabled = true;
+    await sb.from('clases').update({ estado: 'completada' }).eq('id', claseAFinalizar.id);
+    try { await sb.rpc('calcular_ranking'); } catch(e) {}
+    if (claseAFinalizar.btn) {
+      const div = claseAFinalizar.btn.parentElement;
+      div.innerHTML = `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`;
+    }
+    cerrarModal('modal-finalizar');
+    toast('Clase finalizada correctamente');
+    claseAFinalizar = null;
+    btn.textContent = 'Confirmar finalización';
+    btn.disabled = false;
+  });
+
+  window.finalizarClase = async function(claseId, btn) {
+    window.abrirModalFinalizar(claseId, '—', '—', '—', '—', btn);
   };
 
   // --- AUSENCIA ---

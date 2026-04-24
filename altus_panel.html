@@ -279,7 +279,7 @@ input:focus,select:focus{border-color:var(--accent)}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Clases del día</span><span class="panel-meta" id="cl-ct">—</span></div>
-      <div class="t-cols"><div style="width:70px;flex-shrink:0">Hora</div><div style="width:55px;flex-shrink:0">Dur.</div><div style="flex:1">Cliente</div><div style="flex:1">Instructor</div><div style="width:150px;flex-shrink:0">Detalle</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div></div>
+      <div class="t-cols"><div style="width:70px;flex-shrink:0">Hora</div><div style="width:55px;flex-shrink:0">Dur.</div><div style="flex:1">Cliente</div><div style="flex:1">Instructor</div><div style="width:150px;flex-shrink:0">Detalle</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div><div style="width:100px;text-align:center;flex-shrink:0">Acción</div></div>
       <div id="cl-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -457,6 +457,70 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 </div>
 
+<!-- MODAL MI PERFIL -->
+<div class="modal-overlay" id="modal-perfil">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><span class="modal-title">Mi perfil</span><button class="modal-close" id="mp2-close">&times;</button></div>
+    <div class="modal-body">
+
+      <!-- Datos personales -->
+      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Datos personales</div>
+      <div class="form-grid" style="margin-bottom:20px">
+        <div class="fg full">
+          <label>Email</label>
+          <input type="email" id="mp2-email" placeholder="correo@ejemplo.com" readonly style="background:var(--ice);color:var(--muted)">
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin-bottom:20px">
+
+      <!-- Cambiar contraseña -->
+      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Cambiar contraseña</div>
+      <div class="form-grid" style="margin-bottom:8px">
+        <div class="fg full">
+          <label>Nueva contraseña</label>
+          <input type="password" id="mp2-pass1" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="fg full">
+          <label>Confirmar contraseña</label>
+          <input type="password" id="mp2-pass2" placeholder="Repetir contraseña">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--silver);margin-bottom:20px">Dejá los campos vacíos si no querés cambiar la contraseña.</div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" id="mp2-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="mp2-save">Guardar cambios</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FINALIZAR CLASE -->
+<div class="modal-overlay" id="modal-finalizar">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><span class="modal-title">Finalizar clase</span><button class="modal-close" id="mf-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:52px;height:52px;border-radius:50%;background:#E1F5EE;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+        </div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--navy)">¿Dar la clase por finalizada?</div>
+        <div style="font-size:12px;color:var(--silver);margin-top:4px">Esta acción no se puede deshacer</div>
+      </div>
+      <div style="background:var(--ice);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:20px" id="mf-info"></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" id="mf-cancel">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2;display:flex;align-items:center;justify-content:center;gap:8px" id="mf-confirm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+          Confirmar finalización
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const { createClient } = supabase;
@@ -486,7 +550,28 @@ document.getElementById('pm-logout').addEventListener('click', async() => {
 });
 document.getElementById('pm-perfil').addEventListener('click', () => {
   document.getElementById('profile-menu').classList.remove('open');
-  toast('Configuración de perfil próximamente');
+  const email = localStorage.getItem('altus_email')||'';
+  document.getElementById('mp2-email').value = email;
+  document.getElementById('mp2-pass1').value = '';
+  document.getElementById('mp2-pass2').value = '';
+  openModal('modal-perfil');
+});
+
+document.getElementById('mp2-close').addEventListener('click', ()=>closeModal('modal-perfil'));
+document.getElementById('mp2-cancel').addEventListener('click', ()=>closeModal('modal-perfil'));
+document.getElementById('mp2-save').addEventListener('click', async() => {
+  const pass1 = document.getElementById('mp2-pass1').value;
+  const pass2 = document.getElementById('mp2-pass2').value;
+
+  if (pass1 || pass2) {
+    if (pass1.length < 6) { toast('La contraseña debe tener al menos 6 caracteres','err'); return; }
+    if (pass1 !== pass2) { toast('Las contraseñas no coinciden','err'); return; }
+    const {error} = await sb.auth.updateUser({ password: pass1 });
+    if (error) { toast('Error al cambiar la contraseña','err'); return; }
+  }
+
+  closeModal('modal-perfil');
+  toast('Perfil actualizado correctamente');
 });
 
 // Init
@@ -854,6 +939,11 @@ async function loadClases() {
   tabla.innerHTML=data.map(c=>{
     const eC=c.estado==='completada'?'#0F6E56':c.estado==='asignada'?'#185FA5':'var(--warn)';
     const eB=c.estado==='completada'?'#E1F5EE':c.estado==='asignada'?'#E6F1FB':'var(--warn-bg)';
+    const accion = c.estado==='asignada'
+      ? `<button class="inst-action-btn" onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')">Finalizar</button>`
+      : c.estado==='completada'
+      ? `<span style="font-size:11px;color:var(--silver)">Completada</span>`
+      : '—';
     return `<div class="t-row">
       <div style="width:70px;flex-shrink:0;font-weight:500;color:var(--navy)">${c.hora_inicio?.slice(0,5)||'—'}</div>
       <div style="width:55px;flex-shrink:0;color:var(--muted)">${c.duracion_horas}h</div>
@@ -861,6 +951,7 @@ async function loadClases() {
       <div style="flex:1">${c.instructores?.nombre||'—'}</div>
       <div style="width:150px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina} · ${c.nivel}</div>
       <div style="width:100px;text-align:center;flex-shrink:0">${badge(c.estado||'pendiente',eC,eB)}</div>
+      <div style="width:100px;text-align:center;flex-shrink:0">${accion}</div>
     </div>`;
   }).join('');
 }
@@ -973,6 +1064,38 @@ async function loadResenas() {
 }
 document.getElementById('f-buscar-res').addEventListener('input',loadResenas);
 document.getElementById('f-punt-res').addEventListener('change',loadResenas);
+
+// Finalizar clase — modal
+let claseAdminFinalizar = null;
+
+document.getElementById('mf-close').addEventListener('click',()=>closeModal('modal-finalizar'));
+document.getElementById('mf-cancel').addEventListener('click',()=>closeModal('modal-finalizar'));
+document.getElementById('mf-confirm').addEventListener('click', async()=>{
+  if (!claseAdminFinalizar) return;
+  const btn = document.getElementById('mf-confirm');
+  btn.textContent = 'Finalizando...'; btn.disabled = true;
+  await finalizarClase(claseAdminFinalizar);
+  closeModal('modal-finalizar');
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg> Confirmar finalización';
+  btn.disabled = false;
+  claseAdminFinalizar = null;
+});
+
+function abrirFinalizarAdmin(claseId, instructor, cliente, hora, detalle) {
+  claseAdminFinalizar = claseId;
+  document.getElementById('mf-info').innerHTML = `
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px">${cliente}</div>
+    <div style="font-size:12px;color:var(--muted)">${instructor} · ${hora} hs · ${detalle}</div>`;
+  openModal('modal-finalizar');
+}
+
+async function finalizarClase(claseId) {
+  const {error} = await sb.from('clases').update({estado:'completada'}).eq('id',claseId);
+  if (error) { toast('Error al finalizar','err'); return; }
+  try { await sb.rpc('calcular_ranking'); } catch(e) {}
+  toast('Clase finalizada — ranking actualizado');
+  loadClases(); initClasesHoy();
+}
 
 // Init
 initClasesHoy();
