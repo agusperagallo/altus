@@ -414,27 +414,93 @@ input:focus,select:focus{border-color:var(--accent)}
         <button class="paso-tab active" data-paso="1">1. Datos</button>
         <button class="paso-tab" data-paso="2">2. Perfil</button>
         <button class="paso-tab" data-paso="3">3. Preferencias</button>
+        <button class="paso-tab" data-paso="4">4. Confirmar</button>
       </div>
+
+      <!-- PASO 1 — DATOS -->
       <div id="inst-p1">
         <div class="form-grid">
           <div class="fg"><label>Nombre</label><input type="text" id="ni-nom" placeholder="Nombre completo"></div>
           <div class="fg"><label>Teléfono</label><input type="text" id="ni-tel" placeholder="+54 9 ..."></div>
-          <div class="fg full"><label>Email</label><input type="email" id="ni-email" placeholder="correo@ejemplo.com"></div>
+          <div class="fg full"><label>Email (para el login)</label><input type="email" id="ni-email" placeholder="correo@ejemplo.com"></div>
+          <div class="fg full">
+            <label>Contraseña de acceso</label>
+            <input type="password" id="ni-pass" placeholder="Mínimo 6 caracteres">
+            <div style="font-size:11px;color:var(--silver);margin-top:4px">El instructor usará esta contraseña para ingresar a su panel</div>
+          </div>
           <div class="fg"><label>Fecha de ingreso</label><input type="date" id="ni-fecha"></div>
         </div>
         <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="p1-next">Siguiente</button></div>
       </div>
+
+      <!-- PASO 2 — PERFIL -->
       <div id="inst-p2" style="display:none">
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc"><button class="nivel-btn" data-niv="1">1</button><button class="nivel-btn" data-niv="2">2</button><button class="nivel-btn" data-niv="3">3</button><button class="nivel-btn" data-niv="4">4</button><button class="nivel-btn" data-niv="5">5</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Freestyle">Freestyle</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
         <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p2-back">Atrás</button><button class="btn btn-primary" id="p2-next">Siguiente</button></div>
       </div>
+
+      <!-- PASO 3 — PREFERENCIAS -->
       <div id="inst-p3" style="display:none">
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Rangos etarios</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-rang"><button class="tag-btn" data-val="ninos">Niños (4-12)</button><button class="tag-btn" data-val="adolescentes">Adolescentes (13-17)</button><button class="tag-btn" data-val="adultos">Adultos (18-60)</button><button class="tag-btn" data-val="mayores">Adultos mayores (60+)</button></div></div>
-        <div style="background:var(--ice);border-radius:6px;padding:14px;margin-bottom:16px" id="ni-resumen"></div>
-        <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p3-back">Atrás</button><button class="btn btn-primary" id="ni-save">Guardar instructor</button></div>
+        <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p3-back">Atrás</button><button class="btn btn-primary" id="p3-next">Ver confirmación</button></div>
       </div>
+
+      <!-- PASO 4 — CONFIRMACION -->
+      <div id="inst-p4" style="display:none">
+        <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Vista previa — revisá antes de guardar</div>
+
+        <!-- Resumen visual -->
+        <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <!-- Header -->
+          <div style="background:var(--navy);padding:16px 18px;display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:#fff;font-weight:600;flex-shrink:0" id="ni-conf-avatar">—</div>
+            <div>
+              <div style="font-size:15px;font-weight:500;color:#fff" id="ni-conf-nombre">—</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.5)" id="ni-conf-email">—</div>
+            </div>
+            <div style="margin-left:auto;text-align:right">
+              <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:2px">NIVEL CERT.</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:#fff" id="ni-conf-nivel">—</div>
+            </div>
+          </div>
+          <!-- Detalles -->
+          <div style="padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Disciplinas</div>
+              <div style="font-size:13px;color:var(--text)" id="ni-conf-disc">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Niveles</div>
+              <div style="font-size:13px;color:var(--text)" id="ni-conf-niveles">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Rangos etarios</div>
+              <div style="font-size:13px;color:var(--text)" id="ni-conf-rangos">—</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Teléfono</div>
+              <div style="font-size:13px;color:var(--text)" id="ni-conf-tel">—</div>
+            </div>
+          </div>
+          <!-- Acceso -->
+          <div style="padding:12px 18px;border-top:1px solid var(--line);background:var(--ice);display:flex;align-items:center;gap:8px">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--accent2)" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+            <span style="font-size:12px;color:var(--muted)">Acceso al panel con </span>
+            <span style="font-size:12px;font-weight:500;color:var(--text)" id="ni-conf-acceso">—</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" id="p4-back">Atrás</button>
+          <button class="btn btn-primary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px" id="ni-save">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+            Confirmar y guardar
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -883,42 +949,115 @@ function applyCorr(st) {
 // Nuevo instructor
 document.getElementById('mi-close').addEventListener('click',()=>closeModal('modal-inst'));
 function irPaso(n) {
-  [1,2,3].forEach(i=>{
+  [1,2,3,4].forEach(i=>{
     document.getElementById(`inst-p${i}`).style.display=i===n?'block':'none';
     document.querySelector(`.paso-tab[data-paso="${i}"]`)?.classList.toggle('active',i===n);
   });
 }
-document.getElementById('p1-next').addEventListener('click',()=>irPaso(2));
+document.getElementById('p1-next').addEventListener('click',()=>{
+  const nom=document.getElementById('ni-nom').value.trim();
+  const email=document.getElementById('ni-email').value.trim();
+  const pass=document.getElementById('ni-pass').value;
+  if (!nom) { toast('Ingresá el nombre','err'); return; }
+  if (!email) { toast('Ingresá el email','err'); return; }
+  if (!pass || pass.length<6) { toast('La contraseña debe tener al menos 6 caracteres','err'); return; }
+  irPaso(2);
+});
 document.getElementById('p2-back').addEventListener('click',()=>irPaso(1));
 document.getElementById('p3-back').addEventListener('click',()=>irPaso(2));
-document.getElementById('p2-next').addEventListener('click',()=>{ updateResumen(); irPaso(3); });
+document.getElementById('p2-next').addEventListener('click',()=>irPaso(3));
+document.getElementById('p3-next').addEventListener('click',()=>{ mostrarConfirmacion(); irPaso(4); });
+document.getElementById('p4-back').addEventListener('click',()=>irPaso(3));
 document.querySelectorAll('#ni-nc .nivel-btn').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('#ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); nivelCert=btn.dataset.niv;
 }));
 ['ni-disc','ni-niv','ni-rang'].forEach(id=>document.querySelectorAll(`#${id} .tag-btn`).forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active'))));
-function updateResumen() {
-  const nom=document.getElementById('ni-nom').value||'—';
-  const discs=[...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
-  const niv=[...document.querySelectorAll('#ni-niv .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
-  const rang=[...document.querySelectorAll('#ni-rang .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
-  document.getElementById('ni-resumen').innerHTML=`<div style="font-size:13px;font-weight:500;margin-bottom:5px">${nom}</div><div style="font-size:12px;color:var(--muted)">Nivel: ${nivelCert||'—'} · Disciplinas: ${discs}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Rangos: ${rang}</div>`;
+function mostrarConfirmacion() {
+  const nom   = document.getElementById('ni-nom').value.trim();
+  const email = document.getElementById('ni-email').value.trim();
+  const tel   = document.getElementById('ni-tel').value.trim();
+  const discs = [...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  const nivs  = [...document.querySelectorAll('#ni-niv .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  const rangs = [...document.querySelectorAll('#ni-rang .tag-btn.active')].map(b=>b.dataset.val).join(', ')||'—';
+  const ini   = nom.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+  document.getElementById('ni-conf-avatar').textContent  = ini;
+  document.getElementById('ni-conf-nombre').textContent  = nom;
+  document.getElementById('ni-conf-email').textContent   = email;
+  document.getElementById('ni-conf-nivel').textContent   = nivelCert||'—';
+  document.getElementById('ni-conf-disc').textContent    = discs;
+  document.getElementById('ni-conf-niveles').textContent = nivs;
+  document.getElementById('ni-conf-rangos').textContent  = rangs;
+  document.getElementById('ni-conf-tel').textContent     = tel||'—';
+  document.getElementById('ni-conf-acceso').textContent  = email;
 }
+
 document.getElementById('ni-save').addEventListener('click', async()=>{
-  const nom=document.getElementById('ni-nom').value.trim();
-  if (!nom||!nivelCert) { toast('Completá nombre y nivel','err'); return; }
-  const {data:inst,error}=await sb.from('instructores').insert({nombre:nom,email:document.getElementById('ni-email').value,telefono:document.getElementById('ni-tel').value,nivel_certificado:parseInt(nivelCert),fecha_ingreso:document.getElementById('ni-fecha').value,activo:true}).select('id').single();
-  if (error) { toast('Error al guardar','err'); return; }
+  const nom   = document.getElementById('ni-nom').value.trim();
+  const email = document.getElementById('ni-email').value.trim();
+  const pass  = document.getElementById('ni-pass').value;
+  if (!nom||!nivelCert) { toast('Faltan datos obligatorios','err'); return; }
+
+  const btn = document.getElementById('ni-save');
+  btn.disabled=true; btn.querySelector('span')||btn;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Guardando...';
+
+  // 1. Crear cuenta en Supabase Auth
+  const {data:authData, error:authError} = await sb.auth.admin
+    ? await sb.auth.admin.createUser({email, password:pass, email_confirm:true})
+    : {data:null, error:{message:'No admin access'}};
+
+  // Si no tenemos acceso admin, usamos signUp normal
+  let userId = authData?.user?.id;
+  if (authError || !userId) {
+    const {data:signUpData, error:signUpError} = await sb.auth.signUp({email, password:pass});
+    if (signUpError) {
+      toast('Error al crear la cuenta: '+signUpError.message,'err');
+      btn.disabled=false; btn.innerHTML=originalText; return;
+    }
+    userId = signUpData?.user?.id;
+  }
+
+  // 2. Crear perfil en instructores
+  const {data:inst, error:instError} = await sb.from('instructores').insert({
+    nombre:nom, email, telefono:document.getElementById('ni-tel').value,
+    nivel_certificado:parseInt(nivelCert),
+    fecha_ingreso:document.getElementById('ni-fecha').value,
+    activo:true
+  }).select('id').single();
+
+  if (instError) {
+    toast('Error al guardar el perfil','err');
+    btn.disabled=false; btn.innerHTML=originalText; return;
+  }
+
+  // 3. Crear preferencias
   const discs=[...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val);
   const nivs=[...document.querySelectorAll('#ni-niv .tag-btn.active')].map(b=>b.dataset.val);
   const rangs=[...document.querySelectorAll('#ni-rang .tag-btn.active')].map(b=>b.dataset.val);
   const prefs=[];
   discs.forEach(d=>rangs.forEach(r=>prefs.push({instructor_id:inst.id,disciplina:d,nivel_min:1,nivel_max:parseInt(nivelCert),rango_etario:r})));
   if (prefs.length) await sb.from('instructor_preferencias').insert(prefs);
+
+  // 4. Vincular usuario con instructor en tabla usuarios
+  if (userId) {
+    await sb.from('usuarios').insert({id:userId, email, rol:'instructor', instructor_id:inst.id});
+  }
+
+  // 5. Puntaje base
   const {data:snaps}=await sb.from('ranking_snapshot').select('puntaje_total');
   const prom=snaps?.length?snaps.reduce((s,r)=>s+(r.puntaje_total||0),0)/snaps.length:5;
   await sb.from('ranking_snapshot').insert({instructor_id:inst.id,puntaje_opinion:prom,puntaje_asistencia:prom,puntaje_fidelizacion:prom,puntaje_historico:prom,puntaje_perfil:prom,puntaje_total:prom});
-  closeModal('modal-inst'); irPaso(1); toast(`${nom} agregado`);
+
+  closeModal('modal-inst');
+  irPaso(1);
+  // Reset tags
+  document.querySelectorAll('#ni-disc .tag-btn, #ni-niv .tag-btn, #ni-rang .tag-btn, #ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
+  nivelCert=null;
+  btn.disabled=false; btn.innerHTML=originalText;
+  toast(`${nom} agregado al sistema`);
   initInstStats();
 });
 
