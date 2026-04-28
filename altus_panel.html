@@ -753,7 +753,10 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
   if (!insts?.length) { lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">No hay instructores</div>'; return; }
   let filtrados=insts.filter(i=>{
     if (!disc) return true;
-    return (i.instructor_preferencias||[]).some(p=>p.disciplina===disc);
+    return (i.instructor_preferencias||[]).some(p=>
+      p.disciplina?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') ===
+      disc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    );
   });
   filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
   lista.innerHTML=filtrados.map((inst,i)=>{
@@ -971,10 +974,11 @@ async function loadRanking() {
   tabla.innerHTML='<div class="empty">Cargando...</div>';
   const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
   if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   let filtrados=insts.filter(i=>{
     const p=i.instructor_preferencias||[];
     if (!disc&&!niv) return true;
-    return p.some(x=>(!disc||x.disciplina===disc)&&(!niv||x.nivel_max===niv));
+    return p.some(x=>(!disc||norm(x.disciplina)===norm(disc))&&(!niv||norm(x.nivel_max)===norm(niv)));
   });
   filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
   document.getElementById('rk-ct').textContent=`${filtrados.length} instructores`;
