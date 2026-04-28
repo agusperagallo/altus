@@ -233,49 +233,9 @@
   <div class="panel" id="panel-clases">
     <div class="panel-header">
       <span class="panel-title">Mis clases de hoy</span>
-      <span class="panel-meta">3 clases</span>
+      <span class="panel-meta" id="panel-clases-meta">—</span>
     </div>
-    <div class="clase-item">
-      <div class="clase-hora-col">
-        <div class="clase-hora">09:00</div>
-        <div class="clase-dur">1 h</div>
-      </div>
-      <div class="clase-info">
-        <div class="clase-cliente">Ana Castillo</div>
-        <div class="clase-meta">Esquí &middot; Nivel 2 &middot; Adultos</div>
-      </div>
-      <div class="clase-actions">
-        <span class="chip chip-ok"><span class="chip-dot"></span>Confirmada</span>
-      </div>
-    </div>
-    <div class="clase-item">
-      <div class="clase-hora-col">
-        <div class="clase-hora">11:00</div>
-        <div class="clase-dur">1.5 h</div>
-      </div>
-      <div class="clase-info">
-        <div class="clase-cliente">Roberto Díaz</div>
-        <div class="clase-meta">Esquí &middot; Nivel 3 &middot; Adultos</div>
-      </div>
-      <div class="clase-actions">
-        <button class="btn-sm" id="btn-c2" onclick="confirmarClase('btn-c2')">Confirmar</button>
-        <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('Roberto Díaz','11:00')">Ausencia</button>
-      </div>
-    </div>
-    <div class="clase-item">
-      <div class="clase-hora-col">
-        <div class="clase-hora">14:00</div>
-        <div class="clase-dur">1 h</div>
-      </div>
-      <div class="clase-info">
-        <div class="clase-cliente">Familia Torres</div>
-        <div class="clase-meta">Esquí &middot; Nivel 1 &middot; Niños</div>
-      </div>
-      <div class="clase-actions">
-        <button class="btn-sm" id="btn-c3" onclick="confirmarClase('btn-c3')">Confirmar</button>
-        <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('Familia Torres','14:00')">Ausencia</button>
-      </div>
-    </div>
+    <div id="lista-clases"></div>
   </div>
 
   <!-- PUNTAJE -->
@@ -698,11 +658,11 @@
 
     if (!clases?.length) {
       lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">No tenés clases asignadas hoy</div>';
-      document.querySelector('.panel-meta') && (document.querySelector('.panel-meta').textContent = '0 clases');
+      document.getElementById('panel-clases-meta') && (document.getElementById('panel-clases-meta').textContent = '0 clases');
       return;
     }
 
-    document.querySelector('.panel-meta') && (document.querySelector('.panel-meta').textContent = `${total} clase${total !== 1 ? 's' : ''}`);
+    document.getElementById('panel-clases-meta') && (document.getElementById('panel-clases-meta').textContent = `${total} clase${total !== 1 ? 's' : ''}`);
 
     clases.forEach((c, i) => {
       const confirmado = c.instructor_confirmo;
