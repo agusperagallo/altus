@@ -196,6 +196,10 @@ input:focus,select:focus{border-color:var(--accent)}
             <div class="profile-menu-name" id="pm-nombre">Administrador</div>
             <div class="profile-menu-email" id="pm-email">—</div>
           </div>
+          <button class="profile-menu-item" id="pm-temporada">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
+            Gestión de temporada
+          </button>
           <button class="profile-menu-item" id="pm-perfil">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
             Mi perfil
@@ -633,6 +637,68 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 </div>
 
+<!-- MODAL TEMPORADAS -->
+<div class="modal-overlay" id="modal-temporada">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <span class="modal-title">Gestión de temporada</span>
+      <button class="modal-close" id="mt-close">&times;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Temporada activa -->
+      <div style="background:var(--ice);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:20px">
+        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Temporada activa</div>
+        <div style="font-size:16px;font-weight:500;color:var(--navy)" id="mt-nombre-activa">Cargando...</div>
+        <div style="font-size:12px;color:var(--silver);margin-top:3px" id="mt-fecha-activa">—</div>
+      </div>
+
+      <!-- Cerrar temporada -->
+      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:20px">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--line);background:#FAFAFA">
+          <div style="font-size:13px;font-weight:500;color:var(--navy);margin-bottom:3px">Cerrar temporada actual</div>
+          <div style="font-size:12px;color:var(--silver)">El ranking se archiva y se abre una nueva temporada</div>
+        </div>
+        <div style="padding:16px">
+          <div class="fg" style="margin-bottom:14px">
+            <label>Nombre de la nueva temporada</label>
+            <input type="text" id="mt-nueva-nombre" placeholder="Ej: Temporada 2027" style="margin-top:5px">
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="display:block;margin-bottom:8px;font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">¿Qué hacemos con los puntajes?</label>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--line);border-radius:8px;transition:border-color .15s" id="opt-reinicio-label">
+                <input type="radio" name="mt-opcion" value="reinicio" id="mt-reinicio" style="height:auto;width:auto;margin-top:2px;flex-shrink:0">
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--text)">Reinicio total</div>
+                  <div style="font-size:12px;color:var(--silver);margin-top:2px">Todos arrancan desde cero con fase de calibración de 15 clases. El puntaje base será el promedio de la temporada que cierra.</div>
+                </div>
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--line);border-radius:8px;transition:border-color .15s" id="opt-continuar-label">
+                <input type="radio" name="mt-opcion" value="continuar" id="mt-continuar" style="height:auto;width:auto;margin-top:2px;flex-shrink:0">
+                <div>
+                  <div style="font-size:13px;font-weight:500;color:var(--text)">Continuar con puntajes</div>
+                  <div style="font-size:12px;color:var(--silver);margin-top:2px">Los puntajes actuales se mantienen como punto de partida. No hay fase de calibración.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <button style="width:100%;height:42px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer" id="mt-cerrar-btn">Cerrar temporada y abrir nueva</button>
+        </div>
+      </div>
+
+      <!-- Historial -->
+      <div>
+        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:500">Temporadas anteriores</div>
+        <div id="mt-historial">
+          <div style="font-size:13px;color:var(--silver);text-align:center;padding:16px">Cargando...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const { createClient } = supabase;
@@ -650,7 +716,139 @@ sb.auth.getSession().then(({data}) => {
   document.getElementById('pm-nombre').textContent = rol==='admin'?'Administrador':'Supervisor';
 });
 
-// Profile menu toggle
+// Gestión de temporadas
+document.getElementById('pm-temporada').addEventListener('click', async() => {
+  document.getElementById('profile-menu').classList.remove('open');
+  openModal('modal-temporada');
+  await cargarTemporadas();
+});
+
+document.getElementById('mt-close').addEventListener('click', () => closeModal('modal-temporada'));
+
+// Highlight opción seleccionada
+['mt-reinicio','mt-continuar'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    document.getElementById('opt-reinicio-label').style.borderColor = document.getElementById('mt-reinicio').checked ? 'var(--accent)' : 'var(--line)';
+    document.getElementById('opt-continuar-label').style.borderColor = document.getElementById('mt-continuar').checked ? 'var(--accent)' : 'var(--line)';
+  });
+});
+
+async function cargarTemporadas() {
+  const { data } = await sb.from('temporadas').select('*').order('creado_en', { ascending: false });
+  if (!data?.length) return;
+
+  const activa = data.find(t => t.activa);
+  const anteriores = data.filter(t => !t.activa);
+
+  if (activa) {
+    document.getElementById('mt-nombre-activa').textContent = activa.nombre;
+    const inicio = new Date(activa.fecha_inicio).toLocaleDateString('es-AR', { day:'numeric', month:'long', year:'numeric' });
+    document.getElementById('mt-fecha-activa').textContent = `Desde el ${inicio}`;
+    // Sugerir nombre siguiente temporada
+    const añoActual = new Date().getFullYear();
+    document.getElementById('mt-nueva-nombre').value = `Temporada ${añoActual + 1}`;
+  }
+
+  const histEl = document.getElementById('mt-historial');
+  if (!anteriores.length) {
+    histEl.innerHTML = '<div style="font-size:13px;color:var(--silver);text-align:center;padding:12px">No hay temporadas anteriores</div>';
+    return;
+  }
+  histEl.innerHTML = anteriores.map(t => {
+    const inicio = new Date(t.fecha_inicio).toLocaleDateString('es-AR', { day:'numeric', month:'long', year:'numeric' });
+    const cierre = t.fecha_cierre ? new Date(t.fecha_cierre).toLocaleDateString('es-AR', { day:'numeric', month:'long', year:'numeric' }) : '—';
+    const tipo = t.reinicio_total ? 'Reinicio total' : 'Puntajes continuados';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--ice)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">${t.nombre}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:2px">${inicio} → ${cierre} · ${tipo}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('mt-cerrar-btn').addEventListener('click', async() => {
+  const nuevaNombre = document.getElementById('mt-nueva-nombre').value.trim();
+  const reinicio = document.getElementById('mt-reinicio').checked;
+  const continuar = document.getElementById('mt-continuar').checked;
+
+  if (!nuevaNombre) { toast('Ingresá el nombre de la nueva temporada','err'); return; }
+  if (!reinicio && !continuar) { toast('Seleccioná qué hacer con los puntajes','err'); return; }
+
+  if (!confirm(`¿Cerrar la temporada actual y abrir "${nuevaNombre}"? Esta acción no se puede deshacer.`)) return;
+
+  const btn = document.getElementById('mt-cerrar-btn');
+  btn.textContent = 'Procesando...'; btn.disabled = true;
+
+  // 1. Obtener temporada activa
+  const { data: activa } = await sb.from('temporadas').select('id').eq('activa', true).single();
+
+  // 2. Archivar ranking actual en ranking_historico
+  const { data: snapshots } = await sb.from('ranking_snapshot').select('*');
+  if (snapshots?.length) {
+    const historico = snapshots.map((s, i) => ({
+      temporada_id: activa.id,
+      instructor_id: s.instructor_id,
+      puntaje_opinion: s.puntaje_opinion,
+      puntaje_asistencia: s.puntaje_asistencia,
+      puntaje_fidelizacion: s.puntaje_fidelizacion,
+      puntaje_historico: s.puntaje_historico,
+      puntaje_perfil: s.puntaje_perfil,
+      puntaje_total: s.puntaje_total,
+      posicion: i + 1
+    }));
+    await sb.from('ranking_historico').insert(historico);
+  }
+
+  // 3. Cerrar temporada activa
+  await sb.from('temporadas').update({ activa: false, fecha_cierre: new Date().toISOString().split('T')[0] }).eq('activa', true);
+
+  // 4. Si reinicio total: calcular promedio y resetear
+  if (reinicio) {
+    const promedio = snapshots?.length
+      ? snapshots.reduce((s, r) => s + (r.puntaje_total || 0), 0) / snapshots.length
+      : 5.0;
+    await sb.from('ranking_snapshot').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    // Insertar puntaje base para todos los instructores activos
+    const { data: insts } = await sb.from('instructores').select('id').eq('activo', true);
+    if (insts?.length) {
+      await sb.from('ranking_snapshot').insert(insts.map(i => ({
+        instructor_id: i.id,
+        puntaje_opinion: promedio, puntaje_asistencia: promedio,
+        puntaje_fidelizacion: promedio, puntaje_historico: promedio,
+        puntaje_perfil: promedio, puntaje_total: promedio
+      })));
+    }
+  }
+
+  // 5. Abrir nueva temporada
+  await sb.from('temporadas').insert({
+    nombre: nuevaNombre,
+    fecha_inicio: new Date().toISOString().split('T')[0],
+    activa: true,
+    reinicio_total: reinicio
+  });
+
+  closeModal('modal-temporada');
+  toast(`Temporada cerrada. Bienvenido a ${nuevaNombre}`);
+  btn.textContent = 'Cerrar temporada y abrir nueva'; btn.disabled = false;
+
+  // Actualizar stat de período
+  location.reload();
+});
+// Cargar nombre temporada activa en el stat card
+sb.from('temporadas').select('nombre,reinicio_total').eq('activa',true).single().then(({data}) => {
+  if (!data) return;
+  const statVals = document.querySelectorAll('.stat-val');
+  statVals.forEach(el => {
+    if (el.style.fontSize === '18px' || el.textContent === 'Calibración') {
+      el.textContent = data.nombre;
+      const sub = el.nextElementSibling;
+      if (sub) sub.textContent = data.reinicio_total === false ? 'Puntajes continuados' : 'Ranking en formación';
+    }
+  });
+});
+
 document.getElementById('user-avatar').addEventListener('click', e => {
   e.stopPropagation();
   document.getElementById('profile-menu').classList.toggle('open');
