@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Valorá tu clase — Cerro Bayo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;min-height:100vh}
+:root{
+  --navy:#1A1F2E;--accent:#1D9E75;--accent2:#0F6E56;
+  --ice:#F0F2F5;--line:#E0E4EA;--silver:#8090A8;
+  --white:#FFFFFF;--text:#1A1F2E;--muted:#4A5568;
+  --danger:#E24B4A;--danger-bg:#FEE2E2;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:14px;width:100%;max-width:480px;overflow:hidden;animation:fadeUp .3s ease}
+.card-header{background:var(--navy);padding:24px}
+.brand{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#fff;letter-spacing:.12em;margin-bottom:14px}
+.clase-info{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:12px 14px}
+.clase-instructor{font-size:15px;font-weight:500;color:#fff;margin-bottom:3px}
+.clase-detalle{font-size:12px;color:rgba(255,255,255,.5)}
+.lang-toggle{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:16px 20px 0;width:fit-content}
+.lang-btn{padding:6px 16px;font-size:12px;font-weight:500;color:var(--muted);background:#fff;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.lang-btn.active{background:var(--navy);color:#fff}
+.card-body{padding:22px}
+.pregunta{margin-bottom:24px}
+.pregunta-label{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px;line-height:1.4}
+.pregunta-sub{font-size:12px;color:var(--silver);margin-bottom:12px;line-height:1.4}
+.nums{display:flex;gap:6px}
+.num{flex:1;height:46px;border:1.5px solid var(--line);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:500;color:var(--muted);transition:all .15s;font-family:'Cormorant Garamond',serif}
+.num:hover{border-color:var(--accent);color:var(--accent)}
+.num.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.escala{display:flex;justify-content:space-between;margin-top:5px}
+.escala span{font-size:10px;color:var(--silver)}
+textarea{width:100%;min-height:88px;border:1.5px solid var(--line);border-radius:8px;padding:11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;outline:none;transition:border-color .15s;margin-top:9px}
+textarea:focus{border-color:var(--accent)}
+.divider{border:none;border-top:1px solid var(--line);margin:4px 0 22px}
+.btn-enviar{width:100%;height:50px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-enviar:hover{background:var(--accent2)}
+.btn-enviar:disabled{background:var(--line);color:var(--silver);cursor:default}
+.error-msg{background:var(--danger-bg);color:var(--danger);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none}
+.screen{display:none;text-align:center;padding:48px 24px}
+.screen-icon{width:72px;height:72px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+.screen-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--navy);margin-bottom:8px}
+.screen-sub{font-size:14px;color:var(--silver);line-height:1.6}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;gap:14px}
+.spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="card" id="main-card">
+
+  <!-- LOADING -->
+  <div class="loading" id="screen-loading">
+    <div class="spinner"></div>
+    <div style="font-size:13px;color:var(--silver)">Cargando...</div>
+  </div>
+
+  <!-- EXITO -->
+  <div class="screen" id="screen-exito">
+    <div class="screen-icon" style="background:#E1F5EE">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+    </div>
+    <div class="screen-title">¡Gracias!</div>
+    <div class="screen-sub">Tu valoración nos ayuda a mejorar la experiencia en Cerro Bayo.<br><br><em>Thank you! Your feedback helps us improve the experience at Cerro Bayo.</em></div>
+  </div>
+
+  <!-- YA ENVIADA -->
+  <div class="screen" id="screen-ya-enviada">
+    <div class="screen-icon" style="background:#E6F1FB">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    </div>
+    <div class="screen-title">Ya enviaste tu reseña</div>
+    <div class="screen-sub">Ya registramos tu opinión para esta clase. ¡Gracias!<br><br><em>You already submitted your review for this class. Thank you!</em></div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="screen" id="screen-error">
+    <div class="screen-icon" style="background:var(--danger-bg)">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    </div>
+    <div class="screen-title">Link inválido</div>
+    <div class="screen-sub">Este link no corresponde a ninguna clase. Pedile uno nuevo al instructor.<br><br><em>This link is not valid. Please ask your instructor for a new one.</em></div>
+  </div>
+
+  <!-- FORMULARIO -->
+  <div id="screen-form" style="display:none">
+    <div class="card-header">
+      <div class="brand">ALTUS</div>
+      <div class="clase-info">
+        <div class="clase-instructor" id="info-instructor">—</div>
+        <div class="clase-detalle" id="info-detalle">—</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;padding:12px 20px 0">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="setLang('es')">ES</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="error-msg" id="error-msg"></div>
+
+      <div class="pregunta">
+        <div class="pregunta-label" id="lbl-p1">¿Cómo calificás la clase en general?</div>
+        <div class="pregunta-sub" id="lbl-p1-sub">Considerá el contenido, ritmo y organización</div>
+        <div class="nums" id="nums-clase">
+          <div class="num" onclick="setVal('clase',1)">1</div>
+          <div class="num" onclick="setVal('clase',2)">2</div>
+          <div class="num" onclick="setVal('clase',3)">3</div>
+          <div class="num" onclick="setVal('clase',4)">4</div>
+          <div class="num" onclick="setVal('clase',5)">5</div>
+        </div>
+        <div class="escala"><span id="lbl-malo">Muy mala</span><span id="lbl-buena">Excelente</span></div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="pregunta">
+        <div class="pregunta-label" id="lbl-p2">¿Cómo fue el trato del instructor?</div>
+        <div class="pregunta-sub" id="lbl-p2-sub">Paciencia, claridad y atención durante la clase</div>
+        <div class="nums" id="nums-trato">
+          <div class="num" onclick="setVal('trato',1)">1</div>
+          <div class="num" onclick="setVal('trato',2)">2</div>
+          <div class="num" onclick="setVal('trato',3)">3</div>
+          <div class="num" onclick="setVal('trato',4)">4</div>
+          <div class="num" onclick="setVal('trato',5)">5</div>
+        </div>
+        <div class="escala"><span id="lbl-malo2">Muy malo</span><span id="lbl-bueno2">Excelente</span></div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="pregunta" style="margin-bottom:20px">
+        <div class="pregunta-label" id="lbl-comentario">Comentario <span style="color:var(--silver);font-weight:400">(opcional)</span></div>
+        <textarea id="comentario" placeholder="Contanos tu experiencia..."></textarea>
+      </div>
+
+      <button class="btn-enviar" id="btn-enviar" onclick="enviarResena()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+        <span id="lbl-enviar">Enviar valoración</span>
+      </button>
+
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--silver)" id="lbl-footer">
+        Tu opinión es anónima y nos ayuda a mejorar
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const { createClient } = supabase;
+const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
+
+let pClase=null, pTrato=null, lang='es', claseId=null;
+
+const T = {
+  es:{p1:'¿Cómo calificás la clase en general?',p1s:'Considerá el contenido, ritmo y organización',p2:'¿Cómo fue el trato del instructor?',p2s:'Paciencia, claridad y atención durante la clase',malo:'Muy mala',buena:'Excelente',malo2:'Muy malo',bueno2:'Excelente',coment:'Comentario',ph:'Contanos tu experiencia...',enviar:'Enviar valoración',footer:'Tu opinión es anónima y nos ayuda a mejorar',err:'Por favor calificá ambas preguntas'},
+  en:{p1:'How would you rate the class overall?',p1s:'Consider the content, pace and organization',p2:"How was the instructor's attitude?",p2s:'Patience, clarity and attention during the class',malo:'Very poor',buena:'Excellent',malo2:'Very poor',bueno2:'Excellent',coment:'Comment',ph:'Tell us about your experience...',enviar:'Submit review',footer:'Your feedback is anonymous and helps us improve',err:'Please rate both questions before submitting'}
+};
+
+function setLang(l) {
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&l==='es')||(i===1&&l==='en')));
+  const t=T[l];
+  document.getElementById('lbl-p1').textContent=t.p1;
+  document.getElementById('lbl-p1-sub').textContent=t.p1s;
+  document.getElementById('lbl-p2').textContent=t.p2;
+  document.getElementById('lbl-p2-sub').textContent=t.p2s;
+  document.getElementById('lbl-malo').textContent=t.malo;
+  document.getElementById('lbl-buena').textContent=t.buena;
+  document.getElementById('lbl-malo2').textContent=t.malo2;
+  document.getElementById('lbl-bueno2').textContent=t.bueno2;
+  document.getElementById('lbl-comentario').innerHTML=`${t.coment} <span style="color:var(--silver);font-weight:400">(opcional / optional)</span>`;
+  document.getElementById('comentario').placeholder=t.ph;
+  document.getElementById('lbl-enviar').textContent=t.enviar;
+  document.getElementById('lbl-footer').textContent=t.footer;
+}
+
+function setVal(tipo,val) {
+  if (tipo==='clase') {
+    pClase=val;
+    document.querySelectorAll('#nums-clase .num').forEach((n,i)=>n.classList.toggle('active',i+1===val));
+  } else {
+    pTrato=val;
+    document.querySelectorAll('#nums-trato .num').forEach((n,i)=>n.classList.toggle('active',i+1===val));
+  }
+}
+
+function showScreen(id) {
+  ['screen-loading','screen-form','screen-exito','screen-ya-enviada','screen-error'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(el) el.style.display=s===id?'block':'none';
+  });
+}
+
+async function enviarResena() {
+  const errEl=document.getElementById('error-msg');
+  errEl.style.display='none';
+  if (!pClase||!pTrato) { errEl.textContent=T[lang].err; errEl.style.display='block'; return; }
+  const btn=document.getElementById('btn-enviar');
+  btn.disabled=true;
+  document.getElementById('lbl-enviar').textContent=lang==='es'?'Enviando...':'Sending...';
+  const comentario=document.getElementById('comentario').value.trim();
+  const {error}=await sb.from('resenas').insert({clase_id:claseId,puntaje_clase:pClase,puntaje_trato:pTrato,comentario:comentario||null,creado_en:new Date().toISOString()});
+  if (error) {
+    btn.disabled=false;
+    document.getElementById('lbl-enviar').textContent=T[lang].enviar;
+    errEl.textContent=lang==='es'?'Error al enviar. Intentá de nuevo.':'Error sending. Please try again.';
+    errEl.style.display='block';
+    return;
+  }
+  try { await sb.rpc('calcular_ranking'); } catch(e) {}
+  showScreen('screen-exito');
+}
+
+async function init() {
+  showScreen('screen-loading');
+  const params=new URLSearchParams(window.location.search);
+  claseId=params.get('clase');
+  if (!claseId) { showScreen('screen-error'); return; }
+  const {data:clase,error}=await sb.from('clases').select('id,disciplina,nivel,hora_inicio,fecha,instructores(nombre),clientes(nombre)').eq('id',claseId).single();
+  if (error||!clase) { showScreen('screen-error'); return; }
+  const {data:yaExiste}=await sb.from('resenas').select('id').eq('clase_id',claseId).maybeSingle();
+  if (yaExiste) { showScreen('screen-ya-enviada'); return; }
+  document.getElementById('info-instructor').textContent=clase.instructores?.nombre||'—';
+  const fecha=new Date(clase.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('info-detalle').textContent=`${clase.disciplina} · ${clase.nivel} · ${clase.hora_inicio?.slice(0,5)} hs · ${fecha}`;
+  showScreen('screen-form');
+}
+
+init();
+</script>
+</body>
+</html>

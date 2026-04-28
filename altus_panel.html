@@ -1250,7 +1250,10 @@ async function finalizarClase(claseId) {
   const {error} = await sb.from('clases').update({estado:'completada'}).eq('id',claseId);
   if (error) { toast('Error al finalizar','err'); return; }
   try { await sb.rpc('calcular_ranking'); } catch(e) {}
-  toast('Clase finalizada — ranking actualizado');
+  // Mostrar link de reseña
+  const link = `${window.location.origin}/altus_resena.html?clase=${claseId}`;
+  navigator.clipboard?.writeText(link).catch(()=>{});
+  toast('Clase finalizada — Link de reseña copiado al portapapeles');
   loadClases(); initClasesHoy();
 }
 
