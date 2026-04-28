@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Altus — Panel del Instructor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -23,6 +23,7 @@
       --danger:    #E24B4A;
       --danger-bg: #FEE2E2;
     }
+    html,body { overflow-x:hidden; max-width:100vw; }
     body { font-family:'DM Sans',sans-serif; background:var(--ice2); color:var(--text); min-height:100vh; }
     body.modal-open { overflow:hidden; }
 
@@ -148,8 +149,24 @@
     <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
   </div>
   <div class="topbar-right">
-    <span class="inst-name-top">Valentina Ríos</span>
-    <div class="inst-avatar" onclick="cerrarSesion()" style="cursor:pointer" title="Cerrar sesión">VR</div>
+    <span class="inst-name-top" id="inst-nombre-top">—</span>
+    <div style="position:relative">
+      <div class="inst-avatar" id="inst-avatar" style="cursor:pointer" title="Mi perfil">VR</div>
+      <div id="inst-profile-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:190px;z-index:200;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--line);background:var(--ice2)">
+          <div style="font-size:13px;font-weight:500;color:var(--text)" id="ipm-nombre">—</div>
+          <div style="font-size:11px;color:var(--silver);margin-top:2px" id="ipm-email">—</div>
+        </div>
+        <button onclick="abrirPerfilInstructor()" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--muted);background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+          Mi perfil
+        </button>
+        <button onclick="cerrarSesion()" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--danger);background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H2v12h4M11 5l3 3-3 3M6 8h8"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -413,6 +430,41 @@
   </div>
 </div>
 
+<!-- MODAL MI PERFIL -->
+<div class="modal-overlay" id="modal-perfil-inst">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Mi perfil</span>
+      <button class="modal-close" onclick="cerrarModal('modal-perfil-inst')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;font-weight:500">Email</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:20px;padding:10px 12px;background:var(--ice2);border-radius:6px" id="ipm-email-modal">—</div>
+
+      <hr style="border:none;border-top:1px solid var(--line);margin-bottom:20px">
+
+      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Cambiar contraseña</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:8px">
+        <div>
+          <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px">Nueva contraseña</label>
+          <input type="password" id="inst-pass1" placeholder="Mínimo 6 caracteres" style="width:100%;height:40px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px">Confirmar contraseña</label>
+          <input type="password" id="inst-pass2" placeholder="Repetir contraseña" style="width:100%;height:40px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--silver);margin-bottom:20px">Dejá los campos vacíos si no querés cambiar la contraseña.</div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="cerrarModal('modal-perfil-inst')" style="flex:1;height:42px;border:1px solid var(--line);border-radius:8px;background:#fff;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--muted)">Cancelar</button>
+        <button onclick="guardarPerfilInstructor()" style="flex:1;height:42px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL AUSENCIA -->
 <div class="modal-overlay" id="modal-ausencia">
   <div class="modal">
@@ -492,15 +544,69 @@
     'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
   );
 
-  // Verificar sesión
+  // Auth check y datos del usuario
   sb.auth.getSession().then(({ data }) => {
-    if (!data?.session) window.location.href = 'altus_login.html';
+    if (!data?.session) { window.location.href = 'altus_login.html'; return; }
     const rol = localStorage.getItem('altus_rol');
-    if (rol && rol !== 'instructor') window.location.href = 'altus_panel.html';
+    if (rol && rol !== 'instructor') { window.location.href = 'altus_panel.html'; return; }
+    const email = localStorage.getItem('altus_email') || data.session.user.email || '';
+    const ini = email.split('@')[0].slice(0,2).toUpperCase();
+    document.getElementById('inst-avatar').textContent = ini;
+    document.getElementById('ipm-email').textContent = email;
+    document.getElementById('ipm-email-modal').textContent = email;
+
+    // Cargar nombre del instructor
+    if (INSTRUCTOR_ID) {
+      sb.from('instructores').select('nombre').eq('id', INSTRUCTOR_ID).single().then(({ data: inst }) => {
+        if (!inst) return;
+        const nombre = inst.nombre;
+        const primerNombre = nombre.split(' ')[0];
+        const hora = new Date().getHours();
+        const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+        document.getElementById('inst-nombre-top').textContent = nombre;
+        document.getElementById('ipm-nombre').textContent = nombre;
+        const ini2 = nombre.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+        document.getElementById('inst-avatar').textContent = ini2;
+        const greetEl = document.querySelector('.greeting-title');
+        if (greetEl) greetEl.textContent = `${saludo}, ${primerNombre}`;
+      });
+    }
   });
 
   // ID del instructor logueado
   const INSTRUCTOR_ID = localStorage.getItem('altus_instructor_id') || null;
+
+  // Menu de perfil
+  document.getElementById('inst-avatar').addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = document.getElementById('inst-profile-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', () => {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+  });
+
+  function abrirPerfilInstructor() {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+    document.getElementById('inst-pass1').value = '';
+    document.getElementById('inst-pass2').value = '';
+    abrirModal('modal-perfil-inst');
+  }
+
+  async function guardarPerfilInstructor() {
+    const pass1 = document.getElementById('inst-pass1').value;
+    const pass2 = document.getElementById('inst-pass2').value;
+    if (!pass1 && !pass2) { cerrarModal('modal-perfil-inst'); return; }
+    if (pass1.length < 6) { toast('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (pass1 !== pass2) { toast('Las contraseñas no coinciden'); return; }
+    const { error } = await sb.auth.updateUser({ password: pass1 });
+    if (error) { toast('Error al cambiar la contraseña'); return; }
+    cerrarModal('modal-perfil-inst');
+    toast('Contraseña actualizada correctamente');
+  }
+
+  window.abrirPerfilInstructor = abrirPerfilInstructor;
+  window.guardarPerfilInstructor = guardarPerfilInstructor;
 
   // --- FECHA ---
   const hoy = new Date();
