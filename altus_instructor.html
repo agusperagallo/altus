@@ -214,18 +214,18 @@
   <div class="stats-row">
     <div class="stat-card dark">
       <div class="stat-label">Mi puntaje</div>
-      <div class="stat-value">9.2</div>
-      <div class="stat-sub">Posición 1</div>
+      <div class="stat-value" id="stat-puntaje">—</div>
+      <div class="stat-sub" id="stat-posicion">—</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Clases hoy</div>
-      <div class="stat-value">3</div>
-      <div class="stat-sub">1 confirmada</div>
+      <div class="stat-value" id="stat-clases-hoy">—</div>
+      <div class="stat-sub" id="stat-clases-sub">—</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Reseñas</div>
-      <div class="stat-value">47</div>
-      <div class="stat-sub">Prom. 4.6/5</div>
+      <div class="stat-value" id="stat-resenas">—</div>
+      <div class="stat-sub" id="stat-resenas-sub">—</div>
     </div>
   </div>
 
@@ -681,19 +681,28 @@
 
   // --- CARGAR CLASES DEL DÍA ---
   async function cargarClases() {
-    if (!INSTRUCTOR_ID) return; // sin login, mantiene datos de ejemplo
+    if (!INSTRUCTOR_ID) return;
 
-    const { data: clases, error } = await sb
-      .from('clases')
-      .select('*, clientes(nombre, rango_etario)')
-      .eq('instructor_id', INSTRUCTOR_ID)
-      .eq('fecha', fechaISO)
-      .order('hora_inicio');
+    const { data: clases, error } = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).order('hora_inicio');
 
-    if (error || !clases?.length) return;
+    if (error) return;
+
+    // Actualizar stat de clases
+    const total = clases?.length || 0;
+    const confirmadas = clases?.filter(c => c.instructor_confirmo).length || 0;
+    document.getElementById('stat-clases-hoy').textContent = total;
+    document.getElementById('stat-clases-sub').textContent = total === 0 ? 'Sin clases hoy' : `${confirmadas} confirmada${confirmadas !== 1 ? 's' : ''}`;
 
     const lista = document.getElementById('lista-clases');
     lista.innerHTML = '';
+
+    if (!clases?.length) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">No tenés clases asignadas hoy</div>';
+      document.querySelector('.panel-meta') && (document.querySelector('.panel-meta').textContent = '0 clases');
+      return;
+    }
+
+    document.querySelector('.panel-meta') && (document.querySelector('.panel-meta').textContent = `${total} clase${total !== 1 ? 's' : ''}`);
 
     clases.forEach((c, i) => {
       const confirmado = c.instructor_confirmo;
@@ -778,32 +787,39 @@
   async function cargarRanking() {
     if (!INSTRUCTOR_ID) return;
 
-    const { data } = await sb
-      .from('ranking_snapshot')
-      .select('*')
-      .eq('instructor_id', INSTRUCTOR_ID)
-      .order('calculado_en', { ascending: false })
-      .limit(1)
-      .single();
+    // Cargar puntaje
+    const { data } = await sb.from('ranking_snapshot').select('*').eq('instructor_id', INSTRUCTOR_ID).order('calculado_en', { ascending: false }).limit(1).single();
+    if (data) {
+      document.getElementById('stat-puntaje').textContent = data.puntaje_total?.toFixed(1) || '—';
+      // Calcular posición
+      const { data: todos } = await sb.from('ranking_snapshot').select('instructor_id, puntaje_total').order('puntaje_total', { ascending: false });
+      if (todos) {
+        const pos = todos.findIndex(r => r.instructor_id === INSTRUCTOR_ID) + 1;
+        document.getElementById('stat-posicion').textContent = `Posición ${pos}`;
+      }
+      const rankNum = document.querySelector('.rank-num');
+      if (rankNum) rankNum.textContent = data.puntaje_total?.toFixed(1) || '—';
+      const barras = { 'Opinion': data.puntaje_opinion, 'Asistencia': data.puntaje_asistencia, 'Fidelizacion': data.puntaje_fidelizacion, 'Historial': data.puntaje_historico, 'Perfil': data.puntaje_perfil };
+      const fills = document.querySelectorAll('.bar-fill');
+      const vals  = document.querySelectorAll('.bar-val');
+      Object.values(barras).forEach((v, i) => {
+        if (fills[i]) fills[i].style.width = `${(v||0) * 10}%`;
+        if (vals[i])  vals[i].textContent = (v||0).toFixed(1);
+      });
+    }
 
-    if (!data) return;
-
-    document.querySelector('.rank-num').textContent = data.puntaje_total.toFixed(1);
-
-    const barras = {
-      'Opinion clientes': data.puntaje_opinion,
-      'Asistencia':       data.puntaje_asistencia,
-      'Fidelizacion':     data.puntaje_fidelizacion,
-      'Historial':        data.puntaje_historico,
-      'Perfil':           data.puntaje_perfil,
-    };
-
-    const fills = document.querySelectorAll('.bar-fill');
-    const vals  = document.querySelectorAll('.bar-val');
-    Object.values(barras).forEach((v, i) => {
-      if (fills[i]) fills[i].style.width = `${v * 10}%`;
-      if (vals[i])  vals[i].textContent = v.toFixed(1);
-    });
+    // Cargar reseñas
+    const { data: resenas } = await sb.from('resenas').select('puntaje_clase, puntaje_trato').in('clase_id',
+      (await sb.from('clases').select('id').eq('instructor_id', INSTRUCTOR_ID)).data?.map(c=>c.id) || []
+    );
+    if (resenas?.length) {
+      const prom = resenas.reduce((s,r) => s + (r.puntaje_clase + r.puntaje_trato) / 2, 0) / resenas.length;
+      document.getElementById('stat-resenas').textContent = resenas.length;
+      document.getElementById('stat-resenas-sub').textContent = `Prom. ${prom.toFixed(1)}/5`;
+    } else {
+      document.getElementById('stat-resenas').textContent = '0';
+      document.getElementById('stat-resenas-sub').textContent = 'Sin reseñas aún';
+    }
   }
 
   // --- CONFIRMAR CLASE ---
