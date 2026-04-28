@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Altus — Ingresar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -150,7 +151,27 @@
       color: var(--silver);
       margin-top: 24px;
     }
-  </style>
+  
+/* MODO OSCURO */
+body.dark {
+  --ice:#0F1117;--line:#2A2F3E;--white:#1A1F2E;--text:#E8ECF0;
+  --muted:#9AABBD;--silver:#5A6A7E;--ice2:#141820;
+  background:#0F1117;color:#E8ECF0;
+}
+body.dark .topbar{background:#141820;border-color:#2A2F3E}
+body.dark .panel,.dark .page-table,.dark .page-filters,.dark .stat,.dark .modal{background:#1A1F2E;border-color:#2A2F3E}
+body.dark input,body.dark select,body.dark textarea{background:#141820;border-color:#2A2F3E;color:#E8ECF0}
+body.dark .t-row:nth-child(even){background:#141820}
+body.dark .t-row{border-color:#2A2F3E}
+body.dark .t-cols{border-color:#2A2F3E}
+body.dark .nav-item:hover{background:rgba(255,255,255,.06)}
+body.dark .profile-menu,.dark .profile-menu-header{background:#1A1F2E;border-color:#2A2F3E}
+body.dark .modal-head{background:#1A1F2E;border-color:#2A2F3E}
+body.dark .modal-body{background:#1A1F2E}
+body.dark .btn-outline{background:#1A1F2E;border-color:#2A2F3E;color:#9AABBD}
+body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
+
+</style>
 </head>
 <body>
 
