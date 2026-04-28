@@ -997,10 +997,16 @@ document.getElementById('f-disc').addEventListener('change',loadRanking);
 document.getElementById('f-nivel').addEventListener('change',loadRanking);
 
 async function loadClases() {
-  let fechaRaw2 = document.getElementById('f-fecha-cl').value || fechaISO;
-  let fecha2 = fechaRaw2;
-  if (fechaRaw2.includes('/')) { const [d,m,y]=fechaRaw2.split('/'); fecha2=`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; }
-  const fecha = fecha2;
+  const rawVal = document.getElementById('f-fecha-cl').value || fechaISO;
+  // Normalizar siempre a YYYY-MM-DD para Supabase
+  let fecha = rawVal;
+  if (rawVal.includes('/')) {
+    const p = rawVal.split('/');
+    // DD/MM/YYYY
+    if (p[2]?.length === 4) fecha = `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+    // MM/DD/YYYY
+    else if (p[0]?.length <= 2 && p[2]?.length === 4) fecha = `${p[2]}-${p[0].padStart(2,'0')}-${p[1].padStart(2,'0')}`;
+  }
   const estado=document.getElementById('f-estado-cl').value;
   const tabla=document.getElementById('cl-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
@@ -1010,10 +1016,9 @@ async function loadClases() {
   document.getElementById('cl-ct').textContent=`${data?.length||0} clases`;
   if (!data?.length) { tabla.innerHTML='<div class="empty">No hay clases</div>'; return; }
   tabla.innerHTML=data.map(c=>{
-    const estadoLabel = c.estado==='completada'?'Completada':c.estado==='cancelada'?'Cancelada':c.estado==='asignada'?'Asignada':'Pendiente';
     const accion = c.estado==='asignada'
       ? `<div style="display:flex;gap:4px;align-items:center">
-          ${badge('Asignada',eC,eB)}
+          ${badge('Asignada','#185FA5','#E6F1FB')}
           <button class="inst-action-btn" title="Finalizar" onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
           </button>
