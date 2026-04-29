@@ -150,6 +150,7 @@ input:focus,select:focus{border-color:var(--accent)}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90}
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
+  #cl-cols{display:none}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
   .main{margin-left:0}.menu-toggle{display:flex}.overlay.open{display:block}
   .stats{grid-template-columns:1fr 1fr}.content{padding:14px}.page-content{padding:14px}
@@ -327,7 +328,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Clases del día</span><span class="panel-meta" id="cl-ct">—</span></div>
-      <div class="t-cols"><div style="width:60px;flex-shrink:0">Hora</div><div style="width:45px;flex-shrink:0">Dur.</div><div style="flex:1">Cliente</div><div style="flex:1">Instructor</div><div style="width:140px;flex-shrink:0">Detalle</div><div style="width:160px;flex-shrink:0">Estado / Acción</div></div>
+      <div class="t-cols" id="cl-cols"><div style="width:60px;flex-shrink:0">Hora</div><div style="width:45px;flex-shrink:0">Dur.</div><div style="flex:1">Cliente</div><div style="flex:1">Instructor</div><div style="width:140px;flex-shrink:0">Detalle</div><div style="width:160px;flex-shrink:0">Estado / Acción</div></div>
       <div id="cl-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -1418,31 +1419,50 @@ async function loadClases() {
   document.getElementById('cl-ct').textContent=`${data?.length||0} clases`;
   if (!data?.length) { tabla.innerHTML='<div class="empty">No hay clases</div>'; return; }
   tabla.innerHTML=data.map(c=>{
-    const accion = c.estado==='asignada'
-      ? `<div style="display:flex;gap:4px;align-items:center">
-          ${badge('Asignada','#185FA5','#E6F1FB')}
-          <button class="inst-action-btn" title="Finalizar" onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
-          </button>
-          <button class="inst-action-btn" title="Cambiar instructor" onclick="abrirCambiarInstructor('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina}','${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-          </button>
-          <button class="inst-action-btn" title="Cancelar clase" onclick="abrirCancelarClase('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-         </div>`
-      : c.estado==='completada'
-      ? badge('Completada','#0F6E56','#E1F5EE')
-      : c.estado==='cancelada'
-      ? badge('Cancelada','var(--danger)','var(--danger-bg)')
+    const esMobile = window.innerWidth < 768;
+    const accionBtns = c.estado==='asignada' ? `
+      <button class="inst-action-btn" title="Finalizar" onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
+      </button>
+      <button class="inst-action-btn" title="Cambiar instructor" onclick="abrirCambiarInstructor('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina}','${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+      </button>
+      <button class="inst-action-btn" title="Cancelar clase" onclick="abrirCancelarClase('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>` : '';
+
+    const estadoBadge = c.estado==='asignada' ? badge('Asignada','#185FA5','#E6F1FB')
+      : c.estado==='completada' ? badge('Completada','#0F6E56','#E1F5EE')
+      : c.estado==='cancelada' ? badge('Cancelada','var(--danger)','var(--danger-bg)')
       : badge('Pendiente','var(--warn)','var(--warn-bg)');
+
+    if (esMobile) {
+      return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);background:#fff">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:15px;font-weight:500;color:var(--navy)">${c.hora_inicio?.slice(0,5)||'—'} <span style="font-size:12px;color:var(--silver);font-weight:400">${c.duracion_horas}h</span></div>
+            <div style="font-size:13px;color:var(--text);margin-top:3px">${c.clientes?.nombre||'—'}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.instructores?.nombre||'—'} · ${c.disciplina} · ${c.nivel}</div>
+          </div>
+          <div>${estadoBadge}</div>
+        </div>
+        ${c.estado==='asignada' ? `<div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="flex:1;height:34px;border:1px solid #E1F5EE;border-radius:6px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Finalizar</button>
+          <button onclick="abrirCambiarInstructor('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina}','${c.nivel}')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cambiar</button>
+          <button onclick="abrirCancelarClase('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}')" style="flex:1;height:34px;border:1px solid var(--danger-bg);border-radius:6px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cancelar</button>
+        </div>` : ''}
+      </div>`;
+    }
+
     return `<div class="t-row">
       <div style="width:60px;flex-shrink:0;font-weight:500;color:var(--navy)">${c.hora_inicio?.slice(0,5)||'—'}</div>
       <div style="width:45px;flex-shrink:0;color:var(--muted);font-size:12px">${c.duracion_horas}h</div>
       <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.clientes?.nombre||'—'}</div>
       <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)">${c.instructores?.nombre||'—'}</div>
       <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina} · ${c.nivel}</div>
-      <div style="width:160px;flex-shrink:0">${accion}</div>
+      <div style="width:160px;flex-shrink:0;display:flex;gap:4px;align-items:center">${estadoBadge}${accionBtns}</div>
+    </div>`;
+  }).join('');
     </div>`;
   }).join('');
 }
