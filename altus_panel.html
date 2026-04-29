@@ -151,16 +151,23 @@ input:focus,select:focus{border-color:var(--accent)}
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
   #cl-cols{display:none}
+  #modo-switch{display:none !important}
+  #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
   .main{margin-left:0}.menu-toggle{display:flex}.overlay.open{display:block}
   .stats{grid-template-columns:1fr 1fr}.content{padding:14px}.page-content{padding:14px}
   .topbar{padding:0 14px 0 54px}
+  .topbar-title{font-size:13px}
+  .badge-date{display:none}
   .page-filters{padding:12px}
   .filter-group{flex:1 1 calc(50% - 5px)}
   .page-table{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
   .t-cols,.t-row{min-width:520px}
-  .modal{border-radius:14px 14px 0 0}
+  .modal{border-radius:14px 14px 0 0;max-width:100% !important;margin:0}
+  .modal-overlay{align-items:flex-end}
   .form-grid{grid-template-columns:1fr}
+  .rk-head,.rk-row{grid-template-columns:24px 1fr 60px 60px;gap:4px}
+  .grid-2{grid-template-columns:1fr}
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
@@ -196,6 +203,11 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 
 <aside class="sidebar" id="sidebar">
   <div class="brand"><div class="brand-name">ALTUS</div><div class="brand-sub">Cerro Bayo — Villa La Angostura</div></div>
+  <!-- Switch dentro del sidebar — solo visible en mobile -->
+  <div id="modo-switch-sidebar" style="display:none;margin:12px 14px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;gap:2px">
+    <button id="modo-cerro-sb" onclick="setModo('cerro')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">⛷ Cerro</button>
+    <button id="modo-escuelita-sb" onclick="setModo('escuelita')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:rgba(255,255,255,.5)">🎿 Escuelita</button>
+  </div>
   <nav class="nav">
     <!-- NAV CERRO -->
     <div id="nav-cerro">
@@ -1024,17 +1036,23 @@ function setModo(modo) {
   modoActual = modo;
   const esCerro = modo === 'cerro';
 
-  // Switch visual
+  // Switch topbar
   document.getElementById('modo-cerro').style.background = esCerro ? 'var(--navy)' : 'transparent';
   document.getElementById('modo-cerro').style.color = esCerro ? '#fff' : 'var(--muted)';
   document.getElementById('modo-escuelita').style.background = !esCerro ? 'var(--accent)' : 'transparent';
   document.getElementById('modo-escuelita').style.color = !esCerro ? '#fff' : 'var(--muted)';
 
+  // Switch sidebar (mobile)
+  const csbEl = document.getElementById('modo-cerro-sb');
+  const esbEl = document.getElementById('modo-escuelita-sb');
+  if (csbEl) { csbEl.style.background = esCerro ? 'var(--navy)' : 'transparent'; csbEl.style.color = esCerro ? '#fff' : 'rgba(255,255,255,.5)'; }
+  if (esbEl) { esbEl.style.background = !esCerro ? 'var(--accent)' : 'transparent'; esbEl.style.color = !esCerro ? '#fff' : 'rgba(255,255,255,.5)'; }
+
   // Sidebar
   document.getElementById('nav-cerro').style.display = esCerro ? 'block' : 'none';
   document.getElementById('nav-escuelita').style.display = !esCerro ? 'block' : 'none';
 
-  // Ir a la pantalla principal del modo
+  // Pantalla principal del modo
   if (esCerro) {
     setPage('asignacion');
     document.getElementById('fab-btn').style.display = 'flex';
@@ -1048,22 +1066,7 @@ function setModo(modo) {
 const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos'];
 const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos'};
 
-// Extender setPage para escuelita
-const _setPageOriginal = setPage;
-function setPage(page) {
-  const allPages = [...PAGES, ...PAGES_ESCUELITA];
-  allPages.forEach(p => {
-    const el = document.getElementById('pg-'+p);
-    if (el) el.style.display = p===page?'block':'none';
-  });
-  document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
-  document.getElementById('page-title').textContent = TITLES[page]||TITLES_ESC[page]||page;
-  if (LOADERS[page]) LOADERS[page]();
-  if (page==='esc-grupos')       loadEscGruposHoy();
-  if (page==='esc-sesiones')     loadEscSesiones();
-  if (page==='esc-admin-grupos') loadEscAdminGrupos();
-  if (window.innerWidth<768) toggleSidebar();
-}
+// Extender setPage para escuelita — se completa abajo cuando PAGES/TITLES/LOADERS estén definidos
 
 // Grupos de hoy
 async function loadEscGruposHoy() {
@@ -1372,14 +1375,18 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 // Sidebar navigation
 const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos'];
-const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas'};
+const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos'};
 const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas};
 
 function setPage(page) {
-  PAGES.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
+  const allPages = [...PAGES, ...PAGES_ESCUELITA];
+  allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
   document.getElementById('page-title').textContent = TITLES[page]||page;
   if (LOADERS[page]) LOADERS[page]();
+  if (page==='esc-grupos')       loadEscGruposHoy();
+  if (page==='esc-sesiones')     loadEscSesiones();
+  if (page==='esc-admin-grupos') loadEscAdminGrupos();
   if (window.innerWidth<768) toggleSidebar();
 }
 document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page)));
