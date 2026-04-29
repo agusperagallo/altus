@@ -1283,13 +1283,6 @@ document.getElementById('mng-save').addEventListener('click', async()=>{
   loadEscAdminGrupos();
 });
 
-// Inicializar fecha escuelita
-document.getElementById('f-fecha-esc').value = fechaISO;
-document.getElementById('f-fecha-ses').value = fechaISO;
-document.getElementById('f-fecha-esc').addEventListener('change', loadEscGruposHoy);
-document.getElementById('f-fecha-ses').addEventListener('change', loadEscSesiones);
-document.getElementById('f-estado-ses').addEventListener('change', loadEscSesiones);
-
 // Exponer funciones globales de escuelita
 window.setModo = setModo;
 window.abrirDetalleGrupo = abrirDetalleGrupo;
@@ -2088,6 +2081,13 @@ initClasesHoy();
 initInstStats();
 initPresencia();
 initResStat();
+
+// Inicializar fechas escuelita
+document.getElementById('f-fecha-esc').value = fechaISO;
+document.getElementById('f-fecha-ses').value = fechaISO;
+document.getElementById('f-fecha-esc').addEventListener('change', loadEscGruposHoy);
+document.getElementById('f-fecha-ses').addEventListener('change', loadEscSesiones);
+document.getElementById('f-estado-ses').addEventListener('change', loadEscSesiones);
 </script>
 </body>
 </html>
