@@ -161,6 +161,11 @@ body.dark .btn-outline{background:#1A1F2E;border-color:#2A2F3E;color:#9AABBD}
 body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 
 </style>
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
+<meta name="theme-color" content="#1A1F2E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Altus">
 </head>
 <body>
 
@@ -527,6 +532,27 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   </div>
 </div>
 
+<script>
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('altus_dark', isDark ? '1' : '0');
+  const toggle = document.getElementById('dark-toggle');
+  const knob   = document.getElementById('dark-knob');
+  if (toggle) toggle.style.background = isDark ? '#1D9E75' : '';
+  if (knob)   knob.style.transform    = isDark ? 'translateX(18px)' : 'translateX(0)';
+}
+(function() {
+  if (localStorage.getItem('altus_dark') === '1') {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.body.classList.add('dark');
+      const toggle = document.getElementById('dark-toggle');
+      const knob   = document.getElementById('dark-knob');
+      if (toggle) toggle.style.background = '#1D9E75';
+      if (knob)   knob.style.transform    = 'translateX(18px)';
+    });
+  }
+})();
+</script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const { createClient } = supabase;
