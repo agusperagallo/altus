@@ -462,10 +462,19 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 <!-- FAB -->
 <div class="fab-container">
   <div class="fab-menu" id="fab-menu">
-    <div class="fab-row"><span class="fab-label">Registrar asistencia</span><button class="fab-icon" id="fab-asist"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/></svg></button></div>
-    <div class="fab-row"><span class="fab-label">Ver ranking</span><button class="fab-icon" id="fab-rk"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg></button></div>
-    <div class="fab-row"><span class="fab-label">Nuevo instructor</span><button class="fab-icon" id="fab-nuevo"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg></button></div>
-    <div class="fab-row"><span class="fab-label">Modo emergencia</span><button class="fab-icon" id="fab-emerg"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9l-3.1 1.5.6-3.5L3 4.5l3.5-.5z"/></svg></button></div>
+    <!-- CERRO -->
+    <div id="fab-menu-cerro" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="fab-row"><span class="fab-label">Registrar asistencia</span><button class="fab-icon" id="fab-asist"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/></svg></button></div>
+      <div class="fab-row"><span class="fab-label">Ver ranking</span><button class="fab-icon" id="fab-rk"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg></button></div>
+      <div class="fab-row"><span class="fab-label">Nuevo instructor</span><button class="fab-icon" id="fab-nuevo"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg></button></div>
+      <div class="fab-row"><span class="fab-label">Modo emergencia</span><button class="fab-icon" id="fab-emerg"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9l-3.1 1.5.6-3.5L3 4.5l3.5-.5z"/></svg></button></div>
+    </div>
+    <!-- ESCUELITA -->
+    <div id="fab-menu-escuelita" style="display:none;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="fab-row"><span class="fab-label">Nuevo grupo</span><button class="fab-icon" id="fab-esc-grupo" onclick="closeFab();abrirModalNuevoGrupo()"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/><path d="M13 3v4M11 5h4"/></svg></button></div>
+      <div class="fab-row"><span class="fab-label">Ver grupos</span><button class="fab-icon" id="fab-esc-grupos" onclick="closeFab();setPage('esc-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/></svg></button></div>
+      <div class="fab-row"><span class="fab-label">Administrar grupos</span><button class="fab-icon" id="fab-esc-admin" onclick="closeFab();setPage('esc-admin-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 8h6M8 5v6"/></svg></button></div>
+    </div>
   </div>
   <button class="fab-main" id="fab-btn">
     <svg id="fab-plus" width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
@@ -1056,9 +1065,13 @@ function setModo(modo) {
   if (esCerro) {
     setPage('asignacion');
     document.getElementById('fab-btn').style.display = 'flex';
+    document.getElementById('fab-menu-cerro').style.display = 'flex';
+    document.getElementById('fab-menu-escuelita').style.display = 'none';
   } else {
     setPage('esc-grupos');
-    document.getElementById('fab-btn').style.display = 'none';
+    document.getElementById('fab-btn').style.display = 'flex';
+    document.getElementById('fab-menu-cerro').style.display = 'none';
+    document.getElementById('fab-menu-escuelita').style.display = 'flex';
   }
 }
 
@@ -1579,6 +1592,15 @@ document.getElementById('btn-emerg').addEventListener('click',()=>{ document.get
 document.getElementById('btn-desact-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='none'; });
 
 // FAB
+const closeFab = () => {
+  fabOpen = false;
+  document.getElementById('fab-menu').classList.remove('open');
+  document.getElementById('fab-btn').classList.remove('open');
+  document.getElementById('fab-plus').style.display = 'block';
+  document.getElementById('fab-x').style.display = 'none';
+};
+window.closeFab = closeFab;
+
 document.getElementById('fab-btn').addEventListener('click',()=>{
   fabOpen=!fabOpen;
   document.getElementById('fab-menu').classList.toggle('open',fabOpen);
