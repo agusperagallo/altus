@@ -78,30 +78,44 @@ body.no-scroll{overflow:hidden}
 }
 .flatpickr-current-month{
   font-family:'Cormorant Garamond',serif!important;
-  font-size:16px!important;
+  font-size:17px!important;
   font-weight:600!important;
   color:#fff!important;
   padding-top:4px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
 }
-.flatpickr-current-month select{
+.flatpickr-current-month select,.flatpickr-current-month .flatpickr-monthDropdown-months{
   color:#fff!important;
   background:transparent!important;
   border:none!important;
   font-family:'Cormorant Garamond',serif!important;
-  font-size:16px!important;
+  font-size:17px!important;
   font-weight:600!important;
   height:auto!important;
-  padding:0 2px!important;
+  padding:0!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  cursor:default!important;
+  pointer-events:none!important;
 }
-.flatpickr-current-month .numInputWrapper input{
+.flatpickr-current-month .numInputWrapper{
+  pointer-events:none!important;
+}
+.flatpickr-current-month .numInputWrapper input,.numInput.cur-year{
   color:#fff!important;
   font-family:'Cormorant Garamond',serif!important;
-  font-size:16px!important;
+  font-size:17px!important;
   font-weight:600!important;
   height:auto!important;
   border:none!important;
   background:transparent!important;
   padding:0!important;
+  pointer-events:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
 }
 .flatpickr-prev-month,.flatpickr-next-month{
   color:rgba(255,255,255,.6)!important;
@@ -1350,6 +1364,12 @@ function initDatePickers() {
       altInput:true,
       altFormat:'d/m/Y',
       defaultDate: input.value || fechaISO,
+      disableMobile: true,
+      onReady: (_, __, fp) => {
+        // Hacer readonly el input de año para evitar borrado
+        const yearInput = fp.calendarContainer?.querySelector('.numInput.cur-year');
+        if (yearInput) yearInput.setAttribute('readonly', true);
+      },
       onChange: (dates, dateStr) => {
         input.value = dateStr;
         input.dispatchEvent(new Event('change'));
