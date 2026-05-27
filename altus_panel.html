@@ -869,7 +869,7 @@ function toggleDark() {
 
 <!-- MODAL DETALLE GRUPO -->
 <div class="modal-overlay" id="modal-detalle-grupo">
-  <div class="modal" style="max-width:540px">
+  <div class="modal" style="max-width:580px">
     <div class="modal-head"><span class="modal-title" id="mdg-titulo">Grupo</span><button class="modal-close" id="mdg-close">&times;</button></div>
     <div class="modal-body">
       <div style="display:flex;align-items:center;gap:14px;padding:14px;background:var(--ice);border-radius:8px;margin-bottom:18px">
@@ -879,23 +879,68 @@ function toggleDark() {
         </div>
         <div style="text-align:center">
           <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy)" id="mdg-count">0</div>
-          <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.06em">niños hoy</div>
+          <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.06em">niños</div>
         </div>
       </div>
       <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;font-weight:500">Niños en el grupo</div>
-      <div id="mdg-ninos-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:220px;overflow-y:auto">
+      <div id="mdg-ninos-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:260px;overflow-y:auto">
         <div class="empty">Cargando...</div>
       </div>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="mdg-nuevo-nino" placeholder="Nombre del niño" style="flex:1;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 11px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
-        <input type="number" id="mdg-nueva-edad" placeholder="Edad" style="width:70px;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none" min="2" max="16">
-        <button onclick="agregarNino()" class="btn btn-primary" style="height:36px;font-size:13px;padding:0 14px">Agregar</button>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:16px">
+      <button onclick="abrirModalAgregarNino()" class="btn btn-outline" style="width:100%;height:38px;margin-bottom:16px;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v12M2 8h12"/></svg>
+        Agregar niño
+      </button>
+      <div style="display:flex;justify-content:flex-end">
         <button onclick="programarSesion()" class="btn btn-primary" style="display:flex;align-items:center;gap:8px">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
           Programar sesión de hoy
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FICHA NIÑO -->
+<div class="modal-overlay" id="modal-ficha-nino">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><span class="modal-title" id="fn-titulo">Ficha del niño</span><button class="modal-close" id="fn-close">&times;</button></div>
+    <div class="modal-body" style="max-height:80vh;overflow-y:auto">
+
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Datos del niño</div>
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="fg"><label>Nombre</label><input type="text" id="fn-nombre" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Edad</label><input type="number" id="fn-edad" placeholder="Años" min="2" max="16"></div>
+        <div class="fg"><label>Fecha de nacimiento</label><input type="date" id="fn-nacimiento"></div>
+        <div class="fg"><label>Teléfono de contacto</label><input type="text" id="fn-tel" placeholder="+54 9 ..."></div>
+        <div class="fg"><label>Fecha desde</label><input type="date" id="fn-desde"></div>
+        <div class="fg"><label>Fecha hasta</label><input type="date" id="fn-hasta"></div>
+      </div>
+
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Tutor / Padre 1</div>
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="fg"><label>Nombre</label><input type="text" id="fn-t1-nombre" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Relación</label><input type="text" id="fn-t1-relacion" placeholder="Padre, Madre, Tutor..."></div>
+        <div class="fg full"><label>Teléfono</label><input type="text" id="fn-t1-tel" placeholder="+54 9 ..."></div>
+      </div>
+
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Tutor / Padre 2 <span style="color:var(--line);font-weight:400">(opcional)</span></div>
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="fg"><label>Nombre</label><input type="text" id="fn-t2-nombre" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Relación</label><input type="text" id="fn-t2-relacion" placeholder="Padre, Madre, Tutor..."></div>
+        <div class="fg full"><label>Teléfono</label><input type="text" id="fn-t2-tel" placeholder="+54 9 ..."></div>
+      </div>
+
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Información médica</div>
+      <div class="form-grid" style="margin-bottom:18px">
+        <div class="fg full"><label>Alergias</label><input type="text" id="fn-alergias" placeholder="Ej: Polen, mariscos, medicamentos..."></div>
+        <div class="fg full"><label>Condiciones médicas o limitaciones</label><input type="text" id="fn-condiciones" placeholder="Ej: Asma, diabetes, lesión de rodilla..."></div>
+        <div class="fg full"><label>Medicación habitual</label><input type="text" id="fn-medicacion" placeholder="Nombre del medicamento y dosis..."></div>
+        <div class="fg full"><label>Observaciones generales</label><textarea id="fn-observaciones" placeholder="Cualquier información adicional relevante..." style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:5px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none"></textarea></div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button onclick="cerrarModal('modal-ficha-nino')" class="btn btn-outline" style="flex:1">Cancelar</button>
+        <button onclick="guardarFichaNino()" class="btn btn-primary" style="flex:2" id="fn-save">Guardar</button>
       </div>
     </div>
   </div>
@@ -1041,8 +1086,10 @@ document.getElementById('mt-cerrar-btn').addEventListener('click', async() => {
 // ── MODO CERRO / ESCUELITA ────────────────────────────
 let modoActual = 'cerro';
 
+// Guardar modo y página al cambiar
 function setModo(modo) {
   modoActual = modo;
+  localStorage.setItem('altus_modo', modo);
   const esCerro = modo === 'cerro';
 
   // Switch topbar
@@ -1206,23 +1253,107 @@ async function cargarNinosGrupo(grupoId) {
   document.getElementById('mdg-count').textContent = data?.length||0;
   const lista = document.getElementById('mdg-ninos-lista');
   if (!data?.length) { lista.innerHTML='<div class="empty">Sin niños en este grupo</div>'; return; }
-  lista.innerHTML = data.map(n => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--ice)">
-      <div><div style="font-size:13px;font-weight:500">${n.nombre}</div><div style="font-size:11px;color:var(--silver);margin-top:1px">${n.edad} años ${n.telefono_contacto?'· '+n.telefono_contacto:''}</div></div>
-      <button onclick="quitarNino('${n.id}')" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;padding:4px 8px">Quitar</button>
-    </div>`).join('');
+  lista.innerHTML = data.map(n => {
+    const tieneInfo = n.alergias || n.condiciones_medicas || n.tutor1_nombre;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ice)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px">
+          ${n.nombre}
+          ${tieneInfo ? `<span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:500">Ficha</span>` : ''}
+        </div>
+        <div style="font-size:11px;color:var(--silver);margin-top:2px">${n.edad} años${n.tutor1_nombre ? ' · '+n.tutor1_nombre : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="abrirFichaNino('${n.id}')" style="font-size:11px;color:var(--accent2);background:none;border:none;cursor:pointer;padding:4px 8px">Editar</button>
+        <button onclick="quitarNino('${n.id}')" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;padding:4px 8px">Quitar</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-async function agregarNino() {
-  const nombre = document.getElementById('mdg-nuevo-nino').value.trim();
-  const edad   = parseInt(document.getElementById('mdg-nueva-edad').value)||null;
-  if (!nombre) { toast('Ingresá el nombre del niño','err'); return; }
-  await sb.from('grupo_ninos').insert({grupo_id:grupoActual,nombre,edad,activo:true});
-  document.getElementById('mdg-nuevo-nino').value='';
-  document.getElementById('mdg-nueva-edad').value='';
-  await cargarNinosGrupo(grupoActual);
-  toast(`${nombre} agregado al grupo`);
+// Ficha niño
+let ninoActualId = null;
+
+function abrirModalAgregarNino() {
+  ninoActualId = null;
+  document.getElementById('fn-titulo').textContent = 'Agregar niño';
+  document.getElementById('fn-save').textContent = 'Agregar al grupo';
+  ['fn-nombre','fn-edad','fn-tel','fn-t1-nombre','fn-t1-relacion','fn-t1-tel',
+   'fn-t2-nombre','fn-t2-relacion','fn-t2-tel','fn-alergias','fn-condiciones','fn-medicacion','fn-observaciones']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('fn-nacimiento').value = '';
+  document.getElementById('fn-desde').value = fechaISO;
+  document.getElementById('fn-hasta').value = '';
+  openModal('modal-ficha-nino');
 }
+
+async function abrirFichaNino(ninoId) {
+  ninoActualId = ninoId;
+  const {data:n} = await sb.from('grupo_ninos').select('*').eq('id',ninoId).single();
+  if (!n) return;
+  document.getElementById('fn-titulo').textContent = n.nombre;
+  document.getElementById('fn-save').textContent = 'Guardar cambios';
+  document.getElementById('fn-nombre').value = n.nombre||'';
+  document.getElementById('fn-edad').value = n.edad||'';
+  document.getElementById('fn-nacimiento').value = n.fecha_nacimiento||'';
+  document.getElementById('fn-tel').value = n.telefono_contacto||'';
+  document.getElementById('fn-desde').value = n.fecha_desde||'';
+  document.getElementById('fn-hasta').value = n.fecha_hasta||'';
+  document.getElementById('fn-t1-nombre').value = n.tutor1_nombre||'';
+  document.getElementById('fn-t1-relacion').value = n.tutor1_relacion||'';
+  document.getElementById('fn-t1-tel').value = n.tutor1_telefono||'';
+  document.getElementById('fn-t2-nombre').value = n.tutor2_nombre||'';
+  document.getElementById('fn-t2-relacion').value = n.tutor2_relacion||'';
+  document.getElementById('fn-t2-tel').value = n.tutor2_telefono||'';
+  document.getElementById('fn-alergias').value = n.alergias||'';
+  document.getElementById('fn-condiciones').value = n.condiciones_medicas||'';
+  document.getElementById('fn-medicacion').value = n.medicacion||'';
+  document.getElementById('fn-observaciones').value = n.observaciones||'';
+  openModal('modal-ficha-nino');
+}
+
+async function guardarFichaNino() {
+  const nombre = document.getElementById('fn-nombre').value.trim();
+  if (!nombre) { toast('Ingresá el nombre del niño','err'); return; }
+  const btn = document.getElementById('fn-save');
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+
+  const datos = {
+    nombre,
+    edad: parseInt(document.getElementById('fn-edad').value)||null,
+    fecha_nacimiento: document.getElementById('fn-nacimiento').value||null,
+    telefono_contacto: document.getElementById('fn-tel').value||null,
+    fecha_desde: document.getElementById('fn-desde').value||null,
+    fecha_hasta: document.getElementById('fn-hasta').value||null,
+    tutor1_nombre: document.getElementById('fn-t1-nombre').value||null,
+    tutor1_relacion: document.getElementById('fn-t1-relacion').value||null,
+    tutor1_telefono: document.getElementById('fn-t1-tel').value||null,
+    tutor2_nombre: document.getElementById('fn-t2-nombre').value||null,
+    tutor2_relacion: document.getElementById('fn-t2-relacion').value||null,
+    tutor2_telefono: document.getElementById('fn-t2-tel').value||null,
+    alergias: document.getElementById('fn-alergias').value||null,
+    condiciones_medicas: document.getElementById('fn-condiciones').value||null,
+    medicacion: document.getElementById('fn-medicacion').value||null,
+    observaciones: document.getElementById('fn-observaciones').value||null,
+  };
+
+  if (ninoActualId) {
+    await sb.from('grupo_ninos').update(datos).eq('id',ninoActualId);
+    toast(`${nombre} actualizado`);
+  } else {
+    await sb.from('grupo_ninos').insert({...datos, grupo_id:grupoActual, activo:true});
+    toast(`${nombre} agregado al grupo`);
+  }
+
+  btn.textContent = ninoActualId ? 'Guardar cambios' : 'Agregar al grupo';
+  btn.disabled = false;
+  cerrarModal('modal-ficha-nino');
+  await cargarNinosGrupo(grupoActual);
+}
+
+function cerrarModal(id) { closeModal(id); }
+
+document.getElementById('fn-close').addEventListener('click',()=>closeModal('modal-ficha-nino'));
 
 async function quitarNino(id) {
   await sb.from('grupo_ninos').update({activo:false}).eq('id',id);
@@ -1299,7 +1430,10 @@ document.getElementById('mng-save').addEventListener('click', async()=>{
 // Exponer funciones globales de escuelita
 window.setModo = setModo;
 window.abrirDetalleGrupo = abrirDetalleGrupo;
-window.agregarNino = agregarNino;
+window.abrirModalAgregarNino = abrirModalAgregarNino;
+window.abrirFichaNino = abrirFichaNino;
+window.guardarFichaNino = guardarFichaNino;
+window.cerrarModal = cerrarModal;
 window.quitarNino = quitarNino;
 window.programarSesion = programarSesion;
 window.finalizarSesion = finalizarSesion;
@@ -1385,6 +1519,7 @@ const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clas
 const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas};
 
 function setPage(page) {
+  localStorage.setItem('altus_page', page);
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
@@ -2095,6 +2230,17 @@ initClasesHoy();
 initInstStats();
 initPresencia();
 initResStat();
+
+// Restaurar modo y página
+const savedModo = localStorage.getItem('altus_modo') || 'cerro';
+const savedPage = localStorage.getItem('altus_page') || 'asignacion';
+if (savedModo === 'escuelita') {
+  setModo('escuelita');
+  setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-grupos');
+} else {
+  setModo('cerro');
+  setPage(['asignacion','ranking','clases','instructores','clientes','asistencia','resenas'].includes(savedPage) ? savedPage : 'asignacion');
+}
 
 // Inicializar fechas escuelita
 document.getElementById('f-fecha-esc').value = fechaISO;
