@@ -1133,6 +1133,8 @@ function toggleDark() {
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const { createClient } = supabase;
+const hoy = new Date();
+const fechaISO = hoy.toISOString().split('T')[0];
 const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
 
 // Auth check
@@ -1796,8 +1798,6 @@ document.getElementById('mp2-save').addEventListener('click', async() => {
 });
 
 // Init
-const hoy = new Date();
-const fechaISO = hoy.toISOString().split('T')[0];
 document.getElementById('fecha-hoy').textContent = hoy.toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 document.getElementById('cli-fecha').value = fechaISO;
 document.getElementById('ma-fecha').valueAsDate = hoy;
