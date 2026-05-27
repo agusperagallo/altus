@@ -262,6 +262,8 @@ input:focus,select:focus{border-color:var(--accent)}
 @media(max-width:768px){
   #cl-cols{display:none}
   #ses-cols{display:none}
+  #asist-cols{display:none}
+  #esc-admin-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
@@ -512,7 +514,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Asistencia mensual</span><span class="panel-meta" id="asist-period">—</span></div>
-      <div class="t-cols"><div style="flex:1">Instructor</div><div style="width:90px;text-align:center;flex-shrink:0">Presentes</div><div style="width:90px;text-align:center;flex-shrink:0">Ausentes</div><div style="width:90px;text-align:center;flex-shrink:0">Clases</div><div style="width:110px;text-align:center;flex-shrink:0">Hs. trabajadas</div><div style="width:110px;text-align:center;flex-shrink:0">% Asistencia</div></div>
+      <div class="t-cols" id="asist-cols"><div style="flex:1">Instructor</div><div style="width:90px;text-align:center;flex-shrink:0">Presentes</div><div style="width:90px;text-align:center;flex-shrink:0">Ausentes</div><div style="width:90px;text-align:center;flex-shrink:0">Clases</div><div style="width:110px;text-align:center;flex-shrink:0">Hs. trabajadas</div><div style="width:110px;text-align:center;flex-shrink:0">% Asistencia</div></div>
       <div id="asist-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -581,7 +583,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Grupos</span><span class="panel-meta" id="esc-grupos-admin-ct">—</span></div>
-      <div class="t-cols"><div style="flex:1">Nombre</div><div style="width:120px;flex-shrink:0">Edades</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Niños</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div><div style="width:100px;text-align:center;flex-shrink:0">Acciones</div></div>
+      <div class="t-cols" id="esc-admin-cols"><div style="flex:1">Nombre</div><div style="width:120px;flex-shrink:0">Edades</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Niños</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div><div style="width:100px;text-align:center;flex-shrink:0">Acciones</div></div>
       <div id="esc-grupos-admin-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -1513,8 +1515,22 @@ async function loadEscAdminGrupos() {
   const {data} = await sb.from('grupos').select('*, instructores(nombre), grupo_ninos(id,activo)').order('nombre');
   document.getElementById('esc-grupos-admin-ct').textContent=`${data?.length||0} grupos`;
   if (!data?.length) { tabla.innerHTML='<div class="empty">No hay grupos. Creá el primero con el botón de arriba.</div>'; return; }
+  const isMobile = window.innerWidth < 768;
   tabla.innerHTML = data.map(g => {
     const ninos = (g.grupo_ninos||[]).filter(n=>n.activo).length;
+    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${g.nombre}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${g.instructores?.nombre||'Sin instructor'} · ${g.edad_min}-${g.edad_max} años · ${ninos} niños</div>
+        </div>
+        ${badge(g.activo?'Activo':'Inactivo',g.activo?'#0F6E56':'var(--silver)',g.activo?'#E1F5EE':'var(--ice)')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Ver grupo</button>
+        <button onclick="toggleGrupo('${g.id}',${g.activo})" style="flex:1;height:32px;border:none;border-radius:6px;background:${g.activo?'var(--danger-bg)':'#E1F5EE'};color:${g.activo?'var(--danger)':'#0F6E56'};font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">${g.activo?'Dar de baja':'Activar'}</button>
+      </div>
+    </div>`;
     return `<div class="t-row">
       <div style="flex:1;font-weight:500">${g.nombre}</div>
       <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted)">${g.edad_min}-${g.edad_max} años</div>
@@ -2396,6 +2412,7 @@ async function loadAsistencia() {
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
   const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas, instructor_confirmo').gte('fecha',desde).lte('fecha',hasta);
   if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  const isMobile = window.innerWidth < 768;
   tabla.innerHTML=insts.map(inst=>{
     const c=(clases||[]).filter(x=>x.instructor_id===inst.id);
     const pres=c.filter(x=>x.instructor_confirmo).length, total=c.length;
@@ -2403,6 +2420,15 @@ async function loadAsistencia() {
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
     const pB=pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
+    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="font-size:13px;font-weight:500;color:var(--navy)">${inst.nombre}</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-shrink:0">
+        <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:#0F6E56">${pres}</div><div style="font-size:9px;color:var(--silver)">PRES</div></div>
+        <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--danger)">${total-pres}</div><div style="font-size:9px;color:var(--silver)">AUS</div></div>
+        <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--muted)">${total}</div><div style="font-size:9px;color:var(--silver)">TOTAL</div></div>
+        ${badge(pct+'%',pC,pB)}
+      </div>
+    </div>`;
     return `<div class="t-row">
       <div style="flex:1;font-weight:500">${inst.nombre}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:#0F6E56">${pres}</div>
