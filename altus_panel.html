@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Altus — Panel</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/airbnb.css">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -56,9 +58,15 @@ body.no-scroll{overflow:hidden}
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);line-height:1}
 .stat-sub{font-size:11px;color:var(--silver);margin-top:4px}
 .grid-2{display:grid;grid-template-columns:1fr 340px;gap:18px}
-/* Date picker español */
-.date-picker{display:flex;gap:4px;align-items:center}
-.date-picker select{flex:1;min-width:0;padding:0 6px;font-size:13px}
+/* Flatpickr theme override */
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:var(--navy);border-color:var(--navy)}
+.flatpickr-day:hover{background:var(--ice)}
+.flatpickr-calendar{font-family:'DM Sans',sans-serif;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.flatpickr-input.active,.flatpickr-input:focus{border-color:var(--accent)}
+.flatpickr-months .flatpickr-month{background:var(--navy);color:#fff;border-radius:8px 8px 0 0}
+.flatpickr-weekday{color:var(--muted)}
+.numInputWrapper:hover{background:transparent}
+
 .panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px}
 .panel-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-size:13px;font-weight:500}
@@ -1019,6 +1027,7 @@ function toggleDark() {
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const { createClient } = supabase;
@@ -1229,7 +1238,7 @@ async function checkSuperadmin() {
 let modoActual = 'cerro';
 
 // Guardar modo y página al cambiar
-// ── FECHA EN ESPAÑOL ──────────────────────────────────
+// ── FECHA EN ESPAÑOL — Flatpickr ──────────────────────
 function normalizarFecha(val) {
   if (!val) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
@@ -1242,27 +1251,25 @@ function normalizarFecha(val) {
 }
 
 function initDatePickers() {
-  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const SEL = 'height:38px;border:1px solid var(--line);border-radius:5px;padding:0 6px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;-webkit-appearance:none;appearance:none';
+  if (typeof flatpickr === 'undefined') return;
+  const locale = {
+    weekdays:{shorthand:['Do','Lu','Ma','Mi','Ju','Vi','Sá'],longhand:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']},
+    months:{shorthand:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],longhand:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']},
+    firstDayOfWeek:1
+  };
   document.querySelectorAll('input[type="date"]').forEach(input => {
-    if (input.dataset.pickerDone) return;
-    input.dataset.pickerDone = '1';
-    const val = input.value || fechaISO;
-    const [y, m, d] = val.split('-');
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;gap:4px';
-    const selD = document.createElement('select');
-    const selM = document.createElement('select');
-    const selA = document.createElement('select');
-    [selD,selM,selA].forEach(s => s.style.cssText = SEL + ';flex:1;min-width:0');
-    for (let i=1;i<=31;i++) selD.innerHTML+=`<option value="${String(i).padStart(2,'0')}"${String(i).padStart(2,'0')===d?' selected':''}>${i}</option>`;
-    MESES.forEach((mes,idx)=>{ const v=String(idx+1).padStart(2,'0'); selM.innerHTML+=`<option value="${v}"${v===m?' selected':''}>${mes}</option>`; });
-    for (let i=2024;i<=2030;i++) selA.innerHTML+=`<option value="${i}"${String(i)===y?' selected':''}>${i}</option>`;
-    const sync=()=>{ input.value=`${selA.value}-${selM.value}-${selD.value}`; input.dispatchEvent(new Event('change')); };
-    selD.addEventListener('change',sync); selM.addEventListener('change',sync); selA.addEventListener('change',sync);
-    wrap.appendChild(selD); wrap.appendChild(selM); wrap.appendChild(selA);
-    input.style.display='none';
-    input.parentNode.insertBefore(wrap, input.nextSibling);
+    if (input._flatpickr) return;
+    flatpickr(input, {
+      locale,
+      dateFormat:'Y-m-d',
+      altInput:true,
+      altFormat:'d/m/Y',
+      defaultDate: input.value || fechaISO,
+      onChange: (dates, dateStr) => {
+        input.value = dateStr;
+        input.dispatchEvent(new Event('change'));
+      }
+    });
   });
 }
 
