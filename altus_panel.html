@@ -221,6 +221,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
       <div class="nav-sec">Sistema</div>
       <button class="nav-item" data-page="resenas"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.1 5.2l4-.6z"/></svg>Reseñas</button>
+      <button class="nav-item" data-page="usuarios" id="nav-usuarios" style="display:none"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg>Usuarios</button>
     </div>
     <!-- NAV ESCUELITA -->
     <div id="nav-escuelita" style="display:none">
@@ -236,7 +237,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div class="sidebar-footer">Temporada 2026 — v1.0</div>
 </aside>
 
-<main class="main">
+<main class="main" id="main-content" style="opacity:0;transition:opacity .2s">
   <div class="topbar">
     <span class="topbar-title" id="page-title">Panel de asignación</span>
     <!-- SWITCH CERRO / ESCUELITA -->
@@ -416,7 +417,24 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <div id="res-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
-  <!-- GRUPOS DE HOY (ESCUELITA) -->
+  <!-- USUARIOS -->
+  <div id="pg-usuarios" style="display:none" class="page-content">
+    <div class="page-table">
+      <div class="table-head">
+        <span class="panel-title">Usuarios del sistema</span>
+        <span class="panel-meta" id="usuarios-ct">—</span>
+      </div>
+      <div class="t-cols">
+        <div style="flex:1">Email</div>
+        <div style="width:130px;flex-shrink:0">Rol</div>
+        <div style="flex:1">Instructor vinculado</div>
+        <div style="width:100px;flex-shrink:0;text-align:center">Acciones</div>
+      </div>
+      <div id="usuarios-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+</main>
   <div id="pg-esc-grupos" style="display:none" class="page-content">
     <div class="page-filters">
       <div class="filter-group"><label>Fecha</label><input type="date" id="f-fecha-esc" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none"></div>
@@ -564,6 +582,15 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc"><button class="nivel-btn" data-niv="1">1</button><button class="nivel-btn" data-niv="2">2</button><button class="nivel-btn" data-niv="3">3</button><button class="nivel-btn" data-niv="4">4</button><button class="nivel-btn" data-niv="5">5</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Freestyle">Freestyle</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
+        <div style="margin-bottom:18px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Habilitado para Escuelita</div>
+            <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
+          </div>
+          <div id="ni-escuelita-toggle" onclick="toggleEscuelita()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+            <div id="ni-escuelita-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+          </div>
+        </div>
         <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p2-back">Atrás</button><button class="btn btn-primary" id="p2-next">Siguiente</button></div>
       </div>
 
@@ -648,7 +675,16 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <div style="margin-top:14px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">Habilitado para Escuelita</div>
+          <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
+        </div>
+        <div id="mei-escuelita-toggle" onclick="toggleEscuelitaEdit()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+          <div id="mei-escuelita-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
         <button class="btn btn-outline" id="mei-cancel">Cancelar</button>
         <button class="btn btn-primary" id="mei-save">Guardar cambios</button>
       </div>
@@ -946,6 +982,40 @@ function toggleDark() {
   </div>
 </div>
 
+<!-- MODAL CAMBIAR ROL -->
+<div class="modal-overlay" id="modal-cambiar-rol">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><span class="modal-title">Cambiar rol</span><button class="modal-close" id="mcr-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="background:var(--ice);border-radius:8px;padding:14px;margin-bottom:18px">
+        <div style="font-size:13px;font-weight:500" id="mcr-email">—</div>
+        <div style="font-size:12px;color:var(--silver);margin-top:2px" id="mcr-rol-actual">—</div>
+      </div>
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase">Nuevo rol</label>
+        <div style="display:flex;flex-direction:column;gap:8px" id="mcr-opciones">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--line);border-radius:8px">
+            <input type="radio" name="mcr-rol" value="admin" style="margin-top:2px">
+            <div><div style="font-size:13px;font-weight:500">Admin</div><div style="font-size:12px;color:var(--silver);margin-top:2px">Gestión completa excepto usuarios y superadmin</div></div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--line);border-radius:8px">
+            <input type="radio" name="mcr-rol" value="supervisor" style="margin-top:2px">
+            <div><div style="font-size:13px;font-weight:500">Supervisor</div><div style="font-size:12px;color:var(--silver);margin-top:2px">Asignación de clases y gestión del día a día</div></div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:12px;border:1.5px solid var(--line);border-radius:8px">
+            <input type="radio" name="mcr-rol" value="instructor" style="margin-top:2px">
+            <div><div style="font-size:13px;font-weight:500">Instructor</div><div style="font-size:12px;color:var(--silver);margin-top:2px">Solo accede a su panel personal</div></div>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-outline" style="flex:1" id="mcr-cancel">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" id="mcr-save">Guardar cambio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const { createClient } = supabase;
@@ -1083,7 +1153,80 @@ document.getElementById('mt-cerrar-btn').addEventListener('click', async() => {
   // Actualizar stat de período
   location.reload();
 });
-// ── MODO CERRO / ESCUELITA ────────────────────────────
+// ── USUARIOS ──────────────────────────────────────────
+let rolActual = null;
+
+async function loadUsuarios() {
+  const tabla = document.getElementById('usuarios-tabla');
+  tabla.innerHTML = '<div class="empty">Cargando...</div>';
+  const {data} = await sb.from('usuarios').select('*, instructores(nombre)').order('rol');
+  document.getElementById('usuarios-ct').textContent = `${data?.length||0} usuarios`;
+  if (!data?.length) { tabla.innerHTML = '<div class="empty">No hay usuarios</div>'; return; }
+
+  const colores = {superadmin:{c:'#7C3AED',bg:'#EDE9FE'}, admin:{c:'#0F6E56',bg:'#E1F5EE'}, supervisor:{c:'#185FA5',bg:'#E6F1FB'}, instructor:{c:'var(--muted)',bg:'var(--ice)'}};
+
+  tabla.innerHTML = data.map(u => {
+    const esSuperadmin = u.rol === 'superadmin';
+    const {c,bg} = colores[u.rol]||colores.instructor;
+    return `<div class="t-row">
+      <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.email}</div>
+      <div style="width:130px;flex-shrink:0"><span style="font-size:11px;font-weight:500;color:${c};background:${bg};padding:3px 10px;border-radius:20px">${u.rol}</span></div>
+      <div style="flex:1;font-size:12px;color:var(--muted)">${u.instructores?.nombre||'—'}</div>
+      <div style="width:100px;flex-shrink:0;text-align:center">
+        ${esSuperadmin ? '<span style="font-size:11px;color:var(--silver)">Protegido</span>' :
+          `<button class="inst-action-btn" onclick="abrirCambiarRol('${u.id}','${u.email}','${u.rol}')">Cambiar rol</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Modal cambiar rol
+let usuarioACambiar = null;
+document.getElementById('mcr-close').addEventListener('click',()=>closeModal('modal-cambiar-rol'));
+document.getElementById('mcr-cancel').addEventListener('click',()=>closeModal('modal-cambiar-rol'));
+document.getElementById('mcr-save').addEventListener('click', async()=>{
+  if (!usuarioACambiar) return;
+  const nuevoRol = document.querySelector('input[name="mcr-rol"]:checked')?.value;
+  if (!nuevoRol) { toast('Seleccioná un rol','err'); return; }
+  const btn = document.getElementById('mcr-save');
+  btn.textContent='Guardando...'; btn.disabled=true;
+  await sb.from('usuarios').update({rol:nuevoRol}).eq('id',usuarioACambiar);
+  // Si cambia a no-instructor, desvincular instructor_id
+  if (nuevoRol !== 'instructor') {
+    await sb.from('usuarios').update({instructor_id:null}).eq('id',usuarioACambiar);
+  }
+  closeModal('modal-cambiar-rol');
+  toast('Rol actualizado correctamente');
+  btn.textContent='Guardar cambio'; btn.disabled=false;
+  loadUsuarios();
+  usuarioACambiar=null;
+});
+
+function abrirCambiarRol(id, email, rolActualVal) {
+  usuarioACambiar = id;
+  document.getElementById('mcr-email').textContent = email;
+  document.getElementById('mcr-rol-actual').textContent = `Rol actual: ${rolActualVal}`;
+  // Seleccionar rol actual
+  const radios = document.querySelectorAll('input[name="mcr-rol"]');
+  radios.forEach(r => { r.checked = r.value === rolActualVal; });
+  openModal('modal-cambiar-rol');
+}
+window.abrirCambiarRol = abrirCambiarRol;
+
+// Mostrar sección usuarios solo al superadmin
+async function checkSuperadmin() {
+  const {data:{session}} = await sb.auth.getSession();
+  if (!session) return;
+  const {data:u} = await sb.from('usuarios').select('rol').eq('id',session.user.id).single();
+  if (u?.rol === 'superadmin') {
+    document.getElementById('nav-usuarios').style.display = 'flex';
+  }
+}
+
+// Agregar usuarios a PAGES y LOADERS
+PAGES.push('usuarios');
+TITLES['usuarios'] = 'Usuarios del sistema';
+LOADERS['usuarios'] = loadUsuarios;
 let modoActual = 'cerro';
 
 // Guardar modo y página al cambiar
@@ -1400,7 +1543,7 @@ document.getElementById('mdg-close').addEventListener('click',()=>closeModal('mo
 
 async function abrirModalNuevoGrupo() {
   // Cargar instructores en el select
-  const {data} = await sb.from('instructores').select('id,nombre').eq('activo',true).order('nombre');
+  const {data} = await sb.from('instructores').select('id,nombre').eq('activo',true).eq('escuelita',true).order('nombre');
   const sel = document.getElementById('ng-instructor');
   sel.innerHTML='<option value="">Seleccionar instructor...</option>';
   data?.forEach(i => { sel.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`; });
@@ -1550,7 +1693,8 @@ document.getElementById('mei-save').addEventListener('click', async()=>{
     nombre: nom,
     telefono: document.getElementById('mei-tel').value,
     email: document.getElementById('mei-email').value,
-    nivel_certificado: parseInt(document.getElementById('mei-nivel').value)
+    nivel_certificado: parseInt(document.getElementById('mei-nivel').value),
+    escuelita: meiEscuelita
   }).eq('id',id);
   if (error) { toast('Error al guardar','err'); return; }
   closeModal('modal-edit-inst');
@@ -1558,12 +1702,17 @@ document.getElementById('mei-save').addEventListener('click', async()=>{
   loadInstructores();
 });
 
-function editarInstructor(id, nombre, nivel, telefono, email) {
+async function editarInstructor(id, nombre, nivel, telefono, email) {
   document.getElementById('mei-id').value = id;
   document.getElementById('mei-nom').value = nombre;
   document.getElementById('mei-tel').value = telefono;
   document.getElementById('mei-email').value = email;
   document.getElementById('mei-nivel').value = nivel;
+  // Cargar campo escuelita desde DB
+  const {data} = await sb.from('instructores').select('escuelita').eq('id',id).single();
+  meiEscuelita = !!data?.escuelita;
+  document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
   openModal('modal-edit-inst');
 }
 
@@ -1776,7 +1925,29 @@ document.getElementById('p3-back').addEventListener('click',()=>irPaso(2));
 document.getElementById('p2-next').addEventListener('click',()=>irPaso(3));
 document.getElementById('p3-next').addEventListener('click',()=>{ mostrarConfirmacion(); irPaso(4); });
 document.getElementById('p4-back').addEventListener('click',()=>irPaso(3));
-document.querySelectorAll('#ni-nc .nivel-btn').forEach(btn=>btn.addEventListener('click',()=>{
+// Toggle escuelita — nuevo instructor
+let niEscuelita = false;
+function toggleEscuelita() {
+  niEscuelita = !niEscuelita;
+  document.getElementById('ni-escuelita-toggle').style.background = niEscuelita ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('ni-escuelita-knob').style.transform = niEscuelita ? 'translateX(18px)' : 'translateX(0)';
+}
+window.toggleEscuelita = toggleEscuelita;
+
+// Toggle escuelita — editar instructor
+let meiEscuelita = false;
+function toggleEscuelitaEdit() {
+  meiEscuelita = !meiEscuelita;
+  document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
+}
+window.toggleEscuelitaEdit = toggleEscuelitaEdit;
+
+// Instrucción global de abrir edición con escuelita
+const _origEditInst = window.editarInstructor;
+window.editarInstructor = async function(id) {
+  if (_origEditInst) _origEditInst(id);
+};
   document.querySelectorAll('#ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); nivelCert=btn.dataset.niv;
 }));
@@ -1833,7 +2004,8 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
     nombre:nom, email, telefono:document.getElementById('ni-tel').value,
     nivel_certificado:parseInt(nivelCert),
     fecha_ingreso:document.getElementById('ni-fecha').value,
-    activo:true
+    activo:true,
+    escuelita:niEscuelita
   }).select('id').single();
 
   if (instError) {
@@ -1864,6 +2036,9 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
   // Reset tags
   document.querySelectorAll('#ni-disc .tag-btn, #ni-niv .tag-btn, #ni-rang .tag-btn, #ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
   nivelCert=null;
+  niEscuelita=false;
+  document.getElementById('ni-escuelita-toggle').style.background='var(--line)';
+  document.getElementById('ni-escuelita-knob').style.transform='translateX(0)';
   btn.disabled=false; btn.innerHTML=originalText;
   toast(`${nom} agregado al sistema`);
   initInstStats();
@@ -2230,6 +2405,7 @@ initClasesHoy();
 initInstStats();
 initPresencia();
 initResStat();
+checkSuperadmin();
 
 // Restaurar modo y página
 const savedModo = localStorage.getItem('altus_modo') || 'cerro';
@@ -2241,6 +2417,10 @@ if (savedModo === 'escuelita') {
   setModo('cerro');
   setPage(['asignacion','ranking','clases','instructores','clientes','asistencia','resenas'].includes(savedPage) ? savedPage : 'asignacion');
 }
+// Mostrar contenido una vez restaurado
+requestAnimationFrame(() => {
+  document.getElementById('main-content').style.opacity = '1';
+});
 
 // Inicializar fechas escuelita
 document.getElementById('f-fecha-esc').value = fechaISO;
