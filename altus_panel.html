@@ -56,6 +56,9 @@ body.no-scroll{overflow:hidden}
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);line-height:1}
 .stat-sub{font-size:11px;color:var(--silver);margin-top:4px}
 .grid-2{display:grid;grid-template-columns:1fr 340px;gap:18px}
+/* Date picker español */
+.date-picker{display:flex;gap:4px;align-items:center}
+.date-picker select{flex:1;min-width:0;padding:0 6px;font-size:13px}
 .panel{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px}
 .panel-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-size:13px;font-weight:500}
@@ -1226,6 +1229,43 @@ async function checkSuperadmin() {
 let modoActual = 'cerro';
 
 // Guardar modo y página al cambiar
+// ── FECHA EN ESPAÑOL ──────────────────────────────────
+function normalizarFecha(val) {
+  if (!val) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  if (val.includes('/')) {
+    const p = val.split('/');
+    if (p[2]?.length === 4) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+    if (p[0]?.length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+  }
+  return val;
+}
+
+function initDatePickers() {
+  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const SEL = 'height:38px;border:1px solid var(--line);border-radius:5px;padding:0 6px;font-family:\'DM Sans\',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;-webkit-appearance:none;appearance:none';
+  document.querySelectorAll('input[type="date"]').forEach(input => {
+    if (input.dataset.pickerDone) return;
+    input.dataset.pickerDone = '1';
+    const val = input.value || fechaISO;
+    const [y, m, d] = val.split('-');
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:4px';
+    const selD = document.createElement('select');
+    const selM = document.createElement('select');
+    const selA = document.createElement('select');
+    [selD,selM,selA].forEach(s => s.style.cssText = SEL + ';flex:1;min-width:0');
+    for (let i=1;i<=31;i++) selD.innerHTML+=`<option value="${String(i).padStart(2,'0')}"${String(i).padStart(2,'0')===d?' selected':''}>${i}</option>`;
+    MESES.forEach((mes,idx)=>{ const v=String(idx+1).padStart(2,'0'); selM.innerHTML+=`<option value="${v}"${v===m?' selected':''}>${mes}</option>`; });
+    for (let i=2024;i<=2030;i++) selA.innerHTML+=`<option value="${i}"${String(i)===y?' selected':''}>${i}</option>`;
+    const sync=()=>{ input.value=`${selA.value}-${selM.value}-${selD.value}`; input.dispatchEvent(new Event('change')); };
+    selD.addEventListener('change',sync); selM.addEventListener('change',sync); selA.addEventListener('change',sync);
+    wrap.appendChild(selD); wrap.appendChild(selM); wrap.appendChild(selA);
+    input.style.display='none';
+    input.parentNode.insertBefore(wrap, input.nextSibling);
+  });
+}
+
 function setModo(modo) {
   modoActual = modo;
   localStorage.setItem('altus_modo', modo);
@@ -2399,6 +2439,7 @@ initInstStats();
 initPresencia();
 initResStat();
 checkSuperadmin();
+initDatePickers();
 
 // Restaurar modo y página
 const savedModo = localStorage.getItem('altus_modo') || 'cerro';
