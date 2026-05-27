@@ -1223,10 +1223,6 @@ async function checkSuperadmin() {
   }
 }
 
-// Agregar usuarios a PAGES y LOADERS
-PAGES.push('usuarios');
-TITLES['usuarios'] = 'Usuarios del sistema';
-LOADERS['usuarios'] = loadUsuarios;
 let modoActual = 'cerro';
 
 // Guardar modo y página al cambiar
@@ -1657,9 +1653,9 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 
 // Sidebar navigation
-const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos'];
-const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos'};
-const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas};
+const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
+const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos',usuarios:'Usuarios del sistema'};
+const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios};
 
 function setPage(page) {
   localStorage.setItem('altus_page', page);
