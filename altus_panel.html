@@ -261,13 +261,14 @@ input:focus,select:focus{border-color:var(--accent)}
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
   #cl-cols{display:none}
+  #ses-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
   .main{margin-left:0}.menu-toggle{display:flex}.overlay.open{display:block}
   .stats{grid-template-columns:1fr 1fr}.content{padding:14px}.page-content{padding:14px}
-  .topbar{padding:0 14px 0 54px}
-  .topbar-title{font-size:13px}
+  .topbar{padding:0 10px 0 56px;gap:6px}
+  .topbar-title{font-size:11px;max-width:100px}
   .badge-date{display:none}
   .page-filters{padding:12px}
   .filter-group{flex:1 1 calc(50% - 5px)}
@@ -567,7 +568,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Sesiones del día</span><span class="panel-meta" id="esc-ses-ct">—</span></div>
-      <div class="t-cols"><div style="width:70px;flex-shrink:0">Hora</div><div style="flex:1">Grupo</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Niños</div><div style="width:140px;flex-shrink:0">Estado</div></div>
+      <div class="t-cols" id="ses-cols"><div style="width:70px;flex-shrink:0">Hora</div><div style="flex:1">Grupo</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Niños</div><div style="width:140px;flex-shrink:0">Estado</div></div>
       <div id="esc-ses-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
