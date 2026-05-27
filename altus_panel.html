@@ -1942,12 +1942,9 @@ function toggleEscuelitaEdit() {
   document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
 }
 window.toggleEscuelitaEdit = toggleEscuelitaEdit;
+window.editarInstructor = editarInstructor;
 
-// Instrucción global de abrir edición con escuelita
-const _origEditInst = window.editarInstructor;
-window.editarInstructor = async function(id) {
-  if (_origEditInst) _origEditInst(id);
-};
+document.querySelectorAll('#ni-nc .nivel-btn').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('#ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active'); nivelCert=btn.dataset.niv;
 }));
