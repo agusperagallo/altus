@@ -280,6 +280,14 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div id="lista-clases"></div>
     <div id="lista-sesiones-inst" style="display:none"></div>
+    <!-- Proximas sesiones escuelita -->
+    <div id="proximas-sesiones-section" style="display:none;border-top:1px solid var(--line);margin-top:8px">
+      <button onclick="toggleProximasSesiones()" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--silver);display:flex;align-items:center;justify-content:space-between" id="btn-proximas-ses">
+        <span>Ver próximas sesiones</span>
+        <svg id="prox-ses-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div id="lista-proximas-sesiones" style="display:none"></div>
+    </div>
     <!-- Proximas clases -->
     <div style="border-top:1px solid var(--line);margin-top:8px" id="proximas-section">
       <button onclick="toggleProximas()" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--silver);display:flex;align-items:center;justify-content:space-between" id="btn-proximas">
@@ -708,6 +716,7 @@ function toggleDark() {
     document.getElementById('lista-clases').style.display = esCerro ? 'block' : 'none';
     document.getElementById('lista-sesiones-inst').style.display = !esCerro ? 'block' : 'none';
     document.getElementById('proximas-section').style.display = esCerro ? 'block' : 'none';
+    document.getElementById('proximas-sesiones-section').style.display = !esCerro ? 'block' : 'none';
     document.getElementById('inst-clases-titulo').textContent = esCerro ? 'Mis clases de hoy' : 'Mis sesiones de hoy';
     if (!esCerro) cargarSesionesEscuelita();
   };
@@ -768,6 +777,43 @@ function toggleDark() {
       }
     }
   }
+  let proximasSesionesCargadas = false;
+  window.toggleProximasSesiones = async function() {
+    const lista  = document.getElementById('lista-proximas-sesiones');
+    const arrow  = document.getElementById('prox-ses-arrow');
+    const btn    = document.getElementById('btn-proximas-ses');
+    const open   = lista.style.display === 'none';
+    lista.style.display  = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+    btn.querySelector('span').textContent = open ? 'Ocultar próximas sesiones' : 'Ver próximas sesiones';
+    if (open && !proximasSesionesCargadas) {
+      proximasSesionesCargadas = true;
+      lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver)">Cargando...</div>';
+      const {data} = await sb.from('sesiones_escuelita')
+        .select('*, grupos(nombre, nivel, edad_min, edad_max)')
+        .eq('instructor_id', INSTRUCTOR_ID)
+        .eq('estado', 'programada')
+        .gt('fecha', fechaISO)
+        .order('fecha').order('hora_inicio');
+      if (!data?.length) {
+        lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver);text-align:center">No tenés sesiones futuras programadas</div>';
+        return;
+      }
+      lista.innerHTML = data.map(s => {
+        const fechaStr = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+        return `<div style="padding:12px 16px;border-top:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--accent2)">${fechaStr}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-top:2px">${s.grupos?.nombre||'—'}</div>
+            <div style="font-size:11px;color:var(--silver);margin-top:1px">${s.grupos?.nivel||''} · ${s.grupos?.edad_min}-${s.grupos?.edad_max} años · ${s.hora_inicio?.slice(0,5)} hs</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);flex-shrink:0">${s.duracion_horas}h</div>
+        </div>`;
+      }).join('');
+    }
+  };
+
+  let proximasCargadas = false;
   window.toggleProximas = async function() {
     const lista = document.getElementById('lista-proximas');
     const arrow = document.getElementById('prox-arrow');
