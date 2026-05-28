@@ -272,6 +272,14 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <span class="panel-meta" id="panel-clases-meta">—</span>
     </div>
     <div id="lista-clases"></div>
+    <!-- Proximas clases -->
+    <div style="border-top:1px solid var(--line);margin-top:8px">
+      <button onclick="toggleProximas()" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--silver);display:flex;align-items:center;justify-content:space-between" id="btn-proximas">
+        <span>Ver próximas clases</span>
+        <svg id="prox-arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div id="lista-proximas" style="display:none"></div>
+    </div>
   </div>
 
   <!-- PUNTAJE -->
@@ -678,6 +686,44 @@ function toggleDark() {
         `Tenés ${formatMin(minRestantes)} para confirmar (límite: 17:00 hs)`;
     }
   }
+
+  let proximasCargadas = false;
+  window.toggleProximas = async function() {
+    const lista = document.getElementById('lista-proximas');
+    const arrow = document.getElementById('prox-arrow');
+    const btn   = document.getElementById('btn-proximas');
+    const open  = lista.style.display === 'none';
+    lista.style.display = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+    btn.querySelector('span').textContent = open ? 'Ocultar próximas clases' : 'Ver próximas clases';
+    if (open && !proximasCargadas) {
+      proximasCargadas = true;
+      lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver)">Cargando...</div>';
+      if (!INSTRUCTOR_ID) { lista.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+      const {data} = await sb.from('clases')
+        .select('*, clientes(nombre, rango_etario)')
+        .eq('instructor_id', INSTRUCTOR_ID)
+        .eq('estado', 'asignada')
+        .gt('fecha', fechaISO)
+        .order('fecha')
+        .order('hora_inicio');
+      if (!data?.length) {
+        lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver);text-align:center">No tenés clases futuras asignadas</div>';
+        return;
+      }
+      lista.innerHTML = data.map(c => {
+        const fechaStr = new Date(c.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+        return `<div style="padding:12px 16px;border-top:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--accent2)">${fechaStr}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-top:2px">${c.clientes?.nombre||'—'}</div>
+            <div style="font-size:11px;color:var(--silver);margin-top:1px">${c.disciplina} · ${c.nivel} · ${c.hora_inicio?.slice(0,5)} hs</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);flex-shrink:0">${c.duracion_horas}h</div>
+        </div>`;
+      }).join('');
+    }
+  };
 
   window.confirmarPresencia = async function() {
     const ahora = new Date();
