@@ -658,11 +658,11 @@ function toggleDark() {
     const { data } = await sb
       .from('asistencia')
       .select('*')
-      .eq('clase_id', null) // presencia general del día
+      .eq('instructor_id', INSTRUCTOR_ID)
       .eq('tipo', 'presente')
       .gte('registrado_en', fechaISO + 'T00:00:00')
       .lte('registrado_en', fechaISO + 'T23:59:59')
-      .single();
+      .maybeSingle();
 
     if (data) {
       const hora = new Date(data.registrado_en).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
@@ -684,6 +684,7 @@ function toggleDark() {
 
     if (INSTRUCTOR_ID) {
       await sb.from('asistencia').insert({
+        instructor_id: INSTRUCTOR_ID,
         clase_id: null,
         tipo: 'presente',
         registrado_en: ahora.toISOString()

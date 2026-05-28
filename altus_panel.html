@@ -1823,7 +1823,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 // Sidebar navigation
 const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
-const TITLES = {asignacion:'Panel de asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos',usuarios:'Usuarios del sistema'};
+const TITLES = {asignacion:'Asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
 const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios};
 
 function setPage(page) {
@@ -2059,13 +2059,23 @@ document.getElementById('fab-asist').addEventListener('click',()=>{ closeFab(); 
 document.getElementById('mp-close').addEventListener('click',()=>closeModal('modal-presencia'));
 document.getElementById('mp-presente').addEventListener('click',()=>{ applyCorr('presente'); });
 document.getElementById('mp-ausente').addEventListener('click',()=>{ applyCorr('ausente'); });
-function openCorr(nom,btn) { corrBtn=btn; document.getElementById('mp-nom').textContent=nom; openModal('modal-presencia'); }
-function applyCorr(st) {
+function openCorr(instId, nom, btn) { corrBtn=btn; corrInstId=instId; document.getElementById('mp-nom').textContent=nom; openModal('modal-presencia'); }
+let corrInstId = null;
+async function applyCorr(st) {
   closeModal('modal-presencia');
-  if (!corrBtn) return;
+  if (!corrBtn || !corrInstId) return;
+  // Guardar en DB
+  await sb.from('asistencia').insert({
+    instructor_id: corrInstId,
+    clase_id: null,
+    tipo: st,
+    registrado_en: new Date().toISOString()
+  });
   if (st==='presente') { corrBtn.textContent='Presente'; corrBtn.className='pres-badge pres-ok'; corrBtn.onclick=null; }
   else { corrBtn.textContent='Ausente'; corrBtn.className='pres-badge pres-aus'; corrBtn.onclick=null; }
-  toast('Presencia actualizada'); corrBtn=null;
+  toast('Presencia actualizada');
+  corrBtn=null; corrInstId=null;
+  initPresencia();
 }
 
 // Nuevo instructor
@@ -2229,8 +2239,9 @@ async function initInstStats() {
 
 async function initPresencia() {
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
-  const {data:pres}=await sb.from('asistencia').select('*').eq('tipo','presente').gte('registrado_en',fechaISO+'T00:00:00').lte('registrado_en',fechaISO+'T23:59:59');
-  const presIds=new Set((pres||[]).map(p=>p.clase_id));
+  // Buscar instructores que confirmaron presencia hoy via tabla asistencia con instructor_id
+  const {data:pres}=await sb.from('asistencia').select('instructor_id').eq('tipo','presente').gte('registrado_en',fechaISO+'T00:00:00').lte('registrado_en',fechaISO+'T23:59:59');
+  const presIds=new Set((pres||[]).map(p=>p.instructor_id));
   const lista=document.getElementById('pres-lista');
   if (!insts?.length) { lista.innerHTML='<div class="empty">Sin instructores</div>'; return; }
   let conf=0;
@@ -2238,7 +2249,7 @@ async function initPresencia() {
     const ok=presIds.has(inst.id); if(ok) conf++;
     return `<div class="pres-item">
       <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${ok?'Confirmó presencia':'Sin confirmar'}</div></div>
-      ${ok?`<span class="pres-badge pres-ok">Presente</span>`:`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.nombre}',this)">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`}
+      ${ok?`<span class="pres-badge pres-ok">Presente</span>`:`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this)">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`}
     </div>`;
   }).join('');
   document.getElementById('pres-resumen').textContent=`${conf} / ${insts.length} confirmados`;
