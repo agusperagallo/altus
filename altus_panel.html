@@ -10,6 +10,15 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
+/* SKELETON LOADER */
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e7eb 50%,#f0f2f5 75%);background-size:1200px 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:block}
+.sk-text{height:14px;margin-bottom:8px}
+.sk-title{height:22px;width:60%;margin-bottom:12px}
+.sk-stat{height:40px;margin-bottom:6px}
+.sk-row{height:48px;margin-bottom:4px;border-radius:4px}
+.sk-avatar{width:44px;height:44px;border-radius:50%}
+body.dark .sk{background:linear-gradient(90deg,#1e2330 25%,#252c3d 50%,#1e2330 75%);background-size:1200px 100%}
 :root{
   --navy:#1A1F2E;--navy2:#222840;--ice:#F0F2F5;--line:#E0E4EA;
   --silver:#8090A8;--accent:#1D9E75;--accent2:#0F6E56;
@@ -1467,6 +1476,20 @@ function initDatePickers() {
       }
     });
   });
+}
+
+// ── SKELETONS ─────────────────────────────────────────
+function skRows(n=4,h=48){return Array(n).fill(`<div class="sk sk-row" style="height:${h}px;margin-bottom:6px"></div>`).join('');}
+function skPresencia(n=5){return Array(n).fill(`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--ice)"><div style="flex:1"><div class="sk sk-text" style="width:55%;margin-bottom:6px"></div><div class="sk" style="height:10px;width:35%"></div></div><div class="sk" style="width:70px;height:26px;border-radius:20px"></div></div>`).join('');}
+function initSkeletons(){
+  try{ document.getElementById('clases-hoy-lista').innerHTML=skRows(3,56); }catch(e){}
+  try{ document.getElementById('pres-lista').innerHTML=skPresencia(5); }catch(e){}
+  try{ document.getElementById('rk-tabla').innerHTML=skRows(5); }catch(e){}
+  try{ document.getElementById('cl-tabla').innerHTML=skRows(3); }catch(e){}
+  try{ ['stat-clases','stat-insts','stat-resenas'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML='<span class="sk" style="display:inline-block;width:40px;height:28px;vertical-align:middle"></span>';
+  }); }catch(e){}
 }
 
 function setModo(modo) {
@@ -2941,6 +2964,7 @@ initPresencia();
 initResStat();
 checkSuperadmin();
 initDatePickers();
+initSkeletons();
 
 // Restaurar modo y página
 const savedModo = localStorage.getItem('altus_modo') || 'cerro';
