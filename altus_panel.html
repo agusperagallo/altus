@@ -463,7 +463,16 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Ranking de instructores</span><span class="panel-meta" id="rk-ct">—</span></div>
-      <div class="t-cols"><div style="width:40px;flex-shrink:0">#</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Opinión</div><div style="width:80px;text-align:center;flex-shrink:0">Asistencia</div><div style="width:80px;text-align:center;flex-shrink:0">Fideliz.</div><div style="width:80px;text-align:center;flex-shrink:0">Historial</div><div style="width:80px;text-align:center;flex-shrink:0">Perfil</div><div style="width:90px;text-align:center;flex-shrink:0">Total</div></div>
+      <div class="t-cols" id="rk-cols">
+        <div style="width:40px;flex-shrink:0">#</div>
+        <div style="flex:1;cursor:pointer;user-select:none" onclick="sortRanking('nombre')">Instructor <span id="sort-nombre"></span></div>
+        <div style="width:80px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_opinion')">Opinión <span id="sort-puntaje_opinion"></span></div>
+        <div style="width:80px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_asistencia')">Asistencia <span id="sort-puntaje_asistencia"></span></div>
+        <div style="width:80px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_fidelizacion')">Fideliz. <span id="sort-puntaje_fidelizacion"></span></div>
+        <div style="width:80px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_historico')">Historial <span id="sort-puntaje_historico"></span></div>
+        <div style="width:80px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_perfil')">Perfil <span id="sort-puntaje_perfil"></span></div>
+        <div style="width:90px;text-align:center;flex-shrink:0;cursor:pointer;user-select:none" onclick="sortRanking('puntaje_total')">Total <span id="sort-puntaje_total">↓</span></div>
+      </div>
       <div id="rk-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -1130,6 +1139,17 @@ function toggleDark() {
         <button class="btn btn-primary" style="flex:1" id="mcr-save">Guardar cambio</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE INSTRUCTOR RANKING -->
+<div class="modal-overlay" id="modal-rk-detalle">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <span class="modal-title" id="rk-det-titulo">Instructor</span>
+      <button class="modal-close" id="rk-det-close">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:80vh;overflow-y:auto" id="rk-det-body"></div>
   </div>
 </div>
 
@@ -2283,36 +2303,130 @@ async function initResStat() {
 }
 
 // ── PÁGINAS ────────────────────────────────────────────
-async function loadRanking() {
-  const disc=document.getElementById('f-disc').value;
-  const niv=document.getElementById('f-nivel').value;
-  const tabla=document.getElementById('rk-tabla');
-  tabla.innerHTML='<div class="empty">Cargando...</div>';
-  const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
-  if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
-  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  let filtrados=insts.filter(i=>{
-    const p=i.instructor_preferencias||[];
-    if (!disc&&!niv) return true;
-    return p.some(x=>(!disc||norm(x.disciplina)===norm(disc))&&(!niv||norm(x.nivel_max)===norm(niv)));
+let rkSortCol = 'puntaje_total';
+let rkSortDir = -1; // -1 desc, 1 asc
+let rkData = [];
+
+function sortRanking(col) {
+  if (rkSortCol === col) rkSortDir *= -1;
+  else { rkSortCol = col; rkSortDir = col === 'nombre' ? 1 : -1; }
+  renderRanking();
+}
+window.sortRanking = sortRanking;
+
+function renderRanking() {
+  // Actualizar indicadores de ordenamiento
+  ['nombre','puntaje_opinion','puntaje_asistencia','puntaje_fidelizacion','puntaje_historico','puntaje_perfil','puntaje_total'].forEach(col => {
+    const el = document.getElementById('sort-'+col);
+    if (el) el.textContent = col === rkSortCol ? (rkSortDir === -1 ? ' ↓' : ' ↑') : '';
   });
-  filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
-  document.getElementById('rk-ct').textContent=`${filtrados.length} instructores`;
-  tabla.innerHTML=filtrados.map((inst,i)=>{
-    const s=inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
-    const fn=x=>s?.[x]?.toFixed(1)||'—';
-    return `<div class="t-row">
+
+  const sorted = [...rkData].sort((a, b) => {
+    const sa = a.ranking_snapshot?.[a.ranking_snapshot.length-1];
+    const sb2 = b.ranking_snapshot?.[b.ranking_snapshot.length-1];
+    if (rkSortCol === 'nombre') {
+      return rkSortDir * a.nombre.localeCompare(b.nombre, 'es');
+    }
+    const va = sa?.[rkSortCol] || 0;
+    const vb = sb2?.[rkSortCol] || 0;
+    return rkSortDir * (va - vb);
+  });
+
+  const tabla = document.getElementById('rk-tabla');
+  tabla.innerHTML = sorted.map((inst, i) => {
+    const s = inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
+    const fn = x => {
+      const v = s?.[x];
+      return v != null ? v.toFixed(1) : '—';
+    };
+    // Resaltar columna activa
+    const colStyle = col => col === rkSortCol ? 'background:rgba(29,158,117,.06)' : '';
+    return `<div class="t-row" style="cursor:pointer" onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="width:40px;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:15px;color:${i<3?'var(--navy)':'var(--silver)'};font-weight:600;text-align:center">${i+1}</div>
-      <div style="flex:1"><div style="font-weight:500">${inst.nombre}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_opinion'))}</div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_asistencia'))}</div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_fidelizacion'))}</div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_historico'))}</div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${pill(fn('puntaje_perfil'))}</div>
-      <div style="width:90px;text-align:center;flex-shrink:0">${pill(fn('puntaje_total'))}</div>
+      <div style="flex:1;${colStyle('nombre')}"><div style="font-weight:500">${inst.nombre}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
+      <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_opinion')}">${pill(fn('puntaje_opinion'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_asistencia')}">${pill(fn('puntaje_asistencia'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_fidelizacion')}">${pill(fn('puntaje_fidelizacion'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_historico')}">${pill(fn('puntaje_historico'))}</div>
+      <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_perfil')}">${pill(fn('puntaje_perfil'))}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;${colStyle('puntaje_total')}">${pill(fn('puntaje_total'))}</div>
     </div>`;
   }).join('');
+  document.getElementById('rk-ct').textContent = `${sorted.length} instructores`;
 }
+
+async function loadRanking() {
+  const disc = document.getElementById('f-disc').value;
+  const niv  = document.getElementById('f-nivel').value;
+  const tabla = document.getElementById('rk-tabla');
+  tabla.innerHTML = '<div class="empty">Cargando...</div>';
+  const {data:insts} = await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
+  if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  rkData = insts.filter(i => {
+    const p = i.instructor_preferencias||[];
+    if (!disc && !niv) return true;
+    return p.some(x => (!disc||norm(x.disciplina)===norm(disc)) && (!niv||norm(x.nivel_max)===norm(niv)));
+  });
+  renderRanking();
+}
+
+async function abrirDetalleInstructor(instId, nombre) {
+  // Cargar datos del instructor para modal de detalle
+  const [{data:snap},{data:resenas},{data:clases}] = await Promise.all([
+    sb.from('ranking_snapshot').select('*').eq('instructor_id',instId).order('calculado_en',{ascending:false}).limit(1),
+    sb.from('resenas').select('puntaje_clase,puntaje_trato,comentario,creado_en').in('clase_id',
+      (await sb.from('clases').select('id').eq('instructor_id',instId)).data?.map(c=>c.id)||[]
+    ).order('creado_en',{ascending:false}).limit(5),
+    sb.from('clases').select('estado,instructor_confirmo,fecha').eq('instructor_id',instId).order('fecha',{ascending:false}).limit(20)
+  ]);
+
+  const s = snap?.[0];
+  const totalClases = clases?.length||0;
+  const completadas = clases?.filter(c=>c.estado==='completada').length||0;
+  const confirmadas = clases?.filter(c=>c.instructor_confirmo).length||0;
+  const promResena = resenas?.length
+    ? (resenas.reduce((a,r)=>a+(r.puntaje_clase+r.puntaje_trato)/2,0)/resenas.length).toFixed(1)
+    : '—';
+
+  const contenido = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      ${[
+        ['Opinión',s?.puntaje_opinion?.toFixed(1)||'—'],
+        ['Asistencia',s?.puntaje_asistencia?.toFixed(1)||'—'],
+        ['Fidelización',s?.puntaje_fidelizacion?.toFixed(1)||'—'],
+        ['Historial',s?.puntaje_historico?.toFixed(1)||'—'],
+        ['Perfil',s?.puntaje_perfil?.toFixed(1)||'—'],
+        ['TOTAL',s?.puntaje_total?.toFixed(1)||'—'],
+        ['Clases (muestra)',totalClases],
+        ['Prom. reseñas',promResena],
+      ].map(([label,val])=>`
+        <div style="background:var(--ice);border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${label}</div>
+          <div style="font-size:20px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)">${val}</div>
+        </div>`).join('')}
+    </div>
+    ${resenas?.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;font-weight:500">Últimas reseñas</div>
+      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:0">
+        ${resenas.map(r=>`
+          <div style="padding:10px 14px;border-bottom:1px solid var(--ice)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              ${pill(((r.puntaje_clase+r.puntaje_trato)/2).toFixed(1))}
+              <span style="font-size:11px;color:var(--silver)">${new Date(r.creado_en).toLocaleDateString('es-AR')}</span>
+            </div>
+            ${r.comentario?`<div style="font-size:12px;color:var(--muted);font-style:italic">"${r.comentario}"</div>`:''}
+          </div>`).join('')}
+      </div>` : '<div style="font-size:13px;color:var(--silver);text-align:center;padding:16px">Sin reseñas aún</div>'}
+  `;
+
+  // Abrir modal genérico de detalle
+  document.getElementById('rk-det-titulo').textContent = nombre;
+  document.getElementById('rk-det-body').innerHTML = contenido;
+  openModal('modal-rk-detalle');
+}
+window.abrirDetalleInstructor = abrirDetalleInstructor;
+document.getElementById('rk-det-close').addEventListener('click',()=>closeModal('modal-rk-detalle'));
 document.getElementById('f-disc').addEventListener('change',loadRanking);
 document.getElementById('f-nivel').addEventListener('change',loadRanking);
 
@@ -2597,10 +2711,49 @@ async function finalizarClase(claseId) {
   const {error} = await sb.from('clases').update({estado:'completada'}).eq('id',claseId);
   if (error) { toast('Error al finalizar','err'); return; }
   try { await sb.rpc('calcular_ranking'); } catch(e) {}
-  // Mostrar link de reseña
+
+  // Generar link de reseña
   const link = `${window.location.origin}/altus_resena.html?clase=${claseId}`;
-  navigator.clipboard?.writeText(link).catch(()=>{});
-  toast('Clase finalizada — Link de reseña copiado al portapapeles');
+
+  // Intentar enviar WhatsApp si el cliente tiene teléfono
+  const {data:clase} = await sb.from('clases').select('clientes(nombre,telefono), instructores(nombre), disciplina, nivel, hora_inicio').eq('id',claseId).single();
+  const tel = clase?.clientes?.telefono;
+
+  if (tel) {
+    try {
+      const resp = await fetch('/api/send-whatsapp', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          telefono: tel,
+          instructor: clase?.instructores?.nombre,
+          cliente: clase?.clientes?.nombre,
+          disciplina: clase?.disciplina,
+          nivel: clase?.nivel,
+          hora: clase?.hora_inicio?.slice(0,5),
+          claseId
+        })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        toast('Clase finalizada — WhatsApp enviado al cliente');
+      } else if (data.error === 'Twilio no configurado') {
+        // Copiar link manualmente si Twilio no está configurado
+        navigator.clipboard?.writeText(link).catch(()=>{});
+        toast('Clase finalizada — Link de reseña copiado (WhatsApp pendiente)');
+      } else {
+        navigator.clipboard?.writeText(link).catch(()=>{});
+        toast('Clase finalizada — No se pudo enviar WhatsApp, link copiado');
+      }
+    } catch(e) {
+      navigator.clipboard?.writeText(link).catch(()=>{});
+      toast('Clase finalizada — Link de reseña copiado al portapapeles');
+    }
+  } else {
+    navigator.clipboard?.writeText(link).catch(()=>{});
+    toast('Clase finalizada — Link de reseña copiado (sin teléfono del cliente)');
+  }
+
   loadClases(); initClasesHoy();
 }
 
