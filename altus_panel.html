@@ -654,10 +654,14 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div class="modal" style="max-width:400px">
     <div class="modal-head"><span class="modal-title">Corregir presencia</span><button class="modal-close" id="mp-close">&times;</button></div>
     <div class="modal-body">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Corrigiendo presencia de <strong id="mp-nom"></strong>. Queda registrado.</div>
-      <div style="display:flex;gap:10px">
-        <button style="flex:1;height:40px;border:1px solid #E1F5EE;border-radius:5px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" id="mp-presente">Marcar presente</button>
-        <button style="flex:1;height:40px;border:1px solid var(--danger-bg);border-radius:5px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer" id="mp-ausente">Marcar ausente</button>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6">Corrigiendo presencia de <strong id="mp-nom"></strong>. Queda registrado como corrección manual.</div>
+      <div style="display:flex;gap:10px;flex-direction:column">
+        <div id="mp-opt-presente">
+          <button style="width:100%;height:42px;border:1px solid #E1F5EE;border-radius:6px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500" id="mp-presente">✓ Marcar como Presente</button>
+        </div>
+        <div id="mp-opt-ausente">
+          <button style="width:100%;height:42px;border:1px solid var(--danger-bg);border-radius:6px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500" id="mp-ausente">✗ Marcar como Ausente</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2059,20 +2063,27 @@ document.getElementById('fab-asist').addEventListener('click',()=>{ closeFab(); 
 document.getElementById('mp-close').addEventListener('click',()=>closeModal('modal-presencia'));
 document.getElementById('mp-presente').addEventListener('click',()=>{ applyCorr('presente'); });
 document.getElementById('mp-ausente').addEventListener('click',()=>{ applyCorr('ausente'); });
-function openCorr(instId, nom, btn) { corrBtn=btn; corrInstId=instId; document.getElementById('mp-nom').textContent=nom; openModal('modal-presencia'); }
 let corrInstId = null;
+function openCorr(instId, nom, btn, estadoActual) {
+  corrBtn=btn; corrInstId=instId;
+  document.getElementById('mp-nom').textContent=nom;
+  // Mostrar u ocultar opciones según estado actual
+  document.getElementById('mp-opt-presente').style.display = estadoActual==='presente' ? 'none' : 'block';
+  document.getElementById('mp-opt-ausente').style.display = estadoActual==='ausente' ? 'none' : 'block';
+  openModal('modal-presencia');
+}
 async function applyCorr(st) {
   closeModal('modal-presencia');
   if (!corrBtn || !corrInstId) return;
-  // Guardar en DB
+  const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+  // Eliminar registro previo del día y crear nuevo
+  await sb.from('asistencia').delete().eq('instructor_id',corrInstId).gte('registrado_en',hoyAR+'T00:00:00').lte('registrado_en',hoyAR+'T23:59:59');
   await sb.from('asistencia').insert({
     instructor_id: corrInstId,
     clase_id: null,
     tipo: st,
     registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
   });
-  if (st==='presente') { corrBtn.textContent='Presente'; corrBtn.className='pres-badge pres-ok'; corrBtn.onclick=null; }
-  else { corrBtn.textContent='Ausente'; corrBtn.className='pres-badge pres-aus'; corrBtn.onclick=null; }
   toast('Presencia actualizada');
   corrBtn=null; corrInstId=null;
   initPresencia();
@@ -2239,18 +2250,27 @@ async function initInstStats() {
 
 async function initPresencia() {
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
-  // Buscar instructores que confirmaron presencia hoy via tabla asistencia con instructor_id
   const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
-  const {data:pres}=await sb.from('asistencia').select('instructor_id').eq('tipo','presente').gte('registrado_en',hoyAR+'T00:00:00').lte('registrado_en',hoyAR+'T23:59:59');
-  const presIds=new Set((pres||[]).map(p=>p.instructor_id));
+  const {data:pres}=await sb.from('asistencia').select('id, instructor_id, tipo').gte('registrado_en',hoyAR+'T00:00:00').lte('registrado_en',hoyAR+'T23:59:59');
+  // Último registro por instructor
+  const presMap={};
+  (pres||[]).forEach(p=>{ if(p.instructor_id) presMap[p.instructor_id]=p; });
   const lista=document.getElementById('pres-lista');
   if (!insts?.length) { lista.innerHTML='<div class="empty">Sin instructores</div>'; return; }
   let conf=0;
   lista.innerHTML=insts.map(inst=>{
-    const ok=presIds.has(inst.id); if(ok) conf++;
+    const reg=presMap[inst.id];
+    const presente=reg?.tipo==='presente';
+    const ausente=reg?.tipo==='ausente'||reg?.tipo==='ausente_sin_aviso';
+    if(presente) conf++;
+    let badge;
+    if(presente) badge=`<button class="pres-badge pres-ok" onclick="openCorr('${inst.id}','${inst.nombre}',this,'presente')" title="Click para corregir">Presente ✓</button>`;
+    else if(ausente) badge=`<button class="pres-badge pres-aus" onclick="openCorr('${inst.id}','${inst.nombre}',this,'ausente')" title="Click para corregir">Ausente</button>`;
+    else badge=`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this,'pendiente')">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`;
+    const sub=presente?'Confirmó presencia':ausente?'Marcado ausente':'Sin confirmar';
     return `<div class="pres-item">
-      <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${ok?'Confirmó presencia':'Sin confirmar'}</div></div>
-      ${ok?`<span class="pres-badge pres-ok">Presente</span>`:`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this)">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`}
+      <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${sub}</div></div>
+      ${badge}
     </div>`;
   }).join('');
   document.getElementById('pres-resumen').textContent=`${conf} / ${insts.length} confirmados`;
