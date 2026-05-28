@@ -2069,7 +2069,7 @@ async function applyCorr(st) {
     instructor_id: corrInstId,
     clase_id: null,
     tipo: st,
-    registrado_en: new Date().toISOString()
+    registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
   });
   if (st==='presente') { corrBtn.textContent='Presente'; corrBtn.className='pres-badge pres-ok'; corrBtn.onclick=null; }
   else { corrBtn.textContent='Ausente'; corrBtn.className='pres-badge pres-aus'; corrBtn.onclick=null; }
@@ -2240,7 +2240,8 @@ async function initInstStats() {
 async function initPresencia() {
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
   // Buscar instructores que confirmaron presencia hoy via tabla asistencia con instructor_id
-  const {data:pres}=await sb.from('asistencia').select('instructor_id').eq('tipo','presente').gte('registrado_en',fechaISO+'T00:00:00').lte('registrado_en',fechaISO+'T23:59:59');
+  const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+  const {data:pres}=await sb.from('asistencia').select('instructor_id').eq('tipo','presente').gte('registrado_en',hoyAR+'T00:00:00').lte('registrado_en',hoyAR+'T23:59:59');
   const presIds=new Set((pres||[]).map(p=>p.instructor_id));
   const lista=document.getElementById('pres-lista');
   if (!insts?.length) { lista.innerHTML='<div class="empty">Sin instructores</div>'; return; }

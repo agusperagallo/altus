@@ -655,13 +655,14 @@ function toggleDark() {
     }
 
     // Con instructor real — chequear si ya registró presencia hoy
+    const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
     const { data } = await sb
       .from('asistencia')
       .select('*')
       .eq('instructor_id', INSTRUCTOR_ID)
       .eq('tipo', 'presente')
-      .gte('registrado_en', fechaISO + 'T00:00:00')
-      .lte('registrado_en', fechaISO + 'T23:59:59')
+      .gte('registrado_en', hoyAR + 'T00:00:00')
+      .lte('registrado_en', hoyAR + 'T23:59:59')
       .maybeSingle();
 
     if (data) {
@@ -680,14 +681,14 @@ function toggleDark() {
 
   window.confirmarPresencia = async function() {
     const ahora = new Date();
-    const horaStr = ahora.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+    const horaStr = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Argentina/Buenos_Aires' });
 
     if (INSTRUCTOR_ID) {
       await sb.from('asistencia').insert({
         instructor_id: INSTRUCTOR_ID,
         clase_id: null,
         tipo: 'presente',
-        registrado_en: ahora.toISOString()
+        registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
       });
     }
 
