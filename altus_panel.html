@@ -1098,10 +1098,7 @@ function toggleDark() {
           </div>
         </div>
         <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:8px">Días de la semana</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${['Lu','Ma','Mi','Ju','Vi','Sá','Do'].map((d,i)=>`
-          <button id="ses-dia-${i}" onclick="toggleSesDia(${i})" style="width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s">${d}</button>`).join('')}
-        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="ses-dias-container"></div>
         <div style="font-size:11px;color:var(--silver);margin-top:8px" id="ses-preview">Seleccioná los días y las fechas</div>
       </div>
 
@@ -1750,6 +1747,20 @@ async function quitarNino(id) {
 // Programacion de sesiones
 let sesTipo = 'hoy';
 let sesDias = new Set();
+
+// Generar botones de días al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('ses-dias-container');
+  if (!container) return;
+  ['Lu','Ma','Mi','Ju','Vi','Sá','Do'].forEach((d,i) => {
+    const btn = document.createElement('button');
+    btn.id = 'ses-dia-'+i;
+    btn.textContent = d;
+    btn.onclick = () => toggleSesDia(i);
+    btn.style.cssText = 'width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s';
+    container.appendChild(btn);
+  });
+});
 
 function setSesTopo(tipo) {
   sesTipo = tipo;
