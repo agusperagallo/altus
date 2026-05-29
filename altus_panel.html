@@ -273,6 +273,7 @@ input:focus,select:focus{border-color:var(--accent)}
   #ses-cols{display:none}
   #asist-cols{display:none}
   #esc-admin-cols{display:none}
+  #fam-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
@@ -352,6 +353,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <button class="nav-item" data-page="esc-sesiones"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>Sesiones</button>
       <div class="nav-sec">Gestión</div>
       <button class="nav-item" data-page="esc-admin-grupos"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Administrar grupos</button>
+      <button class="nav-item" data-page="esc-familias"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-4 5-4s5 1.2 5 4"/><circle cx="12" cy="6" r="1.8"/><path d="M12 10c1.8 0 3 .8 3 2.5"/></svg>Familias</button>
       <button class="nav-item" data-page="instructores"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Instructores</button>
       <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
     </div>
@@ -515,12 +517,50 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <!-- CLIENTES -->
   <div id="pg-clientes" style="display:none" class="page-content">
     <div class="page-filters">
-      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre..."></div>
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre o teléfono..."></div>
+      <div class="filter-group"><label>Disciplina</label>
+        <select id="f-disc-cli">
+          <option value="">Todas</option>
+          <option value="Esqui">Esqui</option>
+          <option value="Snowboard">Snowboard</option>
+          <option value="Freestyle">Freestyle</option>
+        </select>
+      </div>
+      <div class="filter-group"><label>Ordenar por</label>
+        <select id="f-sort-cli">
+          <option value="nombre">Nombre A-Z</option>
+          <option value="ultima_clase">Última clase</option>
+          <option value="clases_total">Más clases</option>
+          <option value="instructor">Instructor</option>
+        </select>
+      </div>
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Clientes</span><span class="panel-meta" id="cli-ct">—</span></div>
-      <div class="t-cols"><div style="flex:1">Nombre</div><div style="width:120px;flex-shrink:0">Disciplina</div><div style="width:100px;flex-shrink:0">Nivel</div><div style="width:140px;flex-shrink:0">Teléfono</div></div>
+      <div class="t-cols" id="cli-cols">
+        <div style="flex:1">Nombre</div>
+        <div style="width:110px;flex-shrink:0">Disciplina</div>
+        <div style="width:90px;flex-shrink:0">Nivel</div>
+        <div style="width:150px;flex-shrink:0">Teléfono</div>
+        <div style="width:110px;flex-shrink:0">Última clase</div>
+        <div style="width:90px;text-align:center;flex-shrink:0">Clases</div>
+        <div style="width:140px;flex-shrink:0">Instructor habitual</div>
+      </div>
       <div id="cli-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE CLIENTE -->
+  <div class="modal-overlay" id="modal-cliente-det">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-head"><span class="modal-title" id="mcd-nombre">Cliente</span><button class="modal-close" id="mcd-close">&times;</button></div>
+      <div class="modal-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px" id="mcd-stats"></div>
+        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;font-weight:500">Contacto</div>
+        <div style="background:var(--ice);border-radius:8px;padding:14px;margin-bottom:16px" id="mcd-contacto"></div>
+        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;font-weight:500">Historial de clases</div>
+        <div id="mcd-historial" style="border:1px solid var(--line);border-radius:8px;overflow:hidden;max-height:220px;overflow-y:auto"></div>
+      </div>
     </div>
   </div>
 
@@ -603,6 +643,32 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <div class="table-head"><span class="panel-title">Grupos</span><span class="panel-meta" id="esc-grupos-admin-ct">—</span></div>
       <div class="t-cols" id="esc-admin-cols"><div style="flex:1">Nombre</div><div style="width:120px;flex-shrink:0">Edades</div><div style="flex:1">Instructor</div><div style="width:80px;text-align:center;flex-shrink:0">Niños</div><div style="width:100px;text-align:center;flex-shrink:0">Estado</div><div style="width:100px;text-align:center;flex-shrink:0">Acciones</div></div>
       <div id="esc-grupos-admin-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+  <!-- FAMILIAS (ESCUELITA) -->
+  <div id="pg-esc-familias" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group" style="flex:2">
+        <label>Buscar</label>
+        <input type="text" id="f-fam-buscar" placeholder="Nombre del niño o tutor..." oninput="loadFamilias()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none">
+      </div>
+      <div class="filter-group">
+        <label>Grupo</label>
+        <select id="f-fam-grupo" onchange="loadFamilias()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;outline:none;width:100%">
+          <option value="">Todos</option>
+        </select>
+      </div>
+    </div>
+    <div class="page-table">
+      <div class="table-head"><span class="panel-title">Niños y familias</span><span class="panel-meta" id="fam-ct">—</span></div>
+      <div class="t-cols" id="fam-cols">
+        <div style="flex:1">Niño</div>
+        <div style="flex:1">Grupo</div>
+        <div style="flex:1">Tutor 1</div>
+        <div style="width:130px;flex-shrink:0">Contacto</div>
+        <div style="width:80px;flex-shrink:0;text-align:center">Ficha</div>
+      </div>
+      <div id="fam-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
 
@@ -1140,6 +1206,14 @@ function toggleDark() {
     <div class="modal-body" style="max-height:80vh;overflow-y:auto">
 
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Datos del niño</div>
+      <!-- Buscar niño existente -->
+      <div style="background:var(--ice);border-radius:8px;padding:12px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px">¿Ya está en el sistema?</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="fn-buscar-existente" placeholder="Buscar por nombre..." oninput="buscarNinoExistente()" style="flex:1;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div id="fn-resultados-busqueda" style="margin-top:8px"></div>
+      </div>
       <div class="form-grid" style="margin-bottom:18px">
         <div class="fg"><label>Nombre</label><input type="text" id="fn-nombre" placeholder="Nombre completo"></div>
         <div class="fg"><label>Edad</label><input type="number" id="fn-edad" placeholder="Años" min="2" max="16"></div>
@@ -1364,7 +1438,87 @@ document.getElementById('mt-cerrar-btn').addEventListener('click', async() => {
   // Actualizar stat de período
   location.reload();
 });
-// ── USUARIOS ──────────────────────────────────────────
+// ── FAMILIAS (ESCUELITA) ──────────────────────────────
+async function loadFamilias() {
+  const tabla = document.getElementById('fam-tabla');
+  const buscar = document.getElementById('f-fam-buscar')?.value?.toLowerCase()||'';
+  const grupoFil = document.getElementById('f-fam-grupo')?.value||'';
+
+  // Cargar grupos en el filtro si no están
+  const selGrupo = document.getElementById('f-fam-grupo');
+  if (selGrupo && selGrupo.options.length === 1) {
+    const {data:grupos} = await sb.from('grupos').select('id,nombre').eq('activo',true).order('nombre');
+    (grupos||[]).forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.id; o.textContent = g.nombre;
+      selGrupo.appendChild(o);
+    });
+  }
+
+  const {data} = await sb.from('grupo_ninos')
+    .select('*, grupos(nombre, edad_min, edad_max)')
+    .eq('activo', true)
+    .order('nombre');
+
+  let ninos = data||[];
+  if (grupoFil) ninos = ninos.filter(n => n.grupo_id === grupoFil);
+  if (buscar) ninos = ninos.filter(n =>
+    n.nombre?.toLowerCase().includes(buscar) ||
+    n.tutor1_nombre?.toLowerCase().includes(buscar) ||
+    n.tutor2_nombre?.toLowerCase().includes(buscar)
+  );
+
+  document.getElementById('fam-ct').textContent = `${ninos.length} niños`;
+  const isMobile = window.innerWidth < 768;
+
+  if (!ninos.length) { tabla.innerHTML = '<div class="empty">No se encontraron niños</div>'; return; }
+
+  tabla.innerHTML = ninos.map(n => {
+    const tel = n.tutor1_telefono || n.telefono_contacto || '';
+    const telClean = tel.replace(/\s+/g,'').replace(/[^+\d]/g,'');
+    const telWA = telClean.startsWith('+') ? telClean.slice(1) : '54'+telClean;
+    const contactBtns = tel ? `
+      <a href="tel:${tel}" style="font-size:11px;color:var(--accent2);text-decoration:none;padding:3px 8px;border:1px solid var(--accent);border-radius:4px">📞</a>
+      <a href="https://wa.me/${telWA}" target="_blank" style="font-size:11px;color:#25D366;text-decoration:none;padding:3px 8px;border:1px solid #25D366;border-radius:4px">WA</a>
+    ` : '—';
+
+    const alertas = [];
+    if (n.alergias) alertas.push(`⚠️ ${n.alergias}`);
+    if (n.condiciones_medicas) alertas.push(`🏥 ${n.condiciones_medicas}`);
+
+    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${n.nombre} <span style="font-size:12px;color:var(--silver);font-weight:400">${n.edad} años</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${n.grupos?.nombre||'—'}</div>
+          ${n.tutor1_nombre ? `<div style="font-size:12px;color:var(--silver);margin-top:2px">${n.tutor1_nombre}${n.tutor1_relacion?' ('+n.tutor1_relacion+')':''}</div>` : ''}
+          ${alertas.length ? `<div style="font-size:11px;color:var(--danger);margin-top:4px">${alertas.join(' · ')}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">
+          ${contactBtns}
+          <button onclick="abrirFichaNino('${n.id}')" style="font-size:11px;color:var(--accent2);background:none;border:none;cursor:pointer;padding:3px 0">Ver ficha</button>
+        </div>
+      </div>
+    </div>`;
+
+    return `<div class="t-row">
+      <div style="flex:1">
+        <div style="font-weight:500">${n.nombre} <span style="font-size:11px;color:var(--silver);font-weight:400">${n.edad} años</span></div>
+        ${alertas.length ? `<div style="font-size:10px;color:var(--danger);margin-top:2px">${alertas.join(' · ')}</div>` : ''}
+      </div>
+      <div style="flex:1;font-size:12px;color:var(--muted)">${n.grupos?.nombre||'—'}</div>
+      <div style="flex:1;font-size:12px">
+        ${n.tutor1_nombre||'—'}
+        ${n.tutor1_relacion?`<span style="color:var(--silver)"> · ${n.tutor1_relacion}</span>`:''}
+      </div>
+      <div style="width:130px;flex-shrink:0;display:flex;gap:5px">${contactBtns}</div>
+      <div style="width:80px;flex-shrink:0;text-align:center">
+        <button class="inst-action-btn" onclick="abrirFichaNino('${n.id}')">Ficha</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.loadFamilias = loadFamilias;
 let rolActual = null;
 
 async function loadUsuarios() {
@@ -1528,8 +1682,8 @@ function setModo(modo) {
 }
 
 // ── PÁGINAS ESCUELITA ─────────────────────────────────
-const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos'];
-const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos'};
+const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos','esc-familias'];
+const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos','esc-familias':'Familias'};
 
 // Extender setPage para escuelita — se completa abajo cuando PAGES/TITLES/LOADERS estén definidos
 
@@ -1640,6 +1794,7 @@ async function loadEscAdminGrupos() {
       <div style="display:flex;gap:8px">
         <button onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Ver grupo</button>
         <button onclick="toggleGrupo('${g.id}',${g.activo})" style="flex:1;height:32px;border:none;border-radius:6px;background:${g.activo?'var(--danger-bg)':'#E1F5EE'};color:${g.activo?'var(--danger)':'#0F6E56'};font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">${g.activo?'Dar de baja':'Activar'}</button>
+        <button onclick="eliminarGrupo('${g.id}','${g.nombre}')" style="height:32px;width:32px;border:none;border-radius:6px;background:var(--danger-bg);color:var(--danger);font-size:14px;cursor:pointer">✕</button>
       </div>
     </div>`;
     return `<div class="t-row">
@@ -1648,9 +1803,10 @@ async function loadEscAdminGrupos() {
       <div style="flex:1;font-size:12px;color:var(--muted)">${g.instructores?.nombre||'—'}</div>
       <div style="width:80px;text-align:center;flex-shrink:0">${ninos}</div>
       <div style="width:100px;text-align:center;flex-shrink:0">${badge(g.activo?'Activo':'Inactivo',g.activo?'#0F6E56':'var(--silver)',g.activo?'#E1F5EE':'var(--ice)')}</div>
-      <div style="width:100px;text-align:center;flex-shrink:0;display:flex;gap:5px;justify-content:center">
+      <div style="width:120px;text-align:center;flex-shrink:0;display:flex;gap:4px;justify-content:center">
         <button class="inst-action-btn" onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')">Ver</button>
-        <button class="inst-action-btn ${g.activo?'danger':''}" onclick="toggleGrupo('${g.id}',${g.activo})">${g.activo?'Dar de baja':'Activar'}</button>
+        <button class="inst-action-btn ${g.activo?'danger':''}" onclick="toggleGrupo('${g.id}',${g.activo})">${g.activo?'Baja':'Activar'}</button>
+        <button class="inst-action-btn danger" onclick="eliminarGrupo('${g.id}','${g.nombre}')" title="Eliminar grupo">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -1690,8 +1846,26 @@ async function cargarNinosGrupo(grupoId) {
   }).join('');
 }
 
-// Ficha niño
-let ninoActualId = null;
+async function buscarNinoExistente() {
+  const q = document.getElementById('fn-buscar-existente').value.trim();
+  const res = document.getElementById('fn-resultados-busqueda');
+  if (q.length < 2) { res.innerHTML=''; return; }
+  const {data} = await sb.from('grupo_ninos').select('*, grupos(nombre)').ilike('nombre','%'+q+'%').eq('activo',true).limit(5);
+  if (!data?.length) { res.innerHTML='<div style="font-size:12px;color:var(--silver);padding:4px 0">Sin resultados</div>'; return; }
+  res.innerHTML = data.map(n => `
+    <div onclick="cargarNinoExistente('${n.id}')" style="padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;background:#fff;transition:background .15s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background='#fff'">
+      <div style="font-size:13px;font-weight:500">${n.nombre} <span style="color:var(--silver);font-weight:400">${n.edad} años</span></div>
+      <div style="font-size:11px;color:var(--muted)">${n.grupos?.nombre||'Sin grupo'}</div>
+    </div>`).join('');
+}
+window.buscarNinoExistente = buscarNinoExistente;
+
+async function cargarNinoExistente(id) {
+  await abrirFichaNino(id);
+  document.getElementById('fn-buscar-existente').value = '';
+  document.getElementById('fn-resultados-busqueda').innerHTML = '';
+}
+window.cargarNinoExistente = cargarNinoExistente;
 
 function abrirModalAgregarNino() {
   ninoActualId = null;
@@ -1921,6 +2095,16 @@ async function toggleGrupo(id, activo) {
   loadEscAdminGrupos();
 }
 
+async function eliminarGrupo(id, nombre) {
+  if (!confirm(`¿Eliminar el grupo "${nombre}"? Se eliminarán también sus sesiones. Esta acción no se puede deshacer.`)) return;
+  await sb.from('sesiones_escuelita').delete().eq('grupo_id',id);
+  await sb.from('grupo_ninos').delete().eq('grupo_id',id);
+  await sb.from('grupos').delete().eq('id',id);
+  toast(`Grupo "${nombre}" eliminado`);
+  loadEscAdminGrupos();
+}
+window.eliminarGrupo = eliminarGrupo;
+
 // Modal nuevo grupo
 document.getElementById('mng-close').addEventListener('click',()=>closeModal('modal-nuevo-grupo'));
 document.getElementById('mng-cancel').addEventListener('click',()=>closeModal('modal-nuevo-grupo'));
@@ -2048,7 +2232,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // Sidebar navigation
 const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
 const TITLES = {asignacion:'Asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
-const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios};
+const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias};
 
 function setPage(page) {
   localStorage.setItem('altus_page', page);
@@ -2728,21 +2912,128 @@ document.getElementById('f-buscar-inst').addEventListener('input',loadInstructor
 document.getElementById('f-activo-inst').addEventListener('change',loadInstructores);
 
 async function loadClientes() {
-  const buscar=document.getElementById('f-buscar-cli').value.toLowerCase();
-  const tabla=document.getElementById('cli-tabla');
-  tabla.innerHTML='<div class="empty">Cargando...</div>';
-  const {data}=await sb.from('clientes').select('*').order('nombre');
-  const filtrados=buscar?data?.filter(c=>c.nombre.toLowerCase().includes(buscar)):data;
-  document.getElementById('cli-ct').textContent=`${filtrados?.length||0} clientes`;
-  if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay clientes</div>'; return; }
-  tabla.innerHTML=filtrados.map(c=>`<div class="t-row">
-    <div style="flex:1;font-weight:500">${c.nombre}</div>
-    <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina||'—'}</div>
-    <div style="width:100px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.nivel_validado||c.nivel_declarado||'—'}</div>
-    <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.telefono||'—'}</div>
-  </div>`).join('');
+  const buscar = document.getElementById('f-buscar-cli').value.toLowerCase();
+  const disc   = document.getElementById('f-disc-cli').value;
+  const sort   = document.getElementById('f-sort-cli').value;
+  const tabla  = document.getElementById('cli-tabla');
+  tabla.innerHTML = skRows(4);
+
+  // Traer clientes con su historial de clases
+  const {data:clientes} = await sb.from('clientes').select('*').order('nombre');
+  const {data:clases}   = await sb.from('clases').select('id, cliente_id, instructor_id, fecha, disciplina, nivel, estado, instructores(nombre)').eq('estado','completada').order('fecha',{ascending:false});
+
+  if (!clientes?.length) { tabla.innerHTML='<div class="empty">No hay clientes</div>'; return; }
+
+  // Enriquecer clientes con datos de clases
+  const clasesPorCliente = {};
+  (clases||[]).forEach(c => {
+    if (!clasesPorCliente[c.cliente_id]) clasesPorCliente[c.cliente_id] = [];
+    clasesPorCliente[c.cliente_id].push(c);
+  });
+
+  let data = clientes.map(c => {
+    const historial = clasesPorCliente[c.id] || [];
+    const ultima = historial[0];
+    const instructores = [...new Set(historial.map(h=>h.instructores?.nombre).filter(Boolean))];
+    return { ...c, historial, ultima, instructorHabitual: instructores[0]||'—', totalClases: historial.length };
+  });
+
+  // Filtrar
+  if (buscar) data = data.filter(c => c.nombre?.toLowerCase().includes(buscar) || c.telefono?.includes(buscar));
+  if (disc)   data = data.filter(c => c.disciplina === disc);
+
+  // Ordenar
+  if (sort === 'nombre')      data.sort((a,b) => a.nombre.localeCompare(b.nombre,'es'));
+  if (sort === 'ultima_clase') data.sort((a,b) => (b.ultima?.fecha||'') > (a.ultima?.fecha||'') ? 1 : -1);
+  if (sort === 'clases_total') data.sort((a,b) => b.totalClases - a.totalClases);
+  if (sort === 'instructor')   data.sort((a,b) => a.instructorHabitual.localeCompare(b.instructorHabitual,'es'));
+
+  document.getElementById('cli-ct').textContent = `${data.length} clientes`;
+  if (!data.length) { tabla.innerHTML='<div class="empty">No hay clientes que coincidan</div>'; return; }
+
+  const isMobile = window.innerWidth < 768;
+  tabla.innerHTML = data.map(c => {
+    const ultimaStr = c.ultima ? new Date(c.ultima.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}) : '—';
+    const tel = c.telefono;
+    const telLink = tel ? `<a href="tel:${tel}" style="color:var(--accent2);text-decoration:none">${tel}</a>` : '—';
+    const waTel = tel ? tel.replace(/\D/g,'') : null;
+    const waLink = waTel ? `<a href="https://wa.me/${waTel}" target="_blank" style="color:var(--accent2);text-decoration:none;font-size:11px">WhatsApp →</a>` : '';
+
+    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${c.nombre}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.disciplina||'—'} · ${c.nivel_validado||'—'} · ${c.totalClases} clase${c.totalClases!==1?'s':''}</div>
+          ${tel?`<div style="font-size:12px;color:var(--accent2);margin-top:2px">${telLink}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:var(--silver)">${ultimaStr}</div>
+          ${waLink}
+        </div>
+      </div>
+    </div>`;
+
+    return `<div class="t-row" style="cursor:pointer" onclick="abrirClienteDetalle('${c.id}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+      <div style="flex:1;font-weight:500;color:var(--navy)">${c.nombre}</div>
+      <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina||'—'}</div>
+      <div style="width:90px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.nivel_validado||c.nivel_declarado||'—'}</div>
+      <div style="width:150px;flex-shrink:0;font-size:12px">${telLink} ${waLink}</div>
+      <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${ultimaStr}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;font-size:13px;font-weight:500;color:var(--navy)">${c.totalClases}</div>
+      <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.instructorHabitual}</div>
+    </div>`;
+  }).join('');
 }
+
+async function abrirClienteDetalle(clienteId) {
+  const {data:c} = await sb.from('clientes').select('*').eq('id',clienteId).single();
+  const {data:historial} = await sb.from('clases').select('fecha, disciplina, nivel, hora_inicio, duracion_horas, instructores(nombre)').eq('cliente_id',clienteId).eq('estado','completada').order('fecha',{ascending:false}).limit(20);
+
+  document.getElementById('mcd-nombre').textContent = c.nombre;
+
+  const totalClases = historial?.length||0;
+  const instructores = [...new Set((historial||[]).map(h=>h.instructores?.nombre).filter(Boolean))];
+  const tel = c.telefono;
+  const waTel = tel ? tel.replace(/\D/g,'') : null;
+
+  document.getElementById('mcd-stats').innerHTML = [
+    ['Clases totales', totalClases],
+    ['Disciplina', c.disciplina||'—'],
+    ['Nivel', c.nivel_validado||c.nivel_declarado||'—'],
+    ['Instructor habitual', instructores[0]||'—'],
+  ].map(([label,val])=>`<div style="background:var(--ice);border-radius:8px;padding:12px">
+    <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${label}</div>
+    <div style="font-size:14px;font-weight:500;color:var(--navy)">${val}</div>
+  </div>`).join('');
+
+  document.getElementById('mcd-contacto').innerHTML = tel
+    ? `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div style="font-size:14px;font-weight:500">${tel}</div>
+        <div style="display:flex;gap:8px">
+          <a href="tel:${tel}" style="padding:7px 14px;background:var(--navy);color:#fff;border-radius:6px;font-size:12px;text-decoration:none;font-family:'DM Sans',sans-serif">📞 Llamar</a>
+          ${waTel?`<a href="https://wa.me/${waTel}" target="_blank" style="padding:7px 14px;background:#25D366;color:#fff;border-radius:6px;font-size:12px;text-decoration:none;font-family:'DM Sans',sans-serif">WhatsApp</a>`:''}
+        </div>
+      </div>`
+    : '<div style="font-size:13px;color:var(--silver)">Sin teléfono registrado</div>';
+
+  document.getElementById('mcd-historial').innerHTML = historial?.length
+    ? historial.map(h=>`<div style="padding:10px 14px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-size:13px;font-weight:500">${new Date(h.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short',year:'2-digit'})}</div>
+          <div style="font-size:11px;color:var(--silver);margin-top:2px">${h.disciplina} · ${h.nivel} · ${h.instructores?.nombre||'—'}</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">${h.hora_inicio?.slice(0,5)} · ${h.duracion_horas}h</div>
+      </div>`).join('')
+    : '<div class="empty">Sin clases completadas</div>';
+
+  openModal('modal-cliente-det');
+}
+window.abrirClienteDetalle = abrirClienteDetalle;
+
+document.getElementById('mcd-close').addEventListener('click',()=>closeModal('modal-cliente-det'));
 document.getElementById('f-buscar-cli').addEventListener('input',loadClientes);
+document.getElementById('f-disc-cli').addEventListener('change',loadClientes);
+document.getElementById('f-sort-cli').addEventListener('change',loadClientes);
 
 async function loadAsistencia() {
   const mes=parseInt(document.getElementById('f-mes').value);
