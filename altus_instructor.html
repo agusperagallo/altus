@@ -324,38 +324,9 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div class="panel" id="panel-resenas" style="display:none">
     <div class="panel-header">
       <span class="panel-title">Mis reseñas</span>
-      <span class="panel-meta">47 reseñas &middot; Prom. 4.6</span>
+      <span class="panel-meta" id="resenas-meta">—</span>
     </div>
-    <div class="resena-item">
-      <div class="resena-top">
-        <div><div class="resena-nombre">Ana Castillo</div><div class="resena-fecha">22 de abril &middot; Esquí Niv. 2</div></div>
-        <div class="resena-scores">
-          <div class="resena-score">Clase <strong>5/5</strong></div>
-          <div class="resena-score">Trato <strong>5/5</strong></div>
-        </div>
-      </div>
-      <div class="resena-texto">"Excelente profesora, muy paciente y clara en las explicaciones. La recomiendo totalmente."</div>
-    </div>
-    <div class="resena-item">
-      <div class="resena-top">
-        <div><div class="resena-nombre">Roberto Díaz</div><div class="resena-fecha">20 de abril &middot; Esquí Niv. 3</div></div>
-        <div class="resena-scores">
-          <div class="resena-score">Clase <strong>4/5</strong></div>
-          <div class="resena-score">Trato <strong>5/5</strong></div>
-        </div>
-      </div>
-      <div class="resena-texto">"Muy buena experiencia, me ayudó a mejorar bastante la técnica."</div>
-    </div>
-    <div class="resena-item">
-      <div class="resena-top">
-        <div><div class="resena-nombre">Familia Torres</div><div class="resena-fecha">18 de abril &middot; Esquí Niv. 1</div></div>
-        <div class="resena-scores">
-          <div class="resena-score">Clase <strong>5/5</strong></div>
-          <div class="resena-score">Trato <strong>5/5</strong></div>
-        </div>
-      </div>
-      <div class="resena-texto">"Increíble con los chicos, los nenes quedaron felices y con ganas de volver."</div>
-    </div>
+    <div id="lista-resenas"><div style="padding:16px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div></div>
   </div>
 
   <!-- PERFIL -->
@@ -653,9 +624,9 @@ function toggleDark() {
 
   // --- FECHA ---
   const hoy = new Date();
-  const fechaStr = hoy.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  const fechaStr = hoy.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Argentina/Buenos_Aires' });
   document.getElementById('fecha-sub').textContent = fechaStr;
-  const fechaISO = hoy.toISOString().split('T')[0];
+  const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
 
   // --- PRESENCIA DEL DÍA ---
   const HORA_LIMITE = 17;

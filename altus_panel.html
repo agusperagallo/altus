@@ -1342,7 +1342,7 @@ function toggleDark() {
 <script>
 const { createClient } = supabase;
 const hoy = new Date();
-const fechaISO = hoy.toISOString().split('T')[0];
+const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
 const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
 
 // Auth check
