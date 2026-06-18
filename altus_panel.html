@@ -1245,8 +1245,8 @@ function toggleDark() {
     <div class="modal-body" style="max-height:80vh;overflow-y:auto">
 
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Datos del niño</div>
-      <!-- Buscar niño existente -->
-      <div style="background:var(--ice);border-radius:8px;padding:12px;margin-bottom:16px">
+      <!-- Buscar niño existente — solo al agregar -->
+      <div id="fn-buscar-panel" style="background:var(--ice);border-radius:8px;padding:12px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px">¿Ya está en el sistema?</div>
         <div style="display:flex;gap:8px">
           <input type="text" id="fn-buscar-existente" placeholder="Buscar por nombre..." oninput="buscarNinoExistente()" style="flex:1;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
@@ -1985,6 +1985,9 @@ function abrirModalAgregarNino() {
   ninoActualId = null;
   document.getElementById('fn-titulo').textContent = 'Agregar niño';
   document.getElementById('fn-save').textContent = 'Agregar al grupo';
+  document.getElementById('fn-buscar-panel').style.display = 'block';
+  document.getElementById('fn-buscar-existente').value = '';
+  document.getElementById('fn-resultados-busqueda').innerHTML = '';
   ['fn-nombre','fn-edad','fn-tel','fn-t1-nombre','fn-t1-relacion','fn-t1-tel',
    'fn-t2-nombre','fn-t2-relacion','fn-t2-tel','fn-alergias','fn-condiciones','fn-medicacion','fn-observaciones']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
@@ -2000,6 +2003,7 @@ async function abrirFichaNino(ninoId) {
   if (!n) return;
   document.getElementById('fn-titulo').textContent = n.nombre;
   document.getElementById('fn-save').textContent = 'Guardar cambios';
+  document.getElementById('fn-buscar-panel').style.display = 'none';
   document.getElementById('fn-nombre').value = n.nombre||'';
   document.getElementById('fn-edad').value = n.edad||'';
   document.getElementById('fn-nacimiento').value = n.fecha_nacimiento||'';
