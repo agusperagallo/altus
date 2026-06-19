@@ -718,7 +718,8 @@ function toggleDark() {
           <div class="clase-cliente">${s.grupos?.nombre||'—'}</div>
           <div class="clase-meta">${s.grupos?.nivel||''} · ${s.grupos?.edad_min}-${s.grupos?.edad_max} años</div>
         </div>
-        <div class="clase-actions">
+        <div class="clase-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${!cancelada ? `<button class="btn-sm" style="color:var(--navy);border-color:var(--line);font-weight:500" onclick="abrirListaNinos('${s.grupo_id}','${(s.grupos?.nombre||'').replace(/'/g,"\\'")}')">📋 Lista</button>` : ''}
           ${completada
             ? `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`
             : cancelada
@@ -729,6 +730,68 @@ function toggleDark() {
       </div>`;
     }).join('');
   }
+
+  // ── PASAR LISTA (asistencia de niños) ──────────────
+  window.abrirListaNinos = async function(grupoId, nombreGrupo) {
+    let modal = document.getElementById('modal-lista-ninos');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-lista-ninos';
+      modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:15px;font-weight:600" id="lista-ninos-titulo">Lista</span>
+            <button onclick="document.getElementById('modal-lista-ninos').remove()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+          </div>
+          <div id="lista-ninos-body" style="overflow-y:auto;padding:8px 0"></div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    }
+    document.getElementById('lista-ninos-titulo').textContent = nombreGrupo;
+    const body = document.getElementById('lista-ninos-body');
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:ninos} = await sb.from('grupo_ninos').select('*').eq('grupo_id', grupoId).eq('activo', true).order('nombre');
+    if (!ninos?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Sin niños en este grupo</div>'; return; }
+
+    const ids = ninos.map(n=>n.id);
+    const {data:asist} = await sb.from('asistencia_ninos').select('nino_id, presente').eq('fecha', fechaISO).in('nino_id', ids);
+    const asistMap = {};
+    (asist||[]).forEach(a => { asistMap[a.nino_id] = a.presente; });
+
+    body.innerHTML = ninos.map(n => {
+      const estado = asistMap[n.id];
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--ice2)">
+        <div>
+          <div style="font-size:14px;font-weight:500">${n.nombre}</div>
+          <div style="font-size:11px;color:var(--silver)">${n.edad} años</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="marcarAsistNinoInst('${n.id}',true,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:16px">✓</button>
+          <button onclick="marcarAsistNinoInst('${n.id}',false,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===false?'#E24B4A':'var(--line)'};background:${estado===false?'#FEE2E2':'#fff'};color:${estado===false?'#E24B4A':'var(--silver)'};cursor:pointer;font-size:16px">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  window.marcarAsistNinoInst = async function(ninoId, presente, btn) {
+    await sb.from('asistencia_ninos').upsert({
+      nino_id: ninoId, fecha: fechaISO, presente,
+      registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
+    }, {onConflict:'nino_id,fecha'});
+    toast(presente ? 'Presente registrado' : 'Ausente registrado');
+    // Refrescar botones visualmente
+    const parent = btn.parentElement;
+    const btns = parent.querySelectorAll('button');
+    btns[0].style.borderColor = presente ? '#0F6E56' : 'var(--line)';
+    btns[0].style.background = presente ? '#E1F5EE' : '#fff';
+    btns[0].style.color = presente ? '#0F6E56' : 'var(--silver)';
+    btns[1].style.borderColor = !presente ? '#E24B4A' : 'var(--line)';
+    btns[1].style.background = !presente ? '#FEE2E2' : '#fff';
+    btns[1].style.color = !presente ? '#E24B4A' : 'var(--silver)';
+  };
 
   window.finalizarSesionInst = async function(sesionId, btn) {
     btn.textContent = 'Guardando...'; btn.disabled = true;
