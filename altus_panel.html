@@ -2909,7 +2909,7 @@ function setPage(page) {
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
-  document.getElementById('page-title').textContent = TITLES[page]||page;
+  document.getElementById('page-title').textContent = TITLES[page]||TITLES_ESC[page]||page;
   if (LOADERS[page]) LOADERS[page]();
   if (page==='esc-grupos')       loadEscGruposHoy();
   if (page==='esc-sesiones')     loadEscSesiones();
