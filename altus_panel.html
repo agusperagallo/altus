@@ -275,6 +275,7 @@ input:focus,select:focus{border-color:var(--accent)}
   #esc-admin-cols{display:none}
   #fam-cols{display:none}
   #ea-ninos-cols{display:none}
+  #ei-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
@@ -718,6 +719,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--line)">
       <button id="esc-asist-tab-ninos" onclick="setEscAsistTab('ninos')" style="padding:10px 4px;background:none;border:none;border-bottom:2px solid var(--navy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--navy);cursor:pointer">Por niño</button>
       <button id="esc-asist-tab-grupos" onclick="setEscAsistTab('grupos')" style="padding:10px 4px;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;margin-left:16px">Por grupo</button>
+      <button id="esc-asist-tab-inst" onclick="setEscAsistTab('inst')" style="padding:10px 4px;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;margin-left:16px">Instructores</button>
     </div>
 
     <!-- TAB: POR NIÑO -->
@@ -771,6 +773,20 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <div class="page-table">
         <div class="table-head"><span class="panel-title">Historial de sesiones</span><span class="panel-meta" id="eg-ct">—</span></div>
         <div id="eg-tabla"><div class="empty">Seleccioná un grupo para ver su historial</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: INSTRUCTORES ESCUELITA -->
+    <div id="esc-asist-panel-inst" style="display:none">
+      <div class="page-table">
+        <div class="table-head"><span class="panel-title">Instructores de Escuelita</span><span class="panel-meta" id="ei-ct">—</span></div>
+        <div class="t-cols" id="ei-cols">
+          <div style="flex:1">Instructor</div>
+          <div style="width:100px;text-align:center;flex-shrink:0">Esta semana</div>
+          <div style="width:100px;text-align:center;flex-shrink:0">Este mes</div>
+          <div style="width:110px;text-align:center;flex-shrink:0">Horas (mes)</div>
+        </div>
+        <div id="ei-tabla"><div class="empty">Cargando...</div></div>
       </div>
     </div>
   </div>
@@ -1644,15 +1660,18 @@ window.loadFamilias = loadFamilias;
 
 // ── ASISTENCIA ESCUELITA ──────────────────────────────
 function setEscAsistTab(tab) {
-  const esNinos = tab === 'ninos';
-  document.getElementById('esc-asist-tab-ninos').style.borderBottomColor = esNinos ? 'var(--navy)' : 'transparent';
-  document.getElementById('esc-asist-tab-ninos').style.color = esNinos ? 'var(--navy)' : 'var(--muted)';
-  document.getElementById('esc-asist-tab-grupos').style.borderBottomColor = !esNinos ? 'var(--navy)' : 'transparent';
-  document.getElementById('esc-asist-tab-grupos').style.color = !esNinos ? 'var(--navy)' : 'var(--muted)';
-  document.getElementById('esc-asist-panel-ninos').style.display = esNinos ? 'block' : 'none';
-  document.getElementById('esc-asist-panel-grupos').style.display = !esNinos ? 'block' : 'none';
-  if (esNinos) loadAsistEscNinos();
-  else cargarSelectorGrupoAsist();
+  document.getElementById('esc-asist-tab-ninos').style.borderBottomColor = tab==='ninos' ? 'var(--navy)' : 'transparent';
+  document.getElementById('esc-asist-tab-ninos').style.color = tab==='ninos' ? 'var(--navy)' : 'var(--muted)';
+  document.getElementById('esc-asist-tab-grupos').style.borderBottomColor = tab==='grupos' ? 'var(--navy)' : 'transparent';
+  document.getElementById('esc-asist-tab-grupos').style.color = tab==='grupos' ? 'var(--navy)' : 'var(--muted)';
+  document.getElementById('esc-asist-tab-inst').style.borderBottomColor = tab==='inst' ? 'var(--navy)' : 'transparent';
+  document.getElementById('esc-asist-tab-inst').style.color = tab==='inst' ? 'var(--navy)' : 'var(--muted)';
+  document.getElementById('esc-asist-panel-ninos').style.display = tab==='ninos' ? 'block' : 'none';
+  document.getElementById('esc-asist-panel-grupos').style.display = tab==='grupos' ? 'block' : 'none';
+  document.getElementById('esc-asist-panel-inst').style.display = tab==='inst' ? 'block' : 'none';
+  if (tab==='ninos') loadAsistEscNinos();
+  else if (tab==='grupos') cargarSelectorGrupoAsist();
+  else if (tab==='inst') loadAsistEscInstructores();
 }
 window.setEscAsistTab = setEscAsistTab;
 
@@ -1789,6 +1808,151 @@ async function loadAsistEscGrupo() {
   }).join('');
 }
 window.loadAsistEscGrupo = loadAsistEscGrupo;
+
+// ── ASISTENCIA POR INSTRUCTOR (ESCUELITA) ─────────────
+function getSemanaActual() {
+  const hoy = new Date();
+  const diaSemana = hoy.getDay();
+  const offsetLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate() + offsetLunes);
+  const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+  return { desde: lunes.toISOString().split('T')[0], hasta: domingo.toISOString().split('T')[0] };
+}
+function getMesActual() {
+  const hoy = new Date();
+  const desde = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-01`;
+  const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0).getDate();
+  const hasta = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+  return { desde, hasta };
+}
+
+async function loadAsistEscInstructores() {
+  const tabla = document.getElementById('ei-tabla');
+  tabla.innerHTML = '<div class="empty">Cargando...</div>';
+
+  const {data:insts} = await sb.from('instructores').select('id,nombre').eq('activo',true).eq('escuelita',true).order('nombre');
+  if (!insts?.length) { tabla.innerHTML = '<div class="empty">No hay instructores de escuelita</div>'; return; }
+
+  const semana = getSemanaActual();
+  const mes = getMesActual();
+
+  const {data:sesionesMes} = await sb.from('sesiones_escuelita').select('instructor_id,fecha,duracion_horas').gte('fecha',mes.desde).lte('fecha',mes.hasta);
+
+  document.getElementById('ei-ct').textContent = `${insts.length} instructores`;
+  const isMobile = window.innerWidth < 768;
+
+  tabla.innerHTML = insts.map(inst => {
+    const delMes = (sesionesMes||[]).filter(s=>s.instructor_id===inst.id);
+    const deLaSemana = delMes.filter(s=>s.fecha>=semana.desde && s.fecha<=semana.hasta);
+    const horasMes = delMes.reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
+    const onclick = `onclick="abrirDetalleSesionesInstEsc('${inst.id}','${inst.nombre.replace(/'/g,"\\'")}')" style="cursor:pointer"`;
+
+    if (isMobile) return `<div ${onclick} style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--navy)">${deLaSemana.length}</div><div style="font-size:9px;color:var(--silver)">SEM</div></div>
+        <div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--navy)">${delMes.length}</div><div style="font-size:9px;color:var(--silver)">MES</div></div>
+      </div>
+    </div>`;
+
+    return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+      <div style="flex:1;font-weight:500">${inst.nombre}</div>
+      <div style="width:100px;text-align:center;flex-shrink:0">${deLaSemana.length} sesiones</div>
+      <div style="width:100px;text-align:center;flex-shrink:0">${delMes.length} sesiones</div>
+      <div style="width:110px;text-align:center;flex-shrink:0">${horasMes.toFixed(1)} hs</div>
+    </div>`;
+  }).join('');
+}
+window.loadAsistEscInstructores = loadAsistEscInstructores;
+
+let deiInstId = null;
+async function abrirDetalleSesionesInstEsc(instId, nombre) {
+  let modal = document.getElementById('modal-detalle-sesiones-inst');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-detalle-sesiones-inst';
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:560px">
+        <div class="modal-head"><span class="modal-title" id="dei-titulo">Sesiones</span><button class="modal-close" onclick="document.getElementById('modal-detalle-sesiones-inst').remove()">&times;</button></div>
+        <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button id="dei-tab-semana" onclick="setDeiTab('semana')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Esta semana</button>
+            <button id="dei-tab-mes" onclick="setDeiTab('mes')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Este mes</button>
+          </div>
+          <div id="dei-stats" style="display:flex;gap:10px;margin-bottom:16px"></div>
+          <div id="dei-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } else {
+    modal.style.display = 'flex';
+  }
+  document.getElementById('dei-titulo').textContent = nombre;
+  deiInstId = instId;
+  setDeiTab('semana');
+}
+window.abrirDetalleSesionesInstEsc = abrirDetalleSesionesInstEsc;
+
+function setDeiTab(tab) {
+  const esSemana = tab === 'semana';
+  document.getElementById('dei-tab-semana').style.background = esSemana ? 'var(--navy)' : '#fff';
+  document.getElementById('dei-tab-semana').style.color = esSemana ? '#fff' : 'var(--muted)';
+  document.getElementById('dei-tab-mes').style.background = !esSemana ? 'var(--navy)' : '#fff';
+  document.getElementById('dei-tab-mes').style.color = !esSemana ? '#fff' : 'var(--muted)';
+  cargarSesionesInstEscDetalle(tab);
+}
+window.setDeiTab = setDeiTab;
+
+async function cargarSesionesInstEscDetalle(periodo) {
+  const lista = document.getElementById('dei-lista');
+  const stats = document.getElementById('dei-stats');
+  lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+  stats.innerHTML = '';
+
+  const {desde, hasta} = periodo === 'semana' ? getSemanaActual() : getMesActual();
+
+  const {data:sesiones} = await sb.from('sesiones_escuelita')
+    .select('*, grupos(nombre, nivel)')
+    .eq('instructor_id', deiInstId)
+    .gte('fecha', desde).lte('fecha', hasta)
+    .order('fecha').order('hora_inicio');
+
+  const completadas = (sesiones||[]).filter(s=>s.estado==='completada').length;
+  const horas = (sesiones||[]).reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
+
+  stats.innerHTML = `
+    <div style="flex:1;background:var(--ice);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)">${sesiones?.length||0}</div>
+      <div style="font-size:9px;color:var(--silver);text-transform:uppercase">Sesiones</div>
+    </div>
+    <div style="flex:1;background:#E1F5EE;border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:#0F6E56">${completadas}</div>
+      <div style="font-size:9px;color:#0F6E56;text-transform:uppercase">Completadas</div>
+    </div>
+    <div style="flex:1;background:var(--ice);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)">${horas.toFixed(1)}</div>
+      <div style="font-size:9px;color:var(--silver);text-transform:uppercase">Horas</div>
+    </div>
+  `;
+
+  if (!sesiones?.length) { lista.innerHTML = '<div class="empty">Sin sesiones en este período</div>'; return; }
+
+  lista.innerHTML = sesiones.map(s => {
+    const fechaStr = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    const estadoColor = s.estado==='completada'?'#0F6E56':s.estado==='cancelada'?'var(--danger)':'var(--accent2)';
+    const estadoBg = s.estado==='completada'?'#E1F5EE':s.estado==='cancelada'?'var(--danger-bg)':'#E6F1FB';
+    return `<div style="padding:10px 14px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${fechaStr} · ${s.hora_inicio?.slice(0,5)}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:1px">${s.grupos?.nombre||'—'} · ${s.grupos?.nivel||''} · ${s.duracion_horas}h</div>
+      </div>
+      <span style="font-size:10px;font-weight:500;color:${estadoColor};background:${estadoBg};padding:2px 8px;border-radius:10px;flex-shrink:0">${s.estado}</span>
+    </div>`;
+  }).join('');
+}
 
 // Modal de detalle: quién asistió ese día
 async function abrirDetalleSesionAsist(grupoId, fecha, fechaStr) {
@@ -3572,7 +3736,8 @@ async function loadAsistencia() {
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
     const pB=pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
-    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+    const onclick = `onclick="abrirDetalleClasesInstructor('${inst.id}','${inst.nombre.replace(/'/g,"\\'")}','${desde}','${hasta}')" style="cursor:pointer"`;
+    if (isMobile) return `<div ${onclick} style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div style="font-size:13px;font-weight:500;color:var(--navy)">${inst.nombre}</div>
       <div style="display:flex;gap:12px;align-items:center;flex-shrink:0">
         <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:#0F6E56">${pres}</div><div style="font-size:9px;color:var(--silver)">PRES</div></div>
@@ -3581,7 +3746,7 @@ async function loadAsistencia() {
         ${badge(pct+'%',pC,pB)}
       </div>
     </div>`;
-    return `<div class="t-row">
+    return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="flex:1;font-weight:500">${inst.nombre}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:#0F6E56">${pres}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:var(--danger)">${total-pres}</div>
@@ -3593,6 +3758,112 @@ async function loadAsistencia() {
 }
 document.getElementById('f-mes').addEventListener('change',loadAsistencia);
 document.getElementById('f-anio').addEventListener('change',loadAsistencia);
+
+// Detalle de clases del instructor por semana/periodo
+async function abrirDetalleClasesInstructor(instId, nombre, desdeDefault, hastaDefault) {
+  let modal = document.getElementById('modal-detalle-clases-inst');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-detalle-clases-inst';
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:560px">
+        <div class="modal-head"><span class="modal-title" id="dci-titulo">Clases</span><button class="modal-close" onclick="document.getElementById('modal-detalle-clases-inst').remove()">&times;</button></div>
+        <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button id="dci-tab-semana" onclick="setDciTab('semana')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Esta semana</button>
+            <button id="dci-tab-mes" onclick="setDciTab('mes')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Este mes</button>
+          </div>
+          <div id="dci-stats" style="display:flex;gap:10px;margin-bottom:16px"></div>
+          <div id="dci-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } else {
+    modal.style.display = 'flex';
+  }
+  document.getElementById('dci-titulo').textContent = nombre;
+  dciInstId = instId;
+  dciMesDefault = {desde: desdeDefault, hasta: hastaDefault};
+  setDciTab('semana');
+}
+window.abrirDetalleClasesInstructor = abrirDetalleClasesInstructor;
+
+let dciInstId = null;
+let dciMesDefault = null;
+
+function setDciTab(tab) {
+  const esSemana = tab === 'semana';
+  document.getElementById('dci-tab-semana').style.background = esSemana ? 'var(--navy)' : '#fff';
+  document.getElementById('dci-tab-semana').style.color = esSemana ? '#fff' : 'var(--muted)';
+  document.getElementById('dci-tab-mes').style.background = !esSemana ? 'var(--navy)' : '#fff';
+  document.getElementById('dci-tab-mes').style.color = !esSemana ? '#fff' : 'var(--muted)';
+  cargarClasesInstructorDetalle(tab);
+}
+window.setDciTab = setDciTab;
+
+async function cargarClasesInstructorDetalle(periodo) {
+  const lista = document.getElementById('dci-lista');
+  const stats = document.getElementById('dci-stats');
+  lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+  stats.innerHTML = '';
+
+  let desde, hasta;
+  if (periodo === 'semana') {
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0=domingo
+    const offsetLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+    const lunes = new Date(hoy); lunes.setDate(hoy.getDate() + offsetLunes);
+    const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+    desde = lunes.toISOString().split('T')[0];
+    hasta = domingo.toISOString().split('T')[0];
+  } else {
+    desde = dciMesDefault.desde;
+    hasta = dciMesDefault.hasta;
+  }
+
+  const {data:clases} = await sb.from('clases')
+    .select('*, clientes(nombre)')
+    .eq('instructor_id', dciInstId)
+    .gte('fecha', desde).lte('fecha', hasta)
+    .order('fecha').order('hora_inicio');
+
+  const completadas = (clases||[]).filter(c=>c.estado==='completada').length;
+  const canceladas = (clases||[]).filter(c=>c.estado==='cancelada').length;
+  const horas = (clases||[]).reduce((s,c)=>s+(parseFloat(c.duracion_horas)||0),0);
+
+  stats.innerHTML = `
+    <div style="flex:1;background:var(--ice);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)">${clases?.length||0}</div>
+      <div style="font-size:9px;color:var(--silver);text-transform:uppercase">Clases</div>
+    </div>
+    <div style="flex:1;background:#E1F5EE;border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:#0F6E56">${completadas}</div>
+      <div style="font-size:9px;color:#0F6E56;text-transform:uppercase">Completadas</div>
+    </div>
+    <div style="flex:1;background:var(--ice);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:18px;font-weight:600;font-family:'Cormorant Garamond',serif;color:var(--navy)">${horas.toFixed(1)}</div>
+      <div style="font-size:9px;color:var(--silver);text-transform:uppercase">Horas</div>
+    </div>
+  `;
+
+  if (!clases?.length) { lista.innerHTML = '<div class="empty">Sin clases en este período</div>'; return; }
+
+  lista.innerHTML = clases.map(c => {
+    const fechaStr = new Date(c.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    const estadoColor = c.estado==='completada'?'#0F6E56':c.estado==='cancelada'?'var(--danger)':'var(--accent2)';
+    const estadoBg = c.estado==='completada'?'#E1F5EE':c.estado==='cancelada'?'var(--danger-bg)':'#E6F1FB';
+    return `<div style="padding:10px 14px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${fechaStr} · ${c.hora_inicio?.slice(0,5)}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:1px">${c.clientes?.nombre||'—'} · ${c.disciplina} · ${c.nivel}</div>
+      </div>
+      <span style="font-size:10px;font-weight:500;color:${estadoColor};background:${estadoBg};padding:2px 8px;border-radius:10px;flex-shrink:0">${c.estado}</span>
+    </div>`;
+  }).join('');
+}
 
 async function loadResenas() {
   const buscar=document.getElementById('f-buscar-res').value.toLowerCase();
