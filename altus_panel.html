@@ -1768,8 +1768,9 @@ async function loadAsistEscGrupo() {
     const fechaStr = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
     const estadoColor = s.estado==='completada'?'#0F6E56':s.estado==='cancelada'?'var(--danger)':'var(--silver)';
     const estadoBg = s.estado==='completada'?'#E1F5EE':s.estado==='cancelada'?'var(--danger-bg)':'var(--ice)';
+    const onclick = `onclick="abrirDetalleSesionAsist('${grupoId}','${s.fecha}','${fechaStr}')" style="cursor:pointer"`;
 
-    if (isMobile) return `<div style="padding:12px 16px;border-bottom:1px solid var(--ice)">
+    if (isMobile) return `<div ${onclick} style="padding:12px 16px;border-bottom:1px solid var(--ice)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
         <div style="font-size:13px;font-weight:500">${fechaStr} · ${s.hora_inicio?.slice(0,5)}</div>
         ${badge(s.estado,estadoColor,estadoBg)}
@@ -1777,7 +1778,7 @@ async function loadAsistEscGrupo() {
       <div style="font-size:11px;color:var(--silver)">${s.instructores?.nombre||'—'} · ${pres} presentes / ${aus} ausentes</div>
     </div>`;
 
-    return `<div class="t-row">
+    return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="width:130px;flex-shrink:0;font-weight:500">${fechaStr}</div>
       <div style="width:70px;flex-shrink:0;color:var(--muted);font-size:12px">${s.hora_inicio?.slice(0,5)}</div>
       <div style="flex:1;font-size:12px;color:var(--muted)">${s.instructores?.nombre||'—'}</div>
@@ -1788,6 +1789,74 @@ async function loadAsistEscGrupo() {
   }).join('');
 }
 window.loadAsistEscGrupo = loadAsistEscGrupo;
+
+// Modal de detalle: quién asistió ese día
+async function abrirDetalleSesionAsist(grupoId, fecha, fechaStr) {
+  let modal = document.getElementById('modal-detalle-sesion-asist');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-detalle-sesion-asist';
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:440px">
+        <div class="modal-head"><span class="modal-title" id="dsa-titulo">Asistencia</span><button class="modal-close" onclick="document.getElementById('modal-detalle-sesion-asist').remove()">&times;</button></div>
+        <div class="modal-body" id="dsa-body" style="max-height:70vh;overflow-y:auto"></div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } else {
+    modal.style.display = 'flex';
+  }
+  document.getElementById('dsa-titulo').textContent = fechaStr;
+  const body = document.getElementById('dsa-body');
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+  const {data:ninos} = await sb.from('grupo_ninos').select('id,nombre,edad').eq('grupo_id', grupoId).order('nombre');
+  if (!ninos?.length) { body.innerHTML = '<div class="empty">Sin niños en este grupo</div>'; return; }
+
+  const ids = ninos.map(n=>n.id);
+  const {data:asist} = await sb.from('asistencia_ninos').select('nino_id,presente').eq('fecha', fecha).in('nino_id', ids);
+  const asistMap = {};
+  (asist||[]).forEach(a => { asistMap[a.nino_id] = a.presente; });
+
+  const presentes = ninos.filter(n => asistMap[n.id] === true);
+  const ausentes = ninos.filter(n => asistMap[n.id] === false);
+  const sinRegistro = ninos.filter(n => asistMap[n.id] === undefined);
+
+  body.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:18px">
+      <div style="flex:1;background:#E1F5EE;border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:600;color:#0F6E56;font-family:'Cormorant Garamond',serif">${presentes.length}</div>
+        <div style="font-size:10px;color:#0F6E56;text-transform:uppercase;letter-spacing:.05em">Presentes</div>
+      </div>
+      <div style="flex:1;background:var(--danger-bg);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:600;color:var(--danger);font-family:'Cormorant Garamond',serif">${ausentes.length}</div>
+        <div style="font-size:10px;color:var(--danger);text-transform:uppercase;letter-spacing:.05em">Ausentes</div>
+      </div>
+      ${sinRegistro.length ? `<div style="flex:1;background:var(--ice);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:20px;font-weight:600;color:var(--silver);font-family:'Cormorant Garamond',serif">${sinRegistro.length}</div>
+        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.05em">Sin registro</div>
+      </div>` : ''}
+    </div>
+    ${presentes.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✓ Presentes</div>
+      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
+        ${presentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${n.edad} años</span></div>`).join('')}
+      </div>` : ''}
+    ${ausentes.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✕ Ausentes</div>
+      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
+        ${ausentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${n.edad} años</span></div>`).join('')}
+      </div>` : ''}
+    ${sinRegistro.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">— Sin registrar</div>
+      <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden">
+        ${sinRegistro.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px;color:var(--silver)">${n.nombre} <span style="font-size:11px">${n.edad} años</span></div>`).join('')}
+      </div>` : ''}
+  `;
+}
+window.abrirDetalleSesionAsist = abrirDetalleSesionAsist;
 let rolActual = null;
 
 async function loadUsuarios() {
