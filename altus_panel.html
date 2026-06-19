@@ -28,7 +28,7 @@ body.dark .sk{background:linear-gradient(90deg,#1e2330 25%,#252c3d 50%,#1e2330 7
 }
 body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);min-height:100vh;display:flex}
 body.no-scroll{overflow:hidden}
-.sidebar{width:var(--sidebar);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;z-index:200;display:flex;flex-direction:column;transition:transform .25s}
+.sidebar{width:var(--sidebar);background:var(--navy);min-height:100vh;max-height:100vh;position:fixed;top:0;left:0;z-index:200;display:flex;flex-direction:column;transition:transform .25s;overflow-y:auto;overscroll-behavior:contain}
 .brand{padding:24px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.12em}
 .brand-sub{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.08em;margin-top:3px}
@@ -1167,7 +1167,8 @@ function toggleDark() {
           <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.06em">niños</div>
         </div>
       </div>
-      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;font-weight:500">Niños en el grupo</div>
+      <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;font-weight:500">Niños en el grupo</div>
+      <div style="font-size:11px;color:var(--silver);margin-bottom:10px">✓ Presente · ✕ Ausente — pasar lista de hoy</div>
       <div id="mdg-ninos-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px;max-height:260px;overflow-y:auto">
         <div class="empty">Cargando...</div>
       </div>
@@ -1258,6 +1259,24 @@ function toggleDark() {
         <div class="fg"><label>Edad</label><input type="number" id="fn-edad" placeholder="Años" min="2" max="16"></div>
         <div class="fg"><label>Fecha de nacimiento</label><input type="date" id="fn-nacimiento"></div>
         <div class="fg"><label>Teléfono de contacto</label><input type="text" id="fn-tel" placeholder="+54 9 ..."></div>
+        <div class="fg full" id="fn-grupo-wrap" style="display:none">
+          <label>Grupo</label>
+          <select id="fn-grupo" style="height:38px;border:1px solid var(--line);border-radius:5px;padding:0 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;width:100%"></select>
+        </div>
+      </div>
+
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:10px">Asistencia</div>
+      <div style="margin-bottom:14px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px">Días que asiste</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="fn-dias-container"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 14px;background:var(--ice);border-radius:8px">
+        <div id="fn-indefinido-toggle" onclick="toggleFnIndefinido()" style="width:38px;height:21px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+          <div id="fn-indefinido-knob" style="width:17px;height:17px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text);font-weight:500">Asistencia indefinida (hasta darlo de baja)</div>
+      </div>
+      <div class="form-grid" style="margin-bottom:18px" id="fn-fechas-wrap">
         <div class="fg"><label>Fecha desde</label><input type="date" id="fn-desde"></div>
         <div class="fg"><label>Fecha hasta</label><input type="date" id="fn-hasta"></div>
       </div>
@@ -1942,23 +1961,44 @@ async function cargarNinosGrupo(grupoId) {
   document.getElementById('mdg-count').textContent = data?.length||0;
   const lista = document.getElementById('mdg-ninos-lista');
   if (!data?.length) { lista.innerHTML='<div class="empty">Sin niños en este grupo</div>'; return; }
+
+  // Cargar asistencia de hoy
+  const ids = data.map(n=>n.id);
+  const {data:asist} = await sb.from('asistencia_ninos').select('nino_id, presente').eq('fecha', fechaISO).in('nino_id', ids);
+  const asistMap = {};
+  (asist||[]).forEach(a => { asistMap[a.nino_id] = a.presente; });
+
   lista.innerHTML = data.map(n => {
     const tieneInfo = n.alergias || n.condiciones_medicas || n.tutor1_nombre;
+    const estado = asistMap[n.id]; // true, false, o undefined
+    const diasTxt = n.indefinido ? 'Indefinido' : (n.dias_semana?.length ? n.dias_semana.join(',') : '');
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ice)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px">
           ${n.nombre}
           ${tieneInfo ? `<span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:500">Ficha</span>` : ''}
         </div>
-        <div style="font-size:11px;color:var(--silver);margin-top:2px">${n.edad} años${n.tutor1_nombre ? ' · '+n.tutor1_nombre : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:2px">${n.edad} años${diasTxt ? ' · '+diasTxt : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button onclick="abrirFichaNino('${n.id}')" style="font-size:11px;color:var(--accent2);background:none;border:none;cursor:pointer;padding:4px 8px">Editar</button>
-        <button onclick="quitarNino('${n.id}')" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;padding:4px 8px">Quitar</button>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        <button onclick="marcarAsistenciaNino('${n.id}',true,this)" style="width:30px;height:30px;border-radius:6px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:14px" title="Presente">✓</button>
+        <button onclick="marcarAsistenciaNino('${n.id}',false,this)" style="width:30px;height:30px;border-radius:6px;border:1.5px solid ${estado===false?'var(--danger)':'var(--line)'};background:${estado===false?'var(--danger-bg)':'#fff'};color:${estado===false?'var(--danger)':'var(--silver)'};cursor:pointer;font-size:14px" title="Ausente">✕</button>
+        <button onclick="abrirFichaNino('${n.id}')" style="font-size:11px;color:var(--accent2);background:none;border:none;cursor:pointer;padding:4px 6px">Editar</button>
+        <button onclick="quitarNino('${n.id}')" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;padding:4px 6px">Quitar</button>
       </div>
     </div>`;
   }).join('');
 }
+
+async function marcarAsistenciaNino(ninoId, presente, btn) {
+  await sb.from('asistencia_ninos').upsert({
+    nino_id: ninoId, fecha: fechaISO, presente,
+    registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
+  }, {onConflict:'nino_id,fecha'});
+  toast(presente ? 'Marcado presente' : 'Marcado ausente');
+  await cargarNinosGrupo(grupoActual);
+}
+window.marcarAsistenciaNino = marcarAsistenciaNino;
 
 async function buscarNinoExistente() {
   const q = document.getElementById('fn-buscar-existente').value.trim();
@@ -1981,11 +2021,56 @@ async function cargarNinoExistente(id) {
 }
 window.cargarNinoExistente = cargarNinoExistente;
 
+// Días de la semana para asistencia del niño
+let fnDiasSeleccionados = new Set(['Lu','Ma','Mi','Ju','Vi']);
+let fnIndefinido = false;
+
+function renderFnDias() {
+  const container = document.getElementById('fn-dias-container');
+  container.innerHTML = '';
+  ['Lu','Ma','Mi','Ju','Vi','Sá','Do'].forEach(d => {
+    const btn = document.createElement('button');
+    btn.textContent = d;
+    btn.type = 'button';
+    const activo = fnDiasSeleccionados.has(d);
+    btn.style.cssText = `width:36px;height:36px;border-radius:50%;border:1.5px solid ${activo?'var(--navy)':'var(--line)'};background:${activo?'var(--navy)':'#fff'};color:${activo?'#fff':'var(--muted)'};font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s`;
+    btn.onclick = () => {
+      if (fnDiasSeleccionados.has(d)) fnDiasSeleccionados.delete(d);
+      else fnDiasSeleccionados.add(d);
+      renderFnDias();
+    };
+    container.appendChild(btn);
+  });
+}
+
+function toggleFnIndefinido() {
+  fnIndefinido = !fnIndefinido;
+  document.getElementById('fn-indefinido-toggle').style.background = fnIndefinido ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('fn-indefinido-knob').style.transform = fnIndefinido ? 'translateX(17px)' : 'translateX(0)';
+  document.getElementById('fn-fechas-wrap').style.opacity = fnIndefinido ? '0.4' : '1';
+  document.getElementById('fn-hasta').disabled = fnIndefinido;
+  if (fnIndefinido) document.getElementById('fn-hasta').value = '';
+}
+window.toggleFnIndefinido = toggleFnIndefinido;
+
+async function cargarSelectorGrupos(grupoSeleccionado) {
+  const sel = document.getElementById('fn-grupo');
+  sel.innerHTML = '';
+  const {data:grupos} = await sb.from('grupos').select('id,nombre').eq('activo',true).order('nombre');
+  (grupos||[]).forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.nombre;
+    if (g.id === grupoSeleccionado) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
 function abrirModalAgregarNino() {
   ninoActualId = null;
   document.getElementById('fn-titulo').textContent = 'Agregar niño';
   document.getElementById('fn-save').textContent = 'Agregar al grupo';
   document.getElementById('fn-buscar-panel').style.display = 'block';
+  document.getElementById('fn-grupo-wrap').style.display = 'none';
   document.getElementById('fn-buscar-existente').value = '';
   document.getElementById('fn-resultados-busqueda').innerHTML = '';
   ['fn-nombre','fn-edad','fn-tel','fn-t1-nombre','fn-t1-relacion','fn-t1-tel',
@@ -1994,6 +2079,13 @@ function abrirModalAgregarNino() {
   document.getElementById('fn-nacimiento').value = '';
   document.getElementById('fn-desde').value = fechaISO;
   document.getElementById('fn-hasta').value = '';
+  fnDiasSeleccionados = new Set(['Lu','Ma','Mi','Ju','Vi']);
+  fnIndefinido = false;
+  renderFnDias();
+  document.getElementById('fn-indefinido-toggle').style.background = 'var(--line)';
+  document.getElementById('fn-indefinido-knob').style.transform = 'translateX(0)';
+  document.getElementById('fn-fechas-wrap').style.opacity = '1';
+  document.getElementById('fn-hasta').disabled = false;
   openModal('modal-ficha-nino');
 }
 
@@ -2004,6 +2096,8 @@ async function abrirFichaNino(ninoId) {
   document.getElementById('fn-titulo').textContent = n.nombre;
   document.getElementById('fn-save').textContent = 'Guardar cambios';
   document.getElementById('fn-buscar-panel').style.display = 'none';
+  document.getElementById('fn-grupo-wrap').style.display = 'block';
+  await cargarSelectorGrupos(n.grupo_id);
   document.getElementById('fn-nombre').value = n.nombre||'';
   document.getElementById('fn-edad').value = n.edad||'';
   document.getElementById('fn-nacimiento').value = n.fecha_nacimiento||'';
@@ -2020,6 +2114,15 @@ async function abrirFichaNino(ninoId) {
   document.getElementById('fn-condiciones').value = n.condiciones_medicas||'';
   document.getElementById('fn-medicacion').value = n.medicacion||'';
   document.getElementById('fn-observaciones').value = n.observaciones||'';
+
+  fnDiasSeleccionados = new Set(n.dias_semana || ['Lu','Ma','Mi','Ju','Vi']);
+  fnIndefinido = !!n.indefinido;
+  renderFnDias();
+  document.getElementById('fn-indefinido-toggle').style.background = fnIndefinido ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('fn-indefinido-knob').style.transform = fnIndefinido ? 'translateX(17px)' : 'translateX(0)';
+  document.getElementById('fn-fechas-wrap').style.opacity = fnIndefinido ? '0.4' : '1';
+  document.getElementById('fn-hasta').disabled = fnIndefinido;
+
   openModal('modal-ficha-nino');
 }
 
@@ -2035,7 +2138,9 @@ async function guardarFichaNino() {
     fecha_nacimiento: document.getElementById('fn-nacimiento').value||null,
     telefono_contacto: document.getElementById('fn-tel').value||null,
     fecha_desde: document.getElementById('fn-desde').value||null,
-    fecha_hasta: document.getElementById('fn-hasta').value||null,
+    fecha_hasta: fnIndefinido ? null : (document.getElementById('fn-hasta').value||null),
+    indefinido: fnIndefinido,
+    dias_semana: Array.from(fnDiasSeleccionados),
     tutor1_nombre: document.getElementById('fn-t1-nombre').value||null,
     tutor1_relacion: document.getElementById('fn-t1-relacion').value||null,
     tutor1_telefono: document.getElementById('fn-t1-tel').value||null,
@@ -2049,6 +2154,9 @@ async function guardarFichaNino() {
   };
 
   if (ninoActualId) {
+    // Si cambió de grupo, lo actualizamos también
+    const nuevoGrupo = document.getElementById('fn-grupo').value;
+    if (nuevoGrupo) datos.grupo_id = nuevoGrupo;
     await sb.from('grupo_ninos').update(datos).eq('id',ninoActualId);
     toast(`${nombre} actualizado`);
   } else {
@@ -2367,8 +2475,26 @@ function setPage(page) {
 document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page)));
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const opening = !sidebar.classList.contains('open');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+  if (opening) {
+    // Bloquear scroll del fondo, preservando la posición
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.dataset.scrollY = scrollY;
+  } else {
+    // Restaurar scroll del fondo
+    const scrollY = document.body.dataset.scrollY || '0';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, parseInt(scrollY));
+  }
 }
 document.getElementById('menuBtn').addEventListener('click', toggleSidebar);
 document.getElementById('overlay').addEventListener('click', toggleSidebar);
