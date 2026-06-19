@@ -558,6 +558,9 @@ function toggleDark() {
     'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
   );
 
+  // ID del instructor logueado
+  const INSTRUCTOR_ID = localStorage.getItem('altus_instructor_id') || null;
+
   // Auth check y datos del usuario
   sb.auth.getSession().then(({ data }) => {
     if (!data?.session) { window.location.href = 'altus_login.html'; return; }
@@ -586,9 +589,6 @@ function toggleDark() {
       });
     }
   });
-
-  // ID del instructor logueado
-  const INSTRUCTOR_ID = localStorage.getItem('altus_instructor_id') || null;
 
   // Menu de perfil
   document.getElementById('inst-avatar').addEventListener('click', e => {
