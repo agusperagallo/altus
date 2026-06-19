@@ -274,6 +274,7 @@ input:focus,select:focus{border-color:var(--accent)}
   #asist-cols{display:none}
   #esc-admin-cols{display:none}
   #fam-cols{display:none}
+  #ea-ninos-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
@@ -354,6 +355,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <div class="nav-sec">Gestión</div>
       <button class="nav-item" data-page="esc-admin-grupos"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Administrar grupos</button>
       <button class="nav-item" data-page="esc-familias"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-4 5-4s5 1.2 5 4"/><circle cx="12" cy="6" r="1.8"/><path d="M12 10c1.8 0 3 .8 3 2.5"/></svg>Familias</button>
+      <button class="nav-item" data-page="esc-asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8.5l3.5 3.5L14 3.5"/></svg>Asistencia</button>
       <button class="nav-item" data-page="instructores"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Instructores</button>
       <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
     </div>
@@ -708,6 +710,68 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
         <div style="width:80px;flex-shrink:0;text-align:center">Ficha</div>
       </div>
       <div id="fam-tabla"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- ASISTENCIA (ESCUELITA) -->
+  <div id="pg-esc-asistencia" style="display:none" class="page-content">
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--line)">
+      <button id="esc-asist-tab-ninos" onclick="setEscAsistTab('ninos')" style="padding:10px 4px;background:none;border:none;border-bottom:2px solid var(--navy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--navy);cursor:pointer">Por niño</button>
+      <button id="esc-asist-tab-grupos" onclick="setEscAsistTab('grupos')" style="padding:10px 4px;background:none;border:none;border-bottom:2px solid transparent;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;margin-left:16px">Por grupo</button>
+    </div>
+
+    <!-- TAB: POR NIÑO -->
+    <div id="esc-asist-panel-ninos">
+      <div class="page-filters">
+        <div class="filter-group">
+          <label>Mes</label>
+          <select id="ea-mes" onchange="loadAsistEscNinos()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;outline:none">
+            <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+            <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+            <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+            <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Año</label>
+          <select id="ea-anio" onchange="loadAsistEscNinos()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;outline:none">
+            <option value="2026">2026</option><option value="2025">2025</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <div class="filter-group" style="flex:2">
+          <label>Grupo</label>
+          <select id="ea-grupo" onchange="loadAsistEscNinos()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;outline:none;width:100%">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
+      <div class="page-table">
+        <div class="table-head"><span class="panel-title">Asistencia por niño</span><span class="panel-meta" id="ea-ninos-ct">—</span></div>
+        <div class="t-cols" id="ea-ninos-cols">
+          <div style="flex:1">Niño</div>
+          <div style="flex:1">Grupo</div>
+          <div style="width:90px;text-align:center;flex-shrink:0">Presentes</div>
+          <div style="width:90px;text-align:center;flex-shrink:0">Ausentes</div>
+          <div style="width:100px;text-align:center;flex-shrink:0">% Asist.</div>
+        </div>
+        <div id="ea-ninos-tabla"><div class="empty">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: POR GRUPO -->
+    <div id="esc-asist-panel-grupos" style="display:none">
+      <div class="page-filters">
+        <div class="filter-group" style="flex:2">
+          <label>Grupo</label>
+          <select id="eg-grupo" onchange="loadAsistEscGrupo()" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;outline:none;width:100%">
+            <option value="">Seleccionar grupo...</option>
+          </select>
+        </div>
+      </div>
+      <div class="page-table">
+        <div class="table-head"><span class="panel-title">Historial de sesiones</span><span class="panel-meta" id="eg-ct">—</span></div>
+        <div id="eg-tabla"><div class="empty">Seleccioná un grupo para ver su historial</div></div>
+      </div>
     </div>
   </div>
 
@@ -1577,6 +1641,153 @@ async function loadFamilias() {
   }).join('');
 }
 window.loadFamilias = loadFamilias;
+
+// ── ASISTENCIA ESCUELITA ──────────────────────────────
+function setEscAsistTab(tab) {
+  const esNinos = tab === 'ninos';
+  document.getElementById('esc-asist-tab-ninos').style.borderBottomColor = esNinos ? 'var(--navy)' : 'transparent';
+  document.getElementById('esc-asist-tab-ninos').style.color = esNinos ? 'var(--navy)' : 'var(--muted)';
+  document.getElementById('esc-asist-tab-grupos').style.borderBottomColor = !esNinos ? 'var(--navy)' : 'transparent';
+  document.getElementById('esc-asist-tab-grupos').style.color = !esNinos ? 'var(--navy)' : 'var(--muted)';
+  document.getElementById('esc-asist-panel-ninos').style.display = esNinos ? 'block' : 'none';
+  document.getElementById('esc-asist-panel-grupos').style.display = !esNinos ? 'block' : 'none';
+  if (esNinos) loadAsistEscNinos();
+  else cargarSelectorGrupoAsist();
+}
+window.setEscAsistTab = setEscAsistTab;
+
+async function cargarFiltroGruposAsist() {
+  const sels = ['ea-grupo','eg-grupo'];
+  for (const selId of sels) {
+    const sel = document.getElementById(selId);
+    if (!sel || sel.dataset.loaded) continue;
+    const {data:grupos} = await sb.from('grupos').select('id,nombre').order('nombre');
+    (grupos||[]).forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.id; o.textContent = g.nombre;
+      sel.appendChild(o);
+    });
+    sel.dataset.loaded = '1';
+  }
+}
+
+async function loadAsistEscNinos() {
+  await cargarFiltroGruposAsist();
+  const mes = parseInt(document.getElementById('ea-mes').value || (new Date().getMonth()+1));
+  const anio = parseInt(document.getElementById('ea-anio').value || new Date().getFullYear());
+  const grupoFil = document.getElementById('ea-grupo').value;
+
+  // Setear mes actual por defecto
+  if (!document.getElementById('ea-mes').dataset.init) {
+    document.getElementById('ea-mes').value = new Date().getMonth()+1;
+    document.getElementById('ea-anio').value = new Date().getFullYear();
+    document.getElementById('ea-mes').dataset.init = '1';
+  }
+
+  const tabla = document.getElementById('ea-ninos-tabla');
+  tabla.innerHTML = '<div class="empty">Cargando...</div>';
+
+  let q = sb.from('grupo_ninos').select('id,nombre,grupo_id,grupos(nombre)').eq('activo',true);
+  if (grupoFil) q = q.eq('grupo_id', grupoFil);
+  const {data:ninos} = await q.order('nombre');
+  if (!ninos?.length) { tabla.innerHTML = '<div class="empty">Sin niños</div>'; return; }
+
+  const inicio = `${anio}-${String(mes).padStart(2,'0')}-01`;
+  const fin = new Date(anio, mes, 0).toISOString().split('T')[0];
+
+  const ids = ninos.map(n=>n.id);
+  const {data:asist} = await sb.from('asistencia_ninos').select('nino_id,presente').gte('fecha',inicio).lte('fecha',fin).in('nino_id',ids);
+
+  document.getElementById('ea-ninos-ct').textContent = `${ninos.length} niños`;
+  const isMobile = window.innerWidth < 768;
+
+  tabla.innerHTML = ninos.map(n => {
+    const regs = (asist||[]).filter(a => a.nino_id === n.id);
+    const pres = regs.filter(a=>a.presente).length;
+    const aus = regs.filter(a=>!a.presente).length;
+    const total = pres+aus;
+    const pct = total>0 ? Math.round((pres/total)*100) : null;
+    const pC = pct===null?'var(--silver)':pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
+    const pB = pct===null?'var(--ice)':pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
+    const pctTxt = pct===null?'—':pct+'%';
+
+    if (isMobile) return `<div style="padding:12px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:13px;font-weight:500">${n.nombre}</div><div style="font-size:11px;color:var(--silver)">${n.grupos?.nombre||'—'}</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="text-align:center"><div style="font-size:13px;font-weight:600;color:#0F6E56">${pres}</div><div style="font-size:9px;color:var(--silver)">PRES</div></div>
+        <div style="text-align:center"><div style="font-size:13px;font-weight:600;color:var(--danger)">${aus}</div><div style="font-size:9px;color:var(--silver)">AUS</div></div>
+        ${badge(pctTxt,pC,pB)}
+      </div>
+    </div>`;
+
+    return `<div class="t-row">
+      <div style="flex:1;font-weight:500">${n.nombre}</div>
+      <div style="flex:1;font-size:12px;color:var(--muted)">${n.grupos?.nombre||'—'}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;color:#0F6E56;font-weight:500">${pres}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;color:var(--danger);font-weight:500">${aus}</div>
+      <div style="width:100px;text-align:center;flex-shrink:0">${badge(pctTxt,pC,pB)}</div>
+    </div>`;
+  }).join('');
+}
+window.loadAsistEscNinos = loadAsistEscNinos;
+
+async function cargarSelectorGrupoAsist() {
+  await cargarFiltroGruposAsist();
+}
+
+async function loadAsistEscGrupo() {
+  const grupoId = document.getElementById('eg-grupo').value;
+  const tabla = document.getElementById('eg-tabla');
+  if (!grupoId) { tabla.innerHTML = '<div class="empty">Seleccioná un grupo para ver su historial</div>'; document.getElementById('eg-ct').textContent='—'; return; }
+
+  tabla.innerHTML = '<div class="empty">Cargando...</div>';
+
+  const {data:sesiones} = await sb.from('sesiones_escuelita')
+    .select('*, instructores(nombre)')
+    .eq('grupo_id', grupoId)
+    .order('fecha', {ascending:false})
+    .limit(60);
+
+  if (!sesiones?.length) { tabla.innerHTML = '<div class="empty">Sin sesiones registradas para este grupo</div>'; document.getElementById('eg-ct').textContent='0 sesiones'; return; }
+
+  // Para cada sesión, contar asistencia de niños ese día
+  const fechas = [...new Set(sesiones.map(s=>s.fecha))];
+  const {data:ninosGrupo} = await sb.from('grupo_ninos').select('id').eq('grupo_id', grupoId);
+  const ninoIds = (ninosGrupo||[]).map(n=>n.id);
+  const {data:asistTodas} = ninoIds.length
+    ? await sb.from('asistencia_ninos').select('fecha,nino_id,presente').in('nino_id',ninoIds).in('fecha',fechas)
+    : {data:[]};
+
+  document.getElementById('eg-ct').textContent = `${sesiones.length} sesiones`;
+  const isMobile = window.innerWidth < 768;
+
+  tabla.innerHTML = sesiones.map(s => {
+    const regsDia = (asistTodas||[]).filter(a => a.fecha === s.fecha);
+    const pres = regsDia.filter(a=>a.presente).length;
+    const aus = regsDia.filter(a=>!a.presente).length;
+    const fechaStr = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+    const estadoColor = s.estado==='completada'?'#0F6E56':s.estado==='cancelada'?'var(--danger)':'var(--silver)';
+    const estadoBg = s.estado==='completada'?'#E1F5EE':s.estado==='cancelada'?'var(--danger-bg)':'var(--ice)';
+
+    if (isMobile) return `<div style="padding:12px 16px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:500">${fechaStr} · ${s.hora_inicio?.slice(0,5)}</div>
+        ${badge(s.estado,estadoColor,estadoBg)}
+      </div>
+      <div style="font-size:11px;color:var(--silver)">${s.instructores?.nombre||'—'} · ${pres} presentes / ${aus} ausentes</div>
+    </div>`;
+
+    return `<div class="t-row">
+      <div style="width:130px;flex-shrink:0;font-weight:500">${fechaStr}</div>
+      <div style="width:70px;flex-shrink:0;color:var(--muted);font-size:12px">${s.hora_inicio?.slice(0,5)}</div>
+      <div style="flex:1;font-size:12px;color:var(--muted)">${s.instructores?.nombre||'—'}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;color:#0F6E56">${pres} pres.</div>
+      <div style="width:90px;text-align:center;flex-shrink:0;color:var(--danger)">${aus} aus.</div>
+      <div style="width:110px;text-align:center;flex-shrink:0">${badge(s.estado,estadoColor,estadoBg)}</div>
+    </div>`;
+  }).join('');
+}
+window.loadAsistEscGrupo = loadAsistEscGrupo;
 let rolActual = null;
 
 async function loadUsuarios() {
@@ -1815,8 +2026,8 @@ function setModo(modo) {
 }
 
 // ── PÁGINAS ESCUELITA ─────────────────────────────────
-const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos','esc-familias'];
-const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos','esc-familias':'Familias'};
+const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos','esc-familias','esc-asistencia'];
+const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos','esc-familias':'Familias','esc-asistencia':'Asistencia'};
 
 // Extender setPage para escuelita — se completa abajo cuando PAGES/TITLES/LOADERS estén definidos
 
@@ -2458,7 +2669,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // Sidebar navigation
 const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
 const TITLES = {asignacion:'Asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
-const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias};
+const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos};
 
 function setPage(page) {
   localStorage.setItem('altus_page', page);
