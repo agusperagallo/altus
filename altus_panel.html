@@ -342,7 +342,8 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     <!-- NAV CERRO -->
     <div id="nav-cerro">
       <div class="nav-sec">Principal</div>
-      <button class="nav-item active" data-page="asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Panel de asignación</button>
+      <button class="nav-item active" data-page="asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Inicio</button>
+      <button class="nav-item" data-page="nueva-asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg>Nueva asignación</button>
       <button class="nav-item" data-page="clases"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>Clases del día</button>
       <button class="nav-item" data-page="ranking"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg>Ranking</button>
       <div class="nav-sec">Gestión</div>
@@ -417,87 +418,38 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
   </div>
 
-  <!-- ASIGNACION -->
+  <!-- DASHBOARD -->
   <div id="pg-asignacion" class="content" style="display:none">
-    <div class="emerg" id="emerg-banner">
-      <div class="emerg-dot"></div>
-      <div style="font-size:13px;color:var(--danger);flex:1"><strong>Modo emergencia activo</strong> — Instructores fuera de perfil habitual</div>
-      <button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-desact-emerg">Desactivar</button>
-    </div>
     <div class="stats">
       <div class="stat"><div class="stat-label">Clases hoy</div><div class="stat-val" id="stat-clases">—</div><div class="stat-sub">programadas</div></div>
       <div class="stat"><div class="stat-label">Instructores activos</div><div class="stat-val" id="stat-inst">—</div><div class="stat-sub">en el sistema</div></div>
       <div class="stat"><div class="stat-label">Reseñas este mes</div><div class="stat-val" id="stat-res">—</div><div class="stat-sub">acumuladas</div></div>
       <div class="stat"><div class="stat-label">Período</div><div class="stat-val" style="font-size:18px;padding-top:4px">Calibración</div><div class="stat-sub">Ranking en formación</div></div>
     </div>
+
+    <!-- Acceso rápido -->
+    <div style="margin-bottom:20px">
+      <button onclick="setPage('nueva-asignacion'); if(typeof resetTipoCliente==='function') resetTipoCliente();" class="btn btn-primary" style="height:46px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8"><path d="M8 2v12M2 8h12"/></svg>
+        Nueva asignación
+      </button>
+    </div>
+
+    <!-- Alerta de alergias en sesiones de hoy -->
+    <div id="alerta-alergias-hoy" style="display:none;background:var(--danger-bg);border:1px solid var(--danger);border-radius:8px;padding:12px 16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px">⚠️ Atención médica hoy</div>
+      <div id="alerta-alergias-lista" style="font-size:12px;color:var(--danger)"></div>
+    </div>
+
     <div class="grid-2">
       <div>
         <div class="panel">
-          <div class="panel-head"><span class="panel-title">Nueva asignación</span><button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-emerg">Modo emergencia</button></div>
-          <div class="panel-body">
-
-            <!-- PASO 0: Elegir tipo de cliente -->
-            <div id="paso-tipo-cliente">
-              <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">¿Es un cliente nuevo?</div>
-              <div style="display:flex;gap:10px">
-                <button onclick="elegirTipoCliente('nuevo')" class="btn btn-primary" style="flex:1;height:44px;font-size:14px">
-                  ✦ Cliente nuevo
-                </button>
-                <button onclick="elegirTipoCliente('existente')" class="btn btn-outline" style="flex:1;height:44px;font-size:14px">
-                  🔍 Cliente existente
-                </button>
-              </div>
-            </div>
-
-            <!-- PASO 1A: Buscar cliente existente -->
-            <div id="paso-buscar-cliente" style="display:none">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <button onclick="resetTipoCliente()" style="background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;padding:0;line-height:1">←</button>
-                <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;font-weight:500">Buscar cliente existente</div>
-              </div>
-              <input type="text" id="cli-buscar" placeholder="Nombre o teléfono..." oninput="buscarClienteExistente()" autocomplete="new-password" name="search-field-no-fill-1" data-lpignore="true" data-form-type="other" style="width:100%;height:42px;border:1px solid var(--line);border-radius:6px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:8px">
-              <div id="cli-resultados" style="border:1px solid var(--line);border-radius:6px;overflow:hidden;display:none;margin-bottom:4px;max-height:200px;overflow-y:auto"></div>
-            </div>
-
-            <!-- FORMULARIO (nuevo o existente seleccionado) -->
-            <div id="paso-form-cliente" style="display:none">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                <button onclick="resetTipoCliente()" style="background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;padding:0;line-height:1">←</button>
-                <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;font-weight:500" id="form-cliente-label">Datos del cliente</div>
-              </div>
-              <!-- Badge cliente existente -->
-              <div id="cli-existente-badge" style="display:none;background:var(--ice);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-                <div>
-                  <div style="font-size:13px;font-weight:500" id="cli-badge-nombre">—</div>
-                  <div style="font-size:11px;color:var(--silver)" id="cli-badge-info">—</div>
-                </div>
-                <span style="font-size:11px;color:var(--accent2);font-weight:500">Existente</span>
-              </div>
-              <input type="hidden" id="cli-id-existente">
-              <div class="form-grid">
-                <div class="fg"><label>Nombre</label><input type="text" id="cli-nombre" placeholder="Nombre del cliente"></div>
-                <div class="fg"><label>Teléfono</label><input type="text" id="cli-tel" placeholder="+54 9 ..."></div>
-                <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
-                <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
-              </div>
-              <div style="margin-bottom:16px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
-              <div class="form-grid">
-                <div class="fg"><label>Fecha</label><input type="date" id="cli-fecha"></div>
-                <div class="fg"><label>Hora de inicio</label><select id="cli-hora"><option value="">Seleccionar...</option><option>09:00</option><option>09:30</option><option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option><option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option><option>16:00</option><option>16:30</option></select></div>
-                <div class="fg"><label>Duración</label><select id="cli-dur"><option value="1">1 hora</option><option value="1.5">1:30 hs</option><option value="2">2 horas</option><option value="2.5">2:30 hs</option><option value="3">3 horas</option></select></div>
-                <div class="fg"><label>Hora de fin</label><input type="text" id="cli-horafin" readonly placeholder="—" style="background:var(--ice);color:var(--muted)"></div>
-              </div>
-              <div class="aviso-franja" id="aviso-franja"></div>
-              <div class="form-actions" style="margin-bottom:0">
-                <button class="btn btn-primary" id="btn-buscar" style="width:100%">Buscar instructores</button>
-              </div>
-            </div>
-
-            <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-            <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Instructores disponibles</div>
-            <div class="rk-head"><div>#</div><div>Instructor</div><div style="text-align:center">Puntaje</div><div style="text-align:center">Asist.</div><div style="text-align:center">Estado</div></div>
-            <div id="rk-lista"><div style="padding:18px 0;text-align:center;color:var(--silver);font-size:13px">Completá los datos y buscá instructores</div></div>
-          </div>
+          <div class="panel-head"><span class="panel-title">Top instructores</span><span class="panel-meta">Ranking actual</span></div>
+          <div id="top-ranking-lista" style="padding:6px 18px 14px"><div class="empty">Cargando...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Próximos cumpleaños</span><span class="panel-meta">Próximos 7 días</span></div>
+          <div id="cumple-lista" style="padding:6px 18px 14px"><div class="empty">Cargando...</div></div>
         </div>
       </div>
       <div>
@@ -509,6 +461,82 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
           <div class="panel-head"><span class="panel-title">Presencia de hoy</span><span class="panel-meta" id="pres-resumen">—</span></div>
           <div style="padding:0 18px;padding-bottom:80px" id="pres-lista"><div class="empty">Cargando...</div></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUEVA ASIGNACIÓN -->
+  <div id="pg-nueva-asignacion" class="content" style="display:none">
+    <div class="emerg" id="emerg-banner">
+      <div class="emerg-dot"></div>
+      <div style="font-size:13px;color:var(--danger);flex:1"><strong>Modo emergencia activo</strong> — Instructores fuera de perfil habitual</div>
+      <button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-desact-emerg">Desactivar</button>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><span class="panel-title">Nueva asignación</span><button class="btn btn-outline" style="height:28px;font-size:11px;padding:0 10px" id="btn-emerg">Modo emergencia</button></div>
+      <div class="panel-body">
+
+        <!-- PASO 0: Elegir tipo de cliente -->
+        <div id="paso-tipo-cliente">
+          <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">¿Es un cliente nuevo?</div>
+          <div style="display:flex;gap:10px">
+            <button onclick="elegirTipoCliente('nuevo')" class="btn btn-primary" style="flex:1;height:44px;font-size:14px">
+              ✦ Cliente nuevo
+            </button>
+            <button onclick="elegirTipoCliente('existente')" class="btn btn-outline" style="flex:1;height:44px;font-size:14px">
+              🔍 Cliente existente
+            </button>
+          </div>
+        </div>
+
+        <!-- PASO 1A: Buscar cliente existente -->
+        <div id="paso-buscar-cliente" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <button onclick="resetTipoCliente()" style="background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;padding:0;line-height:1">←</button>
+            <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;font-weight:500">Buscar cliente existente</div>
+          </div>
+          <input type="text" id="cli-buscar" placeholder="Nombre o teléfono..." oninput="buscarClienteExistente()" autocomplete="new-password" name="search-field-no-fill-1" data-lpignore="true" data-form-type="other" style="width:100%;height:42px;border:1px solid var(--line);border-radius:6px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:8px">
+          <div id="cli-resultados" style="border:1px solid var(--line);border-radius:6px;overflow:hidden;display:none;margin-bottom:4px;max-height:200px;overflow-y:auto"></div>
+        </div>
+
+        <!-- FORMULARIO (nuevo o existente seleccionado) -->
+        <div id="paso-form-cliente" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <button onclick="resetTipoCliente()" style="background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;padding:0;line-height:1">←</button>
+            <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;font-weight:500" id="form-cliente-label">Datos del cliente</div>
+          </div>
+          <!-- Badge cliente existente -->
+          <div id="cli-existente-badge" style="display:none;background:var(--ice);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:13px;font-weight:500" id="cli-badge-nombre">—</div>
+              <div style="font-size:11px;color:var(--silver)" id="cli-badge-info">—</div>
+            </div>
+            <span style="font-size:11px;color:var(--accent2);font-weight:500">Existente</span>
+          </div>
+          <input type="hidden" id="cli-id-existente">
+          <div class="form-grid">
+            <div class="fg"><label>Nombre</label><input type="text" id="cli-nombre" placeholder="Nombre del cliente"></div>
+            <div class="fg"><label>Teléfono</label><input type="text" id="cli-tel" placeholder="+54 9 ..."></div>
+            <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
+            <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
+          </div>
+          <div style="margin-bottom:16px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
+          <div class="form-grid">
+            <div class="fg"><label>Fecha</label><input type="date" id="cli-fecha"></div>
+            <div class="fg"><label>Hora de inicio</label><select id="cli-hora"><option value="">Seleccionar...</option><option>09:00</option><option>09:30</option><option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option><option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option><option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option><option>16:00</option><option>16:30</option></select></div>
+            <div class="fg"><label>Duración</label><select id="cli-dur"><option value="1">1 hora</option><option value="1.5">1:30 hs</option><option value="2">2 horas</option><option value="2.5">2:30 hs</option><option value="3">3 horas</option></select></div>
+            <div class="fg"><label>Hora de fin</label><input type="text" id="cli-horafin" readonly placeholder="—" style="background:var(--ice);color:var(--muted)"></div>
+          </div>
+          <div class="aviso-franja" id="aviso-franja"></div>
+          <div class="form-actions" style="margin-bottom:0">
+            <button class="btn btn-primary" id="btn-buscar" style="width:100%">Buscar instructores</button>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+        <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;font-weight:500">Instructores disponibles</div>
+        <div class="rk-head"><div>#</div><div>Instructor</div><div style="text-align:center">Puntaje</div><div style="text-align:center">Asist.</div><div style="text-align:center">Estado</div></div>
+        <div id="rk-lista"><div style="padding:18px 0;text-align:center;color:var(--silver);font-size:13px">Completá los datos y buscá instructores</div></div>
       </div>
     </div>
   </div>
@@ -812,10 +840,10 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div class="fab-menu" id="fab-menu">
     <!-- CERRO -->
     <div id="fab-menu-cerro" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="fab-row"><span class="fab-label">Nueva clase</span><button class="fab-icon" id="fab-clase"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Registrar asistencia</span><button class="fab-icon" id="fab-asist"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Ver ranking</span><button class="fab-icon" id="fab-rk"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Nuevo instructor</span><button class="fab-icon" id="fab-nuevo"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg></button></div>
-      <div class="fab-row"><span class="fab-label">Modo emergencia</span><button class="fab-icon" id="fab-emerg"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.5 3 3.5.5-2.5 2.5.6 3.5L8 9l-3.1 1.5.6-3.5L3 4.5l3.5-.5z"/></svg></button></div>
     </div>
     <!-- ESCUELITA -->
     <div id="fab-menu-escuelita" style="display:none;flex-direction:column;gap:8px;align-items:flex-end">
@@ -2923,9 +2951,9 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 
 // Sidebar navigation
-const PAGES = ['asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
-const TITLES = {asignacion:'Asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
-const LOADERS = {ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos};
+const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
+const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
+const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos};
 
 function setPage(page) {
   localStorage.setItem('altus_page', page);
@@ -3161,8 +3189,8 @@ document.getElementById('fab-btn').addEventListener('click',()=>{
 const closeFab=()=>{ fabOpen=false; document.getElementById('fab-menu').classList.remove('open'); document.getElementById('fab-btn').classList.remove('open'); document.getElementById('fab-plus').style.display='block'; document.getElementById('fab-x').style.display='none'; };
 window.closeFab = closeFab;
 document.getElementById('fab-nuevo').addEventListener('click',()=>{ closeFab(); openModal('modal-inst'); });
+document.getElementById('fab-clase').addEventListener('click',()=>{ closeFab(); setPage('nueva-asignacion'); if(typeof resetTipoCliente==='function') resetTipoCliente(); });
 document.getElementById('fab-rk').addEventListener('click',()=>{ closeFab(); setPage('ranking'); });
-document.getElementById('fab-emerg').addEventListener('click',()=>{ closeFab(); document.getElementById('emerg-banner').style.display='flex'; });
 document.getElementById('fab-asist').addEventListener('click',()=>{ closeFab(); setPage('asistencia'); });
 
 // Presencia modal
@@ -3348,6 +3376,99 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 });
 
 // ── CARGA INICIAL ──────────────────────────────────────
+// ── DASHBOARD: TOP RANKING, CUMPLEAÑOS, ALERGIAS ──────
+async function loadDashboardExtras() {
+  cargarTopRanking();
+  cargarCumpleanos();
+  cargarAlertaAlergias();
+}
+
+async function cargarTopRanking() {
+  const cont = document.getElementById('top-ranking-lista');
+  if (!cont) return;
+  const {data:insts} = await sb.from('instructores').select('id,nombre,ranking_snapshot(puntaje_total)').eq('activo',true);
+  if (!insts?.length) { cont.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+  const ordenados = insts
+    .map(i => ({nombre:i.nombre, puntaje: i.ranking_snapshot?.[i.ranking_snapshot.length-1]?.puntaje_total}))
+    .filter(i => i.puntaje != null)
+    .sort((a,b) => b.puntaje - a.puntaje)
+    .slice(0,3);
+  if (!ordenados.length) { cont.innerHTML = '<div class="empty">Ranking aún en formación</div>'; return; }
+  const medallas = ['🥇','🥈','🥉'];
+  cont.innerHTML = ordenados.map((i,idx) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">${medallas[idx]}</span>
+        <span style="font-size:13px;font-weight:500">${i.nombre}</span>
+      </div>
+      <span style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--navy)">${i.puntaje.toFixed(1)}</span>
+    </div>`).join('');
+}
+
+async function cargarCumpleanos() {
+  const cont = document.getElementById('cumple-lista');
+  if (!cont) return;
+  const {data:ninos} = await sb.from('grupo_ninos').select('nombre,fecha_nacimiento').eq('activo',true).not('fecha_nacimiento','is',null);
+  if (!ninos?.length) { cont.innerHTML = '<div class="empty">Sin fechas de nacimiento cargadas</div>'; return; }
+
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const proximos = ninos.map(n => {
+    const nac = new Date(n.fecha_nacimiento+'T12:00:00');
+    let prox = new Date(hoy.getFullYear(), nac.getMonth(), nac.getDate());
+    if (prox < hoy) prox = new Date(hoy.getFullYear()+1, nac.getMonth(), nac.getDate());
+    const dias = Math.round((prox - hoy) / 86400000);
+    const edadCumple = hoy.getFullYear() - nac.getFullYear() + (prox.getFullYear() > hoy.getFullYear() ? 1 : 0);
+    return {nombre:n.nombre, dias, fecha:prox, edad:edadCumple};
+  }).filter(n => n.dias <= 7).sort((a,b) => a.dias - b.dias);
+
+  if (!proximos.length) { cont.innerHTML = '<div class="empty">Sin cumpleaños en los próximos 7 días</div>'; return; }
+
+  cont.innerHTML = proximos.map(n => {
+    const txt = n.dias === 0 ? '🎉 Hoy' : n.dias === 1 ? 'Mañana' : `En ${n.dias} días`;
+    const fechaStr = n.fecha.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
+      <div>
+        <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
+        <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${n.edad} años</div>
+      </div>
+      <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
+    </div>`;
+  }).join('');
+}
+
+async function cargarAlertaAlergias() {
+  const banner = document.getElementById('alerta-alergias-hoy');
+  const lista = document.getElementById('alerta-alergias-lista');
+  if (!banner) return;
+
+  const {data:sesiones} = await sb.from('sesiones_escuelita')
+    .select('grupo_id, grupos(nombre)')
+    .eq('fecha', fechaISO)
+    .neq('estado','cancelada');
+
+  if (!sesiones?.length) { banner.style.display = 'none'; return; }
+
+  const grupoIds = [...new Set(sesiones.map(s => s.grupo_id))];
+  const {data:ninos} = await sb.from('grupo_ninos')
+    .select('nombre, alergias, condiciones_medicas, grupo_id')
+    .in('grupo_id', grupoIds)
+    .eq('activo', true)
+    .or('alergias.not.is.null,condiciones_medicas.not.is.null');
+
+  const conInfo = (ninos||[]).filter(n => n.alergias?.trim() || n.condiciones_medicas?.trim());
+  if (!conInfo.length) { banner.style.display = 'none'; return; }
+
+  const grupoNombre = {};
+  sesiones.forEach(s => { grupoNombre[s.grupo_id] = s.grupos?.nombre; });
+
+  lista.innerHTML = conInfo.map(n => {
+    const detalle = [n.alergias, n.condiciones_medicas].filter(Boolean).join(' · ');
+    return `<div style="margin-bottom:4px"><strong>${n.nombre}</strong> (${grupoNombre[n.grupo_id]||'—'}): ${detalle}</div>`;
+  }).join('');
+  banner.style.display = 'block';
+}
+
 async function initClasesHoy() {
   const {data:cd}=await sb.from('clases').select('instructor_id, hora_inicio, hora_fin').eq('fecha',fechaISO);
   clasesHoy=cd||[];
@@ -4099,6 +4220,7 @@ initResStat();
 checkSuperadmin();
 initDatePickers();
 initSkeletons();
+loadDashboardExtras();
 
 // Restaurar modo y página
 const savedModo = localStorage.getItem('altus_modo') || 'cerro';
@@ -4108,7 +4230,7 @@ if (savedModo === 'escuelita') {
   setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-grupos');
 } else {
   setModo('cerro');
-  setPage(['asignacion','ranking','clases','instructores','clientes','asistencia','resenas'].includes(savedPage) ? savedPage : 'asignacion');
+  setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas'].includes(savedPage) ? savedPage : 'asignacion');
 }
 // Mostrar contenido una vez restaurado
 requestAnimationFrame(() => {
