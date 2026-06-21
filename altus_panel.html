@@ -550,6 +550,15 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 
   <!-- INSTRUCTORES -->
   <div id="pg-instructores" style="display:none" class="page-content">
+    <div id="plan-indicator" style="display:none;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:500;color:var(--muted)" id="plan-label">Plan</span>
+        <span style="font-size:12px;font-weight:600;color:var(--navy)" id="plan-contador">— / —</span>
+      </div>
+      <div style="height:6px;background:var(--ice);border-radius:3px;overflow:hidden">
+        <div id="plan-barra" style="height:100%;background:var(--accent);border-radius:3px;transition:width .3s, background .3s;width:0%"></div>
+      </div>
+    </div>
     <div class="page-filters">
       <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="off" name="buscar-instructor-altus"></div>
       <div class="filter-group"><label>Estado</label><select id="f-activo-inst"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></div>
@@ -3252,6 +3261,19 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
   const btn = document.getElementById('ni-save');
   btn.disabled=true; btn.querySelector('span')||btn;
   const originalText = btn.innerHTML;
+  btn.innerHTML = 'Verificando plan...';
+
+  // 0. Verificar límite del plan contratado
+  const {count: totalInstructores} = await sb.from('instructores').select('*', {count:'exact', head:true}).eq('activo', true);
+  const {data: config} = await sb.from('configuracion').select('max_instructores, plan').limit(1).single();
+  const maxInst = config?.max_instructores ?? 12;
+
+  if ((totalInstructores ?? 0) >= maxInst) {
+    toast(`Límite de tu plan alcanzado (${maxInst} instructores). Contactá a Altus para ampliar tu plan.`, 'err');
+    btn.disabled=false; btn.innerHTML=originalText;
+    return;
+  }
+
   btn.innerHTML = 'Guardando...';
 
   // 1. Crear cuenta en Supabase Auth
@@ -3566,6 +3588,25 @@ async function loadClases() {
 document.getElementById('f-fecha-cl').addEventListener('change',loadClases);
 document.getElementById('f-estado-cl').addEventListener('change',loadClases);
 
+async function cargarIndicadorPlan() {
+  const {count} = await sb.from('instructores').select('*', {count:'exact', head:true}).eq('activo', true);
+  const {data: config} = await sb.from('configuracion').select('max_instructores, plan').limit(1).maybeSingle();
+  if (!config) { document.getElementById('plan-indicator').style.display = 'none'; return; }
+
+  const total = count ?? 0;
+  const max = config.max_instructores;
+  const pct = Math.min(100, Math.round((total / max) * 100));
+  const planNombre = {starter:'Starter', pro:'Pro', business:'Business', enterprise:'Enterprise'}[config.plan] || config.plan;
+
+  document.getElementById('plan-indicator').style.display = 'block';
+  document.getElementById('plan-label').textContent = `Plan ${planNombre}`;
+  document.getElementById('plan-contador').textContent = `${total} / ${max} instructores`;
+
+  const barra = document.getElementById('plan-barra');
+  barra.style.width = pct + '%';
+  barra.style.background = pct >= 100 ? 'var(--danger)' : pct >= 85 ? 'var(--warn)' : 'var(--accent)';
+}
+
 async function loadInstructores() {
   const buscar=document.getElementById('f-buscar-inst').value.toLowerCase();
   const activo=document.getElementById('f-activo-inst').value;
@@ -3576,6 +3617,7 @@ async function loadInstructores() {
   const {data}=await q;
   const filtrados=buscar?data?.filter(i=>i.nombre.toLowerCase().includes(buscar)):data;
   document.getElementById('inst-ct').textContent=`${filtrados?.length||0} instructores`;
+  cargarIndicadorPlan();
   if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
   tabla.innerHTML=filtrados.map(inst=>{
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
