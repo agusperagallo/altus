@@ -455,7 +455,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
                 <button onclick="resetTipoCliente()" style="background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;padding:0;line-height:1">←</button>
                 <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;font-weight:500">Buscar cliente existente</div>
               </div>
-              <input type="text" id="cli-buscar" placeholder="Nombre o teléfono..." oninput="buscarClienteExistente()" autocomplete="off" name="buscar-cliente-altus" style="width:100%;height:42px;border:1px solid var(--line);border-radius:6px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:8px">
+              <input type="text" id="cli-buscar" placeholder="Nombre o teléfono..." oninput="buscarClienteExistente()" autocomplete="new-password" name="search-field-no-fill-1" data-lpignore="true" data-form-type="other" style="width:100%;height:42px;border:1px solid var(--line);border-radius:6px;padding:0 14px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:8px">
               <div id="cli-resultados" style="border:1px solid var(--line);border-radius:6px;overflow:hidden;display:none;margin-bottom:4px;max-height:200px;overflow-y:auto"></div>
             </div>
 
@@ -560,7 +560,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       </div>
     </div>
     <div class="page-filters">
-      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="off" name="buscar-instructor-altus"></div>
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="new-password" name="search-field-no-fill-2" data-lpignore="true" data-form-type="other"></div>
       <div class="filter-group"><label>Estado</label><select id="f-activo-inst"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></div>
     </div>
     <div class="page-table">
@@ -573,7 +573,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <!-- CLIENTES -->
   <div id="pg-clientes" style="display:none" class="page-content">
     <div class="page-filters">
-      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre o teléfono..." autocomplete="off" name="buscar-cliente-filtro-altus"></div>
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre o teléfono..." autocomplete="new-password" name="search-field-no-fill-3" data-lpignore="true" data-form-type="other"></div>
       <div class="filter-group"><label>Disciplina</label>
         <select id="f-disc-cli">
           <option value="">Todas</option>
@@ -706,7 +706,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     <div class="page-filters">
       <div class="filter-group" style="flex:2">
         <label>Buscar</label>
-        <input type="text" id="f-fam-buscar" placeholder="Nombre del niño o tutor..." oninput="loadFamilias()" autocomplete="off" name="buscar-familia-altus" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none">
+        <input type="text" id="f-fam-buscar" placeholder="Nombre del niño o tutor..." oninput="loadFamilias()" autocomplete="new-password" name="search-field-no-fill-4" data-lpignore="true" data-form-type="other" style="height:38px;border:1px solid var(--line);border-radius:6px;padding:0 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none">
       </div>
       <div class="filter-group">
         <label>Grupo</label>
@@ -1344,7 +1344,7 @@ function toggleDark() {
       <div id="fn-buscar-panel" style="background:var(--ice);border-radius:8px;padding:12px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:500;color:var(--muted);margin-bottom:8px">¿Ya está en el sistema?</div>
         <div style="display:flex;gap:8px">
-          <input type="text" id="fn-buscar-existente" placeholder="Buscar por nombre..." oninput="buscarNinoExistente()" autocomplete="off" name="buscar-nino-altus" style="flex:1;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
+          <input type="text" id="fn-buscar-existente" placeholder="Buscar por nombre..." oninput="buscarNinoExistente()" autocomplete="new-password" name="search-field-no-fill-5" data-lpignore="true" data-form-type="other" style="flex:1;height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none">
         </div>
         <div id="fn-resultados-busqueda" style="margin-top:8px"></div>
       </div>
