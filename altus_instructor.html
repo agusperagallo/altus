@@ -300,6 +300,15 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
   </div>
 
+  <!-- MIS GRUPOS (ESCUELITA) -->
+  <div class="panel" id="panel-grupos" style="display:none">
+    <div class="panel-header">
+      <span class="panel-title">Mis grupos</span>
+      <span class="panel-meta" id="grupos-meta">—</span>
+    </div>
+    <div id="lista-mis-grupos"><div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div></div>
+  </div>
+
   <!-- PUNTAJE -->
   <div class="panel" id="panel-ranking" style="display:none">
     <div class="panel-header">
@@ -365,6 +374,10 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <button class="nav-tab active" id="tab-clases" onclick="setTab('clases')">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
     <span class="nav-tab-label">Clases</span>
+  </button>
+  <button class="nav-tab" id="tab-grupos" onclick="setTab('grupos')" style="display:none">
+    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-4 5-4s5 1.2 5 4"/><circle cx="12" cy="6" r="1.8"/><path d="M12 10c1.8 0 3 .8 3 2.5"/></svg>
+    <span class="nav-tab-label">Mis grupos</span>
   </button>
   <button class="nav-tab" id="tab-ranking" onclick="setTab('ranking')">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg>
@@ -806,14 +819,110 @@ function toggleDark() {
     const {data} = await sb.from('instructores').select('escuelita').eq('id', INSTRUCTOR_ID).single();
     if (data?.escuelita) {
       tieneEscuelita = true;
-      // Verificar si tiene sesiones hoy
+      document.getElementById('tab-grupos').style.display = 'flex';
       const {data:ses} = await sb.from('sesiones_escuelita').select('id').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).limit(1);
       if (ses?.length || data?.escuelita) {
         document.getElementById('inst-modo-switch').style.display = 'block';
       }
     }
   }
-  let proximasSesionesCargadas = false;
+  // ── MIS GRUPOS (siempre visibles, no dependen de sesión activa) ──
+  let misGruposCargados = false;
+  async function cargarMisGrupos() {
+    if (!INSTRUCTOR_ID) return;
+    const lista = document.getElementById('lista-mis-grupos');
+    lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:grupos} = await sb.from('grupos').select('*, grupo_ninos(id, nombre, edad, activo)').eq('instructor_id', INSTRUCTOR_ID).eq('activo', true).order('nombre');
+
+    document.getElementById('grupos-meta').textContent = `${grupos?.length||0} grupos`;
+
+    if (!grupos?.length) {
+      lista.innerHTML = '<div style="padding:24px;text-align:center;color:var(--silver);font-size:13px">No tenés grupos asignados</div>';
+      return;
+    }
+
+    lista.innerHTML = grupos.map(g => {
+      const ninos = (g.grupo_ninos||[]).filter(n=>n.activo);
+      return `<div style="border-bottom:1px solid var(--ice2)">
+        <div style="padding:14px 16px 8px">
+          <div style="font-size:14px;font-weight:600;color:var(--navy)">${g.nombre}</div>
+          <div style="font-size:11px;color:var(--silver);margin-top:1px">${g.nivel||''} · ${g.edad_min}-${g.edad_max} años · ${ninos.length} niños</div>
+        </div>
+        <div style="padding:0 16px 12px">
+          ${ninos.map(n => `<div onclick="abrirFichaNinoInst('${n.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--ice2);border-radius:8px;margin-bottom:6px;cursor:pointer">
+            <div style="font-size:13px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">${n.edad} años ›</div>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--silver);padding:8px 0">Sin niños en este grupo</div>'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  window.cargarMisGrupos = cargarMisGrupos;
+
+  // Ficha del niño — sin teléfono
+  window.abrirFichaNinoInst = async function(ninoId) {
+    let modal = document.getElementById('modal-ficha-nino-inst');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-ficha-nino-inst';
+      modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:15px;font-weight:600" id="ffi-titulo">Ficha</span>
+            <button onclick="document.getElementById('modal-ficha-nino-inst').remove()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+          </div>
+          <div id="ffi-body" style="overflow-y:auto;padding:16px 20px"></div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    } else {
+      modal.style.display = 'flex';
+    }
+    const body = document.getElementById('ffi-body');
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:n} = await sb.from('grupo_ninos').select('*').eq('id', ninoId).single();
+    if (!n) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver)">No encontrado</div>'; return; }
+
+    document.getElementById('ffi-titulo').textContent = n.nombre;
+
+    const seccion = (titulo, items) => items.some(i=>i[1]) ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">${titulo}</div>
+      ${items.filter(i=>i[1]).map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--ice2)"><span style="font-size:12px;color:var(--silver)">${label}</span><span style="font-size:13px;font-weight:500;text-align:right;max-width:60%">${val}</span></div>`).join('')}
+    ` : '';
+
+    body.innerHTML = `
+      <div style="display:flex;gap:16px;margin-bottom:8px">
+        <div><div style="font-size:11px;color:var(--silver)">Edad</div><div style="font-size:15px;font-weight:600">${n.edad||'—'} años</div></div>
+        ${n.fecha_nacimiento ? `<div><div style="font-size:11px;color:var(--silver)">Nacimiento</div><div style="font-size:15px;font-weight:600">${new Date(n.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-AR')}</div></div>` : ''}
+      </div>
+
+      ${(n.alergias || n.condiciones_medicas || n.medicacion) ? `
+      <div style="background:var(--danger-bg);border-radius:10px;padding:12px 14px;margin-top:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⚠️ Información médica</div>
+        ${n.alergias ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Alergias:</strong> ${n.alergias}</div>` : ''}
+        ${n.condiciones_medicas ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Condiciones:</strong> ${n.condiciones_medicas}</div>` : ''}
+        ${n.medicacion ? `<div style="font-size:13px;color:var(--text)"><strong>Medicación:</strong> ${n.medicacion}</div>` : ''}
+      </div>` : ''}
+
+      ${seccion('Tutor / Padre 1', [['Nombre', n.tutor1_nombre], ['Relación', n.tutor1_relacion]])}
+      ${seccion('Tutor / Padre 2', [['Nombre', n.tutor2_nombre], ['Relación', n.tutor2_relacion]])}
+
+      ${n.observaciones ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">Observaciones</div>
+      <div style="font-size:13px;color:var(--text);background:var(--ice2);border-radius:8px;padding:10px 12px">${n.observaciones}</div>
+      ` : ''}
+
+      ${n.dias_semana?.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">Días que asiste</div>
+      <div style="font-size:13px;color:var(--text)">${n.indefinido ? 'Indefinido — ' : ''}${n.dias_semana.join(', ')}</div>
+      ` : ''}
+
+      <div style="font-size:10px;color:var(--silver);margin-top:18px;padding-top:12px;border-top:1px solid var(--ice2)">Para contactar a la familia, consultá con el coordinador.</div>
+    `;
+  };
   window.toggleProximasSesiones = async function() {
     const lista  = document.getElementById('lista-proximas-sesiones');
     const arrow  = document.getElementById('prox-ses-arrow');
@@ -1127,7 +1236,7 @@ function toggleDark() {
   };
 
   // --- TABS ---
-  const allPanels = ['clases','ranking','resenas','perfil'];
+  const allPanels = ['clases','grupos','ranking','resenas','perfil'];
   window.setTab = function(tab) {
     allPanels.forEach(p => {
       document.getElementById(`panel-${p}`).style.display = p === tab ? 'block' : 'none';
@@ -1174,6 +1283,7 @@ function toggleDark() {
   cargarResenas();
   cargarRanking();
   checkEscuelita();
+  cargarMisGrupos();
 
   // Skeletons iniciales
   try {
