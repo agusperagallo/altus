@@ -1460,10 +1460,11 @@ const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishab
 
 // Cliente aislado, exclusivo para crear cuentas nuevas (signUp) sin afectar
 // la sesión activa del supervisor logueado en el cliente principal "sb".
+// Usa una storageKey distinta para que no comparta ni pise la sesión guardada.
 const sbAuthAux = createClient(
   'https://pngtxnpywchizyyynuyb.supabase.co',
   'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-',
-  { auth: { persistSession: false, autoRefreshToken: false } }
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'altus-aux-signup' } }
 );
 
 // Auth check
@@ -2106,7 +2107,7 @@ window.abrirCambiarRol = abrirCambiarRol;
 async function checkSuperadmin() {
   const {data:{session}} = await sb.auth.getSession();
   if (!session) return;
-  const {data:u} = await sb.from('usuarios').select('rol').eq('id',session.user.id).single();
+  const {data:u} = await sb.from('usuarios').select('rol').eq('id',session.user.id).maybeSingle();
   if (u?.rol === 'superadmin') {
     document.getElementById('nav-usuarios').style.display = 'flex';
   }
