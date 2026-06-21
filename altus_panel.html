@@ -1458,6 +1458,14 @@ const hoy = new Date();
 const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
 const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
 
+// Cliente aislado, exclusivo para crear cuentas nuevas (signUp) sin afectar
+// la sesión activa del supervisor logueado en el cliente principal "sb".
+const sbAuthAux = createClient(
+  'https://pngtxnpywchizyyynuyb.supabase.co',
+  'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-',
+  { auth: { persistSession: false, autoRefreshToken: false } }
+);
+
 // Auth check
 sb.auth.getSession().then(({data}) => {
   if (!data?.session) { window.location.href='altus_login.html'; return; }
@@ -3276,23 +3284,24 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 
   btn.innerHTML = 'Guardando...';
 
-  // 1. Crear cuenta en Supabase Auth
-  const {data:authData, error:authError} = await sb.auth.admin
-    ? await sb.auth.admin.createUser({email, password:pass, email_confirm:true})
-    : {data:null, error:{message:'No admin access'}};
-
-  // Si no tenemos acceso admin, usamos signUp normal
-  let userId = authData?.user?.id;
-  if (authError || !userId) {
-    const {data:signUpData, error:signUpError} = await sb.auth.signUp({email, password:pass});
-    if (signUpError) {
-      toast('Error al crear la cuenta: '+signUpError.message,'err');
-      btn.disabled=false; btn.innerHTML=originalText; return;
-    }
-    userId = signUpData?.user?.id;
+  // 1. Crear cuenta en Supabase Auth — usando el cliente AISLADO (sbAuthAux)
+  //    para que la sesión del supervisor logueado en "sb" no se vea afectada.
+  const {data:signUpData, error:signUpError} = await sbAuthAux.auth.signUp({email, password:pass});
+  if (signUpError) {
+    toast('Error al crear la cuenta: '+signUpError.message,'err');
+    btn.disabled=false; btn.innerHTML=originalText; return;
   }
+  const userId = signUpData?.user?.id;
+  if (!userId) {
+    toast('No se pudo crear la cuenta del instructor','err');
+    btn.disabled=false; btn.innerHTML=originalText; return;
+  }
+  // Cerramos cualquier sesión que el cliente auxiliar haya podido abrir,
+  // para que no quede una sesión fantasma en el navegador.
+  await sbAuthAux.auth.signOut();
 
-  // 2. Crear perfil en instructores
+  // 2. Crear perfil en instructores — con el cliente principal "sb",
+  //    que mantiene la sesión del supervisor (necesaria para pasar la policy RLS).
   const {data:inst, error:instError} = await sb.from('instructores').insert({
     nombre:nom, email, telefono:document.getElementById('ni-tel').value,
     nivel_certificado:parseInt(nivelCert),
