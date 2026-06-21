@@ -3639,9 +3639,9 @@ async function loadClientes() {
   tabla.innerHTML = data.map(c => {
     const ultimaStr = c.ultima ? new Date(c.ultima.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'2-digit'}) : '—';
     const tel = c.telefono;
-    const telLink = tel ? `<a href="tel:${tel}" style="color:var(--accent2);text-decoration:none">${tel}</a>` : '—';
+    const telLink = tel ? `<a href="tel:${tel}" onclick="event.stopPropagation()" style="color:var(--accent2);text-decoration:none">${tel}</a>` : '—';
     const waTel = tel ? tel.replace(/\D/g,'') : null;
-    const waLink = waTel ? `<a href="https://wa.me/${waTel}" target="_blank" style="color:var(--accent2);text-decoration:none;font-size:11px">WhatsApp →</a>` : '';
+    const waLink = waTel ? `<a href="https://wa.me/${waTel}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent2);text-decoration:none;font-size:11px">WhatsApp →</a>` : '';
 
     if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
