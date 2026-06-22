@@ -275,6 +275,7 @@ input:focus,select:focus{border-color:var(--accent)}
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
   #cl-cols{display:none}
+  #rk-cols{display:none}
   #ses-cols{display:none}
   #asist-cols{display:none}
   #esc-admin-cols{display:none}
@@ -291,12 +292,14 @@ input:focus,select:focus{border-color:var(--accent)}
   .badge-date{display:none}
   .page-filters{padding:12px}
   .filter-group{flex:1 1 calc(50% - 5px)}
-  .page-table{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
-  .t-cols,.t-row{min-width:520px}
+  .page-table{width:100%;overflow-x:hidden}
+  .t-cols,.t-row{min-width:0}
   .modal{border-radius:14px 14px 0 0;max-width:100% !important;margin:0}
   .modal-overlay{align-items:flex-end}
   .form-grid{grid-template-columns:1fr}
-  .rk-head,.rk-row{grid-template-columns:24px 1fr 60px 60px;gap:4px}
+  .rk-head,.rk-row{grid-template-columns:22px 1fr 50px;gap:6px}
+  .rk-head div:nth-child(4),.rk-head div:nth-child(5),
+  .rk-row > div:nth-child(4),.rk-row > div:nth-child(5){display:none}
   .grid-2{grid-template-columns:1fr}
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -2955,7 +2958,7 @@ const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores'
 const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
 const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos};
 
-function setPage(page) {
+function setPage(page, fromSidebarNav) {
   localStorage.setItem('altus_page', page);
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
@@ -2965,9 +2968,10 @@ function setPage(page) {
   if (page==='esc-grupos')       loadEscGruposHoy();
   if (page==='esc-sesiones')     loadEscSesiones();
   if (page==='esc-admin-grupos') loadEscAdminGrupos();
-  if (window.innerWidth<768) toggleSidebar();
+  // Solo cerrar el sidebar si la navegación vino de un click en el menú lateral
+  if (fromSidebarNav && window.innerWidth<768) toggleSidebar();
 }
-document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page)));
+document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page, true)));
 
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
@@ -3553,6 +3557,7 @@ function renderRanking() {
     return rkSortDir * (va - vb);
   });
 
+  const isMobile = window.innerWidth < 768;
   const tabla = document.getElementById('rk-tabla');
   tabla.innerHTML = sorted.map((inst, i) => {
     const s = inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
@@ -3560,6 +3565,18 @@ function renderRanking() {
       const v = s?.[x];
       return v != null ? v.toFixed(1) : '—';
     };
+    if (isMobile) {
+      return `<div onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--ice);cursor:pointer">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${i<3?'var(--navy)':'var(--silver)'};flex-shrink:0;width:20px;text-align:center">${i+1}</span>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div>
+          </div>
+        </div>
+        <div style="flex-shrink:0">${pill(fn('puntaje_total'))}</div>
+      </div>`;
+    }
     // Resaltar columna activa
     const colStyle = col => col === rkSortCol ? 'background:rgba(29,158,117,.06)' : '';
     return `<div class="t-row" style="cursor:pointer" onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
