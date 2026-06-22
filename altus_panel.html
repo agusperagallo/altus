@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden;max-width:100vw}
+html,body{overflow-x:hidden;max-width:100vw;overscroll-behavior-y:none}
 /* SKELETON LOADER */
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 .sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e7eb 50%,#f0f2f5 75%);background-size:1200px 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:block}
@@ -282,6 +282,7 @@ input:focus,select:focus{border-color:var(--accent)}
   #fam-cols{display:none}
   #ea-ninos-cols{display:none}
   #ei-cols{display:none}
+  #cli-cols{display:none}
   #modo-switch{display:none !important}
   #modo-switch-sidebar{display:flex !important}
   .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
@@ -2216,6 +2217,12 @@ function resetTipoCliente() {
   document.getElementById('cli-resultados').style.display = 'none';
   document.getElementById('cli-buscar').value = '';
   document.getElementById('cli-id-existente').value = '';
+  // Re-habilitar campos que puedan haber quedado bloqueados
+  ['cli-nombre','cli-tel','cli-disc','cli-rango'].forEach(cid => {
+    const el = document.getElementById(cid);
+    if (el) { el.disabled = false; el.style.background = ''; el.style.color = ''; }
+  });
+  document.querySelectorAll('.nivel-btn[data-nivel]').forEach(b => { b.style.pointerEvents=''; b.style.opacity=''; });
   document.getElementById('rk-lista').innerHTML = '<div style="padding:18px 0;text-align:center;color:var(--silver);font-size:13px">Completá los datos y buscá instructores</div>';
 }
 window.resetTipoCliente = resetTipoCliente;
@@ -2233,15 +2240,30 @@ async function buscarClienteExistente() {
   res.style.display = 'block';
   res.innerHTML = data.map(c => {
     const ultimaClase = c.ultima_clase ? new Date(c.ultima_clase+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}) : 'Sin clases';
-    return `<div onclick="seleccionarClienteExistente('${c.id}','${(c.nombre||'').replace(/'/g,"\\'")}','${c.telefono||''}','${c.disciplina||''}','${c.rango_etario||''}','${c.nivel_validado||c.nivel_declarado||''}')" style="padding:12px 14px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
-      <div style="font-size:13px;font-weight:500">${c.nombre}</div>
-      <div style="font-size:11px;color:var(--silver);margin-top:2px">${c.telefono||'Sin teléfono'} · Última clase: ${ultimaClase}</div>
+    const disc = (c.disciplina||'—');
+    const nivel = (c.nivel_validado||c.nivel_declarado||'—');
+    const tel = c.telefono||'Sin teléfono';
+    const id = c.id;
+    const nombre = (c.nombre||'').replace(/'/g,"\\'");
+    const telE = (c.telefono||'').replace(/'/g,"\\'");
+    const discE = (c.disciplina||'').replace(/'/g,"\\'");
+    const rangoE = (c.rango_etario||'').replace(/'/g,"\\'");
+    const nivelE = (c.nivel_validado||c.nivel_declarado||'').replace(/'/g,"\\'");
+    return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);position:relative">
+      <button onclick="document.getElementById('cli-resultados').style.display='none'" style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;color:var(--silver);font-size:18px;line-height:1;padding:2px 6px">×</button>
+      <div style="font-size:14px;font-weight:500;color:var(--navy);margin-bottom:2px;padding-right:28px">${c.nombre}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:2px">${disc} · ${nivel} · ${tel}</div>
+      <div style="font-size:11px;color:var(--silver);margin-bottom:10px">Última clase: ${ultimaClase}</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="seleccionarClienteExistente('${id}','${nombre}','${telE}','${discE}','${rangoE}','${nivelE}',false)" style="flex:1;height:34px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Seleccionar</button>
+        <button onclick="seleccionarClienteExistente('${id}','${nombre}','${telE}','${discE}','${rangoE}','${nivelE}',true)" style="flex:1;height:34px;background:var(--ice);color:var(--navy);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Modificar datos</button>
+      </div>
     </div>`;
   }).join('');
 }
 window.buscarClienteExistente = buscarClienteExistente;
 
-function seleccionarClienteExistente(id, nombre, tel, disc, rango, nivel) {
+function seleccionarClienteExistente(id, nombre, tel, disc, rango, nivel, editable) {
   document.getElementById('cli-buscar').value = '';
   document.getElementById('cli-resultados').style.display = 'none';
   document.getElementById('paso-buscar-cliente').style.display = 'none';
@@ -2256,6 +2278,16 @@ function seleccionarClienteExistente(id, nombre, tel, disc, rango, nivel) {
     });
     nivelCliente = nivel;
   }
+  // Bloquear o habilitar campos según si se quiere modificar
+  const campos = ['cli-nombre','cli-tel','cli-disc','cli-rango'];
+  campos.forEach(cid => {
+    const el = document.getElementById(cid);
+    if (el) { el.disabled = !editable; el.style.background = editable ? '' : 'var(--ice)'; el.style.color = editable ? '' : 'var(--muted)'; }
+  });
+  document.querySelectorAll('.nivel-btn[data-nivel]').forEach(b => {
+    b.style.pointerEvents = editable ? '' : 'none';
+    b.style.opacity = editable ? '' : '0.6';
+  });
   const badge = document.getElementById('cli-existente-badge');
   badge.style.display = 'flex';
   document.getElementById('cli-badge-nombre').textContent = nombre;
@@ -2896,9 +2928,38 @@ sb.from('temporadas').select('nombre,reinicio_total').eq('activa',true).single()
 
 document.getElementById('user-avatar').addEventListener('click', e => {
   e.stopPropagation();
-  document.getElementById('profile-menu').classList.toggle('open');
+  const menu = document.getElementById('profile-menu');
+  const opening = !menu.classList.contains('open');
+  menu.classList.toggle('open');
+  if (window.innerWidth < 768) {
+    if (opening) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.dataset.pmScrollY = scrollY;
+    } else {
+      const scrollY = document.body.dataset.pmScrollY || '0';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY));
+    }
+  }
 });
-document.addEventListener('click', () => document.getElementById('profile-menu').classList.remove('open'));
+function closeProfileMenu() {
+  const menu = document.getElementById('profile-menu');
+  if (!menu.classList.contains('open')) return;
+  menu.classList.remove('open');
+  if (window.innerWidth < 768) {
+    const scrollY = document.body.dataset.pmScrollY || '0';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, parseInt(scrollY));
+  }
+}
+document.addEventListener('click', closeProfileMenu);
 document.getElementById('profile-menu').addEventListener('click', e => e.stopPropagation());
 document.getElementById('pm-logout').addEventListener('click', async() => {
   await sb.auth.signOut(); localStorage.clear(); window.location.href='altus_login.html';
