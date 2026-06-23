@@ -360,15 +360,16 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <!-- NAV ESCUELITA -->
     <div id="nav-escuelita" style="display:none">
-      <div class="nav-sec">Escuelita</div>
+      <div class="nav-sec">Principal</div>
       <button class="nav-item" data-page="esc-grupos"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/></svg>Grupos de hoy</button>
       <button class="nav-item" data-page="esc-sesiones"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>Sesiones</button>
       <div class="nav-sec">Gestión</div>
       <button class="nav-item" data-page="esc-admin-grupos"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Administrar grupos</button>
       <button class="nav-item" data-page="esc-familias"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-4 5-4s5 1.2 5 4"/><circle cx="12" cy="6" r="1.8"/><path d="M12 10c1.8 0 3 .8 3 2.5"/></svg>Familias</button>
-      <button class="nav-item" data-page="esc-asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8.5l3.5 3.5L14 3.5"/></svg>Asistencia</button>
+      <div class="nav-sec">Sistema</div>
+      <button class="nav-item" data-page="esc-asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8.5l3.5 3.5L14 3.5"/></svg>Asistencia niños</button>
       <button class="nav-item" data-page="instructores"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Instructores</button>
-      <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
+      <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia instructores</button>
     </div>
   </nav>
   <div class="sidebar-footer">Temporada 2026 — v1.0</div>
@@ -1531,7 +1532,7 @@ function toggleDark() {
 const { createClient } = supabase;
 const hoy = new Date();
 const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
-const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-');
+const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-', { auth: { persistSession: true, autoRefreshToken: true } });
 
 // Cliente aislado, exclusivo para crear cuentas nuevas (signUp) sin afectar
 // la sesión activa del supervisor logueado en el cliente principal "sb".
@@ -4048,7 +4049,7 @@ async function loadAsistencia() {
   document.getElementById('asist-period').textContent=`${anio} — ${mn[mes-1]}`;
   const tabla=document.getElementById('asist-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
-  const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
+  const {data:insts}=await sb.from('instructores').select('id, nombre, created_at').eq('activo',true).order('nombre');
   // Tabla asistencia = fuente de verdad (marcada por supervisor)
   const {data:registros}=await sb.from('asistencia').select('instructor_id, tipo, registrado_en').gte('registrado_en',desde+'T00:00:00').lte('registrado_en',hasta+'T23:59:59');
   // Horas siguen saliendo de clases
@@ -4060,14 +4061,18 @@ async function loadAsistencia() {
   const diasTranscurridos = Math.max(0, Math.round((new Date(fechaHasta) - new Date(desde)) / 86400000) + 1);
   const isMobile = window.innerWidth < 768;
   tabla.innerHTML=insts.map(inst=>{
+    // Fecha de inicio efectiva: la mayor entre el inicio del período y la creación del instructor
+    const fechaCreacion = inst.created_at ? inst.created_at.split('T')[0] : desde;
+    const desdeEfectivo = fechaCreacion > desde ? fechaCreacion : desde;
+    const diasInst = Math.max(0, Math.round((new Date(fechaHasta) - new Date(desdeEfectivo)) / 86400000) + 1);
     // Un registro por día (el más reciente si hay varios)
-    const regsInst=(registros||[]).filter(r=>r.instructor_id===inst.id && r.registrado_en.split('T')[0]<=fechaHasta);
+    const regsInst=(registros||[]).filter(r=>r.instructor_id===inst.id && r.registrado_en.split('T')[0]<=fechaHasta && r.registrado_en.split('T')[0]>=desdeEfectivo);
     // Agrupar por día y tomar el último registro
     const porDia={};
     regsInst.forEach(r=>{ const d=r.registrado_en.split('T')[0]; porDia[d]=r.tipo; });
     const francos=Object.values(porDia).filter(t=>t==='franco').length;
     const pres=Object.values(porDia).filter(t=>t==='presente').length;
-    const total=diasTranscurridos-francos; // días laborables reales
+    const total=diasInst-francos; // días laborables reales desde que ingresó
     const hs=(clases||[]).filter(x=>x.instructor_id===inst.id).reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
@@ -4400,7 +4405,7 @@ if (savedModo === 'escuelita') {
   setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-grupos');
 } else {
   setModo('cerro');
-  setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas'].includes(savedPage) ? savedPage : 'asignacion');
+  setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','usuarios'].includes(savedPage) ? savedPage : 'asignacion');
 }
 // Mostrar contenido una vez restaurado
 requestAnimationFrame(() => {
