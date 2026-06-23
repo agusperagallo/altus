@@ -667,7 +667,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div id="pg-asistencia" style="display:none" class="page-content">
     <div class="page-filters">
       <div class="filter-group"><label>Mes</label><select id="f-mes"><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
-      <div class="filter-group"><label>Año</label><select id="f-anio"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+      <div class="filter-group"><label>Año</label><select id="f-anio"></select></div>
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Asistencia mensual</span><span class="panel-meta" id="asist-period">—</span></div>
@@ -4093,6 +4093,18 @@ async function loadAsistencia() {
   }).join('');
 }
 document.getElementById('f-mes').addEventListener('change',loadAsistencia);
+// Poblar selector de año dinámicamente (año de inicio de plataforma hasta año actual)
+(function() {
+  const sel = document.getElementById('f-anio');
+  const anioActual = new Date().getFullYear();
+  const anioInicio = 2026;
+  for (let a = anioInicio; a <= anioActual; a++) {
+    const opt = document.createElement('option');
+    opt.value = a; opt.textContent = a;
+    if (a === anioActual) opt.selected = true;
+    sel.appendChild(opt);
+  }
+})();
 document.getElementById('f-anio').addEventListener('change',loadAsistencia);
 
 // Detalle de clases del instructor por semana/periodo
