@@ -420,6 +420,7 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
     <!-- NAV ESCUELITA -->
     <div id="nav-escuelita" style="display:none">
       <div class="nav-sec">Principal</div>
+      <button class="nav-item" data-page="esc-inicio"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Inicio</button>
       <button class="nav-item" data-page="esc-grupos"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/></svg>Grupos de hoy</button>
       <button class="nav-item" data-page="esc-sesiones"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>Sesiones</button>
       <div class="nav-sec">Gestión</div>
@@ -767,6 +768,42 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
   </div>
 
   <!-- GRUPOS DE HOY (ESCUELITA) -->
+  <!-- DASHBOARD ESCUELITA -->
+  <div id="pg-esc-inicio" style="display:none" class="page-content">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Grupos hoy</div><div class="stat-val" id="esc-stat-grupos">—</div><div class="stat-sub">con sesión activa</div></div>
+      <div class="stat"><div class="stat-label">Niños activos</div><div class="stat-val" id="esc-stat-ninos">—</div><div class="stat-sub">en el sistema</div></div>
+      <div class="stat"><div class="stat-label">Sesiones esta semana</div><div class="stat-val" id="esc-stat-sesiones">—</div><div class="stat-sub">programadas</div></div>
+      <div class="stat"><div class="stat-label">Instructores</div><div class="stat-val" id="esc-stat-insts">—</div><div class="stat-sub">asignados a escuelita</div></div>
+    </div>
+    <!-- Alerta alergias -->
+    <div id="esc-alerta-alergias" style="display:none;background:var(--danger-bg);border:1px solid var(--danger);border-radius:8px;padding:12px 16px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px">⚠️ Alergias y condiciones médicas — grupos de hoy</div>
+      <div id="esc-alerta-lista" style="font-size:12px;color:var(--danger)"></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <!-- Cumpleaños niños -->
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Próximos cumpleaños</span><span class="panel-meta">Niños · 7 días</span></div>
+          <div id="esc-cumple-lista" style="padding:6px 18px 14px"><div class="empty">Cargando...</div></div>
+        </div>
+        <!-- Grupos de hoy resumen -->
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Grupos de hoy</span><span class="panel-meta" id="esc-dash-grupos-ct">—</span></div>
+          <div id="esc-dash-grupos-lista" style="padding:4px 0 8px"><div class="empty">Cargando...</div></div>
+        </div>
+      </div>
+      <div>
+        <!-- Niños con condiciones médicas activas hoy -->
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Fichas médicas activas hoy</span><span class="panel-meta">Grupos con sesión</span></div>
+          <div id="esc-fichas-hoy" style="padding:6px 18px 14px"><div class="empty">Sin grupos activos hoy</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="pg-esc-grupos" style="display:none" class="page-content">
     <div class="page-filters">
       <div class="filter-group"><label>Fecha</label><input type="date" id="f-fecha-esc" style="height:36px;border:1px solid var(--line);border-radius:5px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none"></div>
@@ -1044,6 +1081,7 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
             <div style="font-size:11px;color:var(--silver);margin-top:4px">El instructor usará esta contraseña para ingresar a su panel</div>
           </div>
           <div class="fg"><label>Fecha de ingreso</label><input type="date" id="ni-fecha"></div>
+          <div class="fg"><label>Fecha de nacimiento</label><input type="date" id="ni-nacimiento"></div>
         </div>
         <div style="display:flex;justify-content:flex-end"><button class="btn btn-primary" id="p1-next">Siguiente</button></div>
       </div>
@@ -2463,7 +2501,7 @@ function setModo(modo) {
     document.getElementById('fab-menu-cerro').style.display = 'flex';
     document.getElementById('fab-menu-escuelita').style.display = 'none';
   } else {
-    setPage('esc-grupos');
+    setPage('esc-inicio');
     document.getElementById('fab-btn').style.display = 'flex';
     document.getElementById('fab-menu-cerro').style.display = 'none';
     document.getElementById('fab-menu-escuelita').style.display = 'flex';
@@ -2471,8 +2509,8 @@ function setModo(modo) {
 }
 
 // ── PÁGINAS ESCUELITA ─────────────────────────────────
-const PAGES_ESCUELITA = ['esc-grupos','esc-sesiones','esc-admin-grupos','esc-familias','esc-asistencia'];
-const TITLES_ESC = {'esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos','esc-familias':'Familias','esc-asistencia':'Asistencia'};
+const PAGES_ESCUELITA = ['esc-inicio','esc-grupos','esc-sesiones','esc-admin-grupos','esc-familias','esc-asistencia'];
+const TITLES_ESC = {'esc-inicio':'Inicio','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Administrar grupos','esc-familias':'Familias','esc-asistencia':'Asistencia'};
 
 // Extender setPage para escuelita — se completa abajo cuando PAGES/TITLES/LOADERS estén definidos
 
@@ -3143,7 +3181,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // Sidebar navigation
 const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
 const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
-const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos};
+const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
 
 function setPage(page, fromSidebarNav) {
   localStorage.setItem('altus_page', page);
@@ -3530,6 +3568,7 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
     nombre:nom, email, telefono:document.getElementById('ni-tel').value,
     nivel_certificado:parseInt(nivelCert),
     fecha_ingreso:document.getElementById('ni-fecha').value,
+    fecha_nacimiento:document.getElementById('ni-nacimiento').value||null,
     activo:true,
     escuelita:niEscuelita
   }).select('id').single();
@@ -3603,12 +3642,12 @@ async function cargarTopRanking() {
 async function cargarCumpleanos() {
   const cont = document.getElementById('cumple-lista');
   if (!cont) return;
-  const {data:ninos} = await sb.from('grupo_ninos').select('nombre,fecha_nacimiento').eq('activo',true).not('fecha_nacimiento','is',null);
-  if (!ninos?.length) { cont.innerHTML = '<div class="empty">Sin fechas de nacimiento cargadas</div>'; return; }
+  const {data:insts} = await sb.from('instructores').select('nombre,fecha_nacimiento').eq('activo',true).not('fecha_nacimiento','is',null);
+  if (!insts?.length) { cont.innerHTML = '<div class="empty">Sin fechas de nacimiento cargadas</div>'; return; }
 
   const hoy = new Date();
   hoy.setHours(0,0,0,0);
-  const proximos = ninos.map(n => {
+  const proximos = insts.map(n => {
     const nac = new Date(n.fecha_nacimiento+'T12:00:00');
     let prox = new Date(hoy.getFullYear(), nac.getMonth(), nac.getDate());
     if (prox < hoy) prox = new Date(hoy.getFullYear()+1, nac.getMonth(), nac.getDate());
@@ -4476,6 +4515,91 @@ initResStat();
 checkSuperadmin();
 initDatePickers();
 initSkeletons();
+async function loadEscInicio() {
+  // Stats
+  const hoy = new Date().toISOString().split('T')[0];
+  const semLunes = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-(day===0?6:day-1); d.setDate(diff); return d.toISOString().split('T')[0]; })();
+  const semDom   = (() => { const d=new Date(semLunes); d.setDate(d.getDate()+6); return d.toISOString().split('T')[0]; })();
+
+  const [{data:sesHoy},{data:ninos},{data:sesSemanales},{data:instsEsc}] = await Promise.all([
+    sb.from('sesiones_escuelita').select('id,grupo_id').eq('fecha',hoy).neq('estado','cancelada'),
+    sb.from('grupo_ninos').select('id').eq('activo',true),
+    sb.from('sesiones_escuelita').select('id').gte('fecha',semLunes).lte('fecha',semDom).neq('estado','cancelada'),
+    sb.from('instructores').select('id').eq('activo',true).eq('escuelita',true)
+  ]);
+  document.getElementById('esc-stat-grupos').textContent   = sesHoy?.length||0;
+  document.getElementById('esc-stat-ninos').textContent    = ninos?.length||0;
+  document.getElementById('esc-stat-sesiones').textContent = sesSemanales?.length||0;
+  document.getElementById('esc-stat-insts').textContent    = instsEsc?.length||0;
+
+  // Cumpleaños niños
+  const {data:todosNinos} = await sb.from('grupo_ninos').select('nombre,fecha_nacimiento,grupos(nombre)').eq('activo',true).not('fecha_nacimiento','is',null);
+  const contCumple = document.getElementById('esc-cumple-lista');
+  if (!todosNinos?.length) { contCumple.innerHTML='<div class="empty">Sin fechas cargadas</div>'; }
+  else {
+    const hoyD = new Date(); hoyD.setHours(0,0,0,0);
+    const prox = todosNinos.map(n => {
+      const nac = new Date(n.fecha_nacimiento+'T12:00:00');
+      let p = new Date(hoyD.getFullYear(), nac.getMonth(), nac.getDate());
+      if (p < hoyD) p = new Date(hoyD.getFullYear()+1, nac.getMonth(), nac.getDate());
+      const dias = Math.round((p - hoyD)/86400000);
+      const edad = hoyD.getFullYear() - nac.getFullYear() + (p.getFullYear()>hoyD.getFullYear()?1:0);
+      return {...n, dias, edad, fechaProx:p};
+    }).filter(n=>n.dias<=7).sort((a,b)=>a.dias-b.dias);
+    if (!prox.length) contCumple.innerHTML='<div class="empty">Sin cumpleaños en los próximos 7 días</div>';
+    else contCumple.innerHTML = prox.map(n=>{
+      const txt = n.dias===0?'🎉 Hoy':n.dias===1?'Mañana':`En ${n.dias} días`;
+      const fechaStr = n.fechaProx.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
+        <div>
+          <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
+          <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${n.edad} años · ${n.grupos?.nombre||'—'}</div>
+        </div>
+        <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Grupos de hoy (resumen)
+  const {data:gruposHoy} = await sb.from('sesiones_escuelita').select('grupos(nombre,instructores(nombre)),estado').eq('fecha',hoy).neq('estado','cancelada');
+  const contGrupos = document.getElementById('esc-dash-grupos-lista');
+  document.getElementById('esc-dash-grupos-ct').textContent = `${gruposHoy?.length||0} grupos`;
+  if (!gruposHoy?.length) contGrupos.innerHTML='<div class="empty">Sin sesiones hoy</div>';
+  else contGrupos.innerHTML = gruposHoy.map(s=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--ice)">
+      <div>
+        <div style="font-size:13px;font-weight:500">${s.grupos?.nombre||'—'}</div>
+        <div style="font-size:11px;color:var(--silver)">${s.grupos?.instructores?.nombre||'Sin instructor'}</div>
+      </div>
+      ${badge(s.estado==='completada'?'Completada':s.estado==='en_curso'?'En curso':'Pendiente', s.estado==='completada'?'#0F6E56':s.estado==='en_curso'?'var(--accent2)':'var(--silver)', s.estado==='completada'?'#E1F5EE':s.estado==='en_curso'?'#E0F7F0':'var(--ice)')}
+    </div>`).join('');
+
+  // Fichas médicas de niños en grupos de hoy
+  const contFichas = document.getElementById('esc-fichas-hoy');
+  const escAlerta = document.getElementById('esc-alerta-alergias');
+  const escAlertaLista = document.getElementById('esc-alerta-lista');
+  if (!sesHoy?.length) { contFichas.innerHTML='<div class="empty">Sin grupos activos hoy</div>'; escAlerta.style.display='none'; return; }
+  const grupoIds = [...new Set(sesHoy.map(s=>s.grupo_id))];
+  const {data:ninosMed} = await sb.from('grupo_ninos').select('nombre,alergias,medicacion,observaciones_medicas,grupo_id,grupos(nombre)').in('grupo_id',grupoIds).eq('activo',true);
+  const conMed = (ninosMed||[]).filter(n=>n.alergias?.trim()||n.medicacion?.trim()||n.observaciones_medicas?.trim());
+  if (!conMed.length) { contFichas.innerHTML='<div class="empty">Ningún niño con condiciones médicas hoy</div>'; escAlerta.style.display='none'; }
+  else {
+    escAlerta.style.display='block';
+    escAlertaLista.innerHTML = conMed.map(n=>`<div style="margin-bottom:4px"><strong>${n.nombre}</strong> (${n.grupos?.nombre||'—'}): ${[n.alergias,n.medicacion].filter(Boolean).join(' · ')}</div>`).join('');
+    contFichas.innerHTML = conMed.map(n=>`
+      <div style="padding:12px 18px;border-bottom:1px solid var(--ice)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:500">⚕️ ${n.nombre}</div>
+          <span style="font-size:10px;color:var(--silver)">${n.grupos?.nombre||'—'}</span>
+        </div>
+        ${n.alergias?`<div style="font-size:11px;color:var(--danger);margin-bottom:2px">⚠ ${n.alergias}</div>`:''}
+        ${n.medicacion?`<div style="font-size:11px;color:var(--muted)">💊 ${n.medicacion}</div>`:''}
+        ${n.observaciones_medicas?`<div style="font-size:11px;color:var(--silver);margin-top:2px">${n.observaciones_medicas}</div>`:''}
+      </div>`).join('');
+  }
+}
+window.loadEscInicio = loadEscInicio;
+
 loadDashboardExtras();
 
 // Restaurar modo y página
@@ -4483,7 +4607,7 @@ const savedModo = localStorage.getItem('altus_modo') || 'cerro';
 const savedPage = localStorage.getItem('altus_page') || 'asignacion';
 if (savedModo === 'escuelita') {
   setModo('escuelita');
-  setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-grupos');
+  setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-inicio');
 } else {
   setModo('cerro');
   setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','usuarios'].includes(savedPage) ? savedPage : 'asignacion');
