@@ -755,13 +755,20 @@ function toggleDark() {
         <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
           <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:15px;font-weight:600" id="lista-ninos-titulo">Lista</span>
-            <button onclick="document.getElementById('modal-lista-ninos').remove()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+            <button onclick="cerrarListaNinos()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
           </div>
-          <div id="lista-ninos-body" style="overflow-y:auto;padding:8px 0"></div>
+          <div id="lista-ninos-body" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0"></div>
         </div>`;
       document.body.appendChild(modal);
-      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
     }
+    // Bloquear scroll del fondo
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    modal._scrollY = scrollY;
+    modal.style.display = 'flex';
     document.getElementById('lista-ninos-titulo').textContent = nombreGrupo;
     const body = document.getElementById('lista-ninos-body');
     body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
@@ -814,6 +821,17 @@ function toggleDark() {
     btns[1].style.borderColor = !presente ? '#E24B4A' : 'var(--line)';
     btns[1].style.background = !presente ? '#FEE2E2' : '#fff';
     btns[1].style.color = !presente ? '#E24B4A' : 'var(--silver)';
+  };
+
+  window.cerrarListaNinos = function() {
+    const modal = document.getElementById('modal-lista-ninos');
+    if (!modal) return;
+    modal.style.display = 'none';
+    const scrollY = modal._scrollY || 0;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, scrollY);
   };
 
   window.finalizarSesionInst = async function(sesionId, btn) {
@@ -1089,10 +1107,15 @@ function toggleDark() {
   async function cargarResenas() {
     if (!INSTRUCTOR_ID) return;
 
+    // Primero obtener IDs de clases del instructor
+    const { data: clasesInst } = await sb.from('clases').select('id').eq('instructor_id', INSTRUCTOR_ID);
+    if (!clasesInst?.length) return;
+    const claseIds = clasesInst.map(c => c.id);
+
     const { data } = await sb
       .from('resenas')
       .select('*, clases(disciplina, nivel, fecha, clientes(nombre))')
-      .eq('clases.instructor_id', INSTRUCTOR_ID)
+      .in('clase_id', claseIds)
       .order('creado_en', { ascending: false })
       .limit(20);
 
@@ -1258,11 +1281,23 @@ function toggleDark() {
   // --- MODALES ---
   window.abrirModal = function(id) {
     document.getElementById(id).classList.add('open');
-    document.body.classList.add('modal-open');
+    const scrollY = window.scrollY;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+    document.body.dataset.scrollY = scrollY;
+  }
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('open');
+    const scrollY = document.body.dataset.scrollY || 0;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    window.scrollTo(0, parseInt(scrollY));
   };
 
   window.cerrarModal = function(id) {
-    document.getElementById(id).classList.remove('open');
+    closeModal(id);
     document.body.classList.remove('modal-open');
   };
 
