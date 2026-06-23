@@ -1296,6 +1296,21 @@ function toggleDark() {
     window.scrollTo(0, parseInt(scrollY));
   };
 
+  // Bloquear scroll del fondo cuando cualquier overlay está abierto
+  document.addEventListener('touchmove', function(e) {
+    const openOverlay = document.querySelector('.modal-overlay.open');
+    const listaNinos = document.getElementById('modal-lista-ninos');
+    const anyOpen = openOverlay || (listaNinos && listaNinos.style.display !== 'none');
+    if (!anyOpen) return;
+    const scrollable = e.target.closest('.modal, #lista-ninos-body, [style*="overflow-y:auto"]');
+    if (!scrollable) { e.preventDefault(); return; }
+    // Permitir scroll dentro del modal pero bloquear si está en los límites
+    if (scrollable.scrollTop <= 0 && e.touches[0]?.clientY > (e.target._lastY || 0)) {
+      e.preventDefault();
+    }
+    e.target._lastY = e.touches[0]?.clientY;
+  }, { passive: false });
+
   window.cerrarModal = function(id) {
     closeModal(id);
     document.body.classList.remove('modal-open');
