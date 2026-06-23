@@ -3446,7 +3446,10 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 
   // 1. Crear cuenta en Supabase Auth — usando el cliente AISLADO (sbAuthAux)
   //    para que la sesión del supervisor logueado en "sb" no se vea afectada.
-  const {data:signUpData, error:signUpError} = await sbAuthAux.auth.signUp({email, password:pass});
+  const {data:signUpData, error:signUpError} = await sbAuthAux.auth.signUp({
+    email, password:pass,
+    options: { data: { rol: 'instructor' } }
+  });
   if (signUpError) {
     toast('Error al crear la cuenta: '+signUpError.message,'err');
     btn.disabled=false; btn.innerHTML=originalText; return;
