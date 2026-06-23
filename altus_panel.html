@@ -2492,7 +2492,7 @@ async function loadEscGruposHoy() {
     const estadoBg    = sesionHoy?.estado==='completada'?'#E1F5EE':sesionHoy?.estado==='programada'?'#E6F1FB':'var(--ice)';
     const estadoLabel = sesionHoy?.estado==='completada'?'Completada':sesionHoy?.estado==='programada'?'Programada':'Sin sesión';
     return `
-    <div style="padding:16px 18px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s" onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:14px">
           <div style="width:44px;height:44px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:600;flex-shrink:0">${g.nombre[0]}</div>
@@ -4373,7 +4373,7 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
   lista.innerHTML=insts.map(inst=>{
     const snap=inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
     const total=snap?.puntaje_total?.toFixed(1)||'—';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" 
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s" 
       onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''"
       onclick="confirmarCambioInstructor('${inst.id}','${inst.nombre}')">
       <div>
