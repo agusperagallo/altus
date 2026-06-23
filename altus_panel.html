@@ -612,7 +612,11 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <!-- CLIENTES -->
   <div id="pg-clientes" style="display:none" class="page-content">
     <div class="page-filters">
-      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-cli" placeholder="Nombre o teléfono..." autocomplete="new-password" name="search-field-no-fill-3" data-lpignore="true" data-form-type="other"></div>
+      <div class="filter-group" style="flex:2"><label>Buscar</label>
+        <input type="text" style="display:none" aria-hidden="true" tabindex="-1">
+        <input type="password" style="display:none" aria-hidden="true" tabindex="-1">
+        <input type="text" id="f-buscar-cli" placeholder="Nombre o teléfono..." autocomplete="off" name="search-field-no-fill-3" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')">
+      </div>
       <div class="filter-group"><label>Disciplina</label>
         <select id="f-disc-cli">
           <option value="">Todas</option>
@@ -4039,12 +4043,15 @@ async function loadAsistencia() {
   const tabla=document.getElementById('asist-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
-  const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas, instructor_confirmo').gte('fecha',desde).lte('fecha',hasta);
+  const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas, instructor_confirmo, fecha').gte('fecha',desde).lte('fecha',hasta);
   if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  // Solo clases hasta hoy para el denominador (no contar días futuros)
+  const hoyISO = new Date().toISOString().split('T')[0];
   const isMobile = window.innerWidth < 768;
   tabla.innerHTML=insts.map(inst=>{
     const c=(clases||[]).filter(x=>x.instructor_id===inst.id);
-    const pres=c.filter(x=>x.instructor_confirmo).length, total=c.length;
+    const cHasta=(c||[]).filter(x=>x.fecha<=hoyISO); // solo hasta hoy
+    const pres=cHasta.filter(x=>x.instructor_confirmo).length, total=cHasta.length;
     const hs=c.reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
