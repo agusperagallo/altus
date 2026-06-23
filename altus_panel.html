@@ -951,6 +951,9 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
         <div id="mp-opt-ausente">
           <button style="width:100%;height:42px;border:1px solid var(--danger-bg);border-radius:6px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500" id="mp-ausente">✗ Marcar como Ausente</button>
         </div>
+        <div id="mp-opt-franco">
+          <button style="width:100%;height:42px;border:1px solid #E8ECFF;border-radius:6px;background:#E8ECFF;color:#4A5FAD;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500" id="mp-franco">☀ Marcar como Franco</button>
+        </div>
       </div>
     </div>
   </div>
@@ -3323,20 +3326,20 @@ document.getElementById('fab-asist').addEventListener('click',()=>{ closeFab(); 
 document.getElementById('mp-close').addEventListener('click',()=>closeModal('modal-presencia'));
 document.getElementById('mp-presente').addEventListener('click',()=>{ applyCorr('presente'); });
 document.getElementById('mp-ausente').addEventListener('click',()=>{ applyCorr('ausente'); });
+document.getElementById('mp-franco').addEventListener('click',()=>{ applyCorr('franco'); });
 let corrInstId = null;
 function openCorr(instId, nom, btn, estadoActual) {
   corrBtn=btn; corrInstId=instId;
   document.getElementById('mp-nom').textContent=nom;
-  // Mostrar u ocultar opciones según estado actual
   document.getElementById('mp-opt-presente').style.display = estadoActual==='presente' ? 'none' : 'block';
   document.getElementById('mp-opt-ausente').style.display = estadoActual==='ausente' ? 'none' : 'block';
+  document.getElementById('mp-opt-franco').style.display = estadoActual==='franco' ? 'none' : 'block';
   openModal('modal-presencia');
 }
 async function applyCorr(st) {
   closeModal('modal-presencia');
-  if (!corrBtn || !corrInstId) return;
+  if (!corrInstId) return;
   const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
-  // Eliminar registro previo del día y crear nuevo
   await sb.from('asistencia').delete().eq('instructor_id',corrInstId).gte('registrado_en',hoyAR+'T00:00:00').lte('registrado_en',hoyAR+'T23:59:59');
   await sb.from('asistencia').insert({
     instructor_id: corrInstId,
@@ -3344,7 +3347,8 @@ async function applyCorr(st) {
     tipo: st,
     registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
   });
-  toast('Presencia actualizada');
+  const msgs = {presente:'Presente marcado ✓', ausente:'Ausente marcado', franco:'Franco registrado ☀'};
+  toast(msgs[st]||'Presencia actualizada');
   corrBtn=null; corrInstId=null;
   initPresencia();
 }
@@ -3629,12 +3633,14 @@ async function initPresencia() {
     const reg=presMap[inst.id];
     const presente=reg?.tipo==='presente';
     const ausente=reg?.tipo==='ausente'||reg?.tipo==='ausente_sin_aviso';
+    const franco=reg?.tipo==='franco';
     if(presente) conf++;
     let badge;
     if(presente) badge=`<button class="pres-badge pres-ok" onclick="openCorr('${inst.id}','${inst.nombre}',this,'presente')" title="Click para corregir">Presente ✓</button>`;
+    else if(franco) badge=`<button class="pres-badge" style="background:#E8ECFF;color:#4A5FAD;border-color:#C5CCEE" onclick="openCorr('${inst.id}','${inst.nombre}',this,'franco')" title="Click para corregir">Franco ☀</button>`;
     else if(ausente) badge=`<button class="pres-badge pres-aus" onclick="openCorr('${inst.id}','${inst.nombre}',this,'ausente')" title="Click para corregir">Ausente</button>`;
     else badge=`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this,'pendiente')">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`;
-    const sub=presente?'Confirmó presencia':ausente?'Marcado ausente':'Sin confirmar';
+    const sub=presente?'Confirmó presencia':franco?'Franco — no computable':ausente?'Marcado ausente':'Sin confirmar';
     return `<div class="pres-item">
       <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${sub}</div></div>
       ${badge}
@@ -4043,16 +4049,26 @@ async function loadAsistencia() {
   const tabla=document.getElementById('asist-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
   const {data:insts}=await sb.from('instructores').select('id, nombre').eq('activo',true).order('nombre');
-  const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas, instructor_confirmo, fecha').gte('fecha',desde).lte('fecha',hasta);
+  // Tabla asistencia = fuente de verdad (marcada por supervisor)
+  const {data:registros}=await sb.from('asistencia').select('instructor_id, tipo, registrado_en').gte('registrado_en',desde+'T00:00:00').lte('registrado_en',hasta+'T23:59:59');
+  // Horas siguen saliendo de clases
+  const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas').gte('fecha',desde).lte('fecha',hasta);
   if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
-  // Solo clases hasta hoy para el denominador (no contar días futuros)
+  // Días transcurridos en el período (hasta hoy inclusive)
   const hoyISO = new Date().toISOString().split('T')[0];
+  const fechaHasta = hasta < hoyISO ? hasta : hoyISO;
+  const diasTranscurridos = Math.max(0, Math.round((new Date(fechaHasta) - new Date(desde)) / 86400000) + 1);
   const isMobile = window.innerWidth < 768;
   tabla.innerHTML=insts.map(inst=>{
-    const c=(clases||[]).filter(x=>x.instructor_id===inst.id);
-    const cHasta=(c||[]).filter(x=>x.fecha<=hoyISO); // solo hasta hoy
-    const pres=cHasta.filter(x=>x.instructor_confirmo).length, total=cHasta.length;
-    const hs=c.reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
+    // Un registro por día (el más reciente si hay varios)
+    const regsInst=(registros||[]).filter(r=>r.instructor_id===inst.id && r.registrado_en.split('T')[0]<=fechaHasta);
+    // Agrupar por día y tomar el último registro
+    const porDia={};
+    regsInst.forEach(r=>{ const d=r.registrado_en.split('T')[0]; porDia[d]=r.tipo; });
+    const francos=Object.values(porDia).filter(t=>t==='franco').length;
+    const pres=Object.values(porDia).filter(t=>t==='presente').length;
+    const total=diasTranscurridos-francos; // días laborables reales
+    const hs=(clases||[]).filter(x=>x.instructor_id===inst.id).reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
     const pB=pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
@@ -4062,7 +4078,7 @@ async function loadAsistencia() {
       <div style="display:flex;gap:12px;align-items:center;flex-shrink:0">
         <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:#0F6E56">${pres}</div><div style="font-size:9px;color:var(--silver)">PRES</div></div>
         <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--danger)">${total-pres}</div><div style="font-size:9px;color:var(--silver)">AUS</div></div>
-        <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--muted)">${total}</div><div style="font-size:9px;color:var(--silver)">TOTAL</div></div>
+        ${francos>0?`<div style="text-align:center"><div style="font-size:15px;font-weight:600;color:#4A5FAD">${francos}</div><div style="font-size:9px;color:var(--silver)">FRANCO</div></div>`:''}
         ${badge(pct+'%',pC,pB)}
       </div>
     </div>`;
@@ -4070,7 +4086,7 @@ async function loadAsistencia() {
       <div style="flex:1;font-weight:500">${inst.nombre}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:#0F6E56">${pres}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:var(--danger)">${total-pres}</div>
-      <div style="width:90px;text-align:center;flex-shrink:0">${total}</div>
+      <div style="width:90px;text-align:center;flex-shrink:0">${total}${francos>0?` <span style="font-size:10px;color:#4A5FAD">(+${francos}fr)</span>`:''}</div>
       <div style="width:110px;text-align:center;flex-shrink:0">${hs.toFixed(1)} hs</div>
       <div style="width:110px;text-align:center;flex-shrink:0">${badge(pct+'%',pC,pB)}</div>
     </div>`;
