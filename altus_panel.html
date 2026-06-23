@@ -500,12 +500,6 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
       </button>
     </div>
 
-    <!-- Alerta de alergias en sesiones de hoy -->
-    <div id="alerta-alergias-hoy" style="display:none;background:var(--danger-bg);border:1px solid var(--danger);border-radius:8px;padding:12px 16px;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--danger);margin-bottom:6px">⚠️ Atención médica hoy</div>
-      <div id="alerta-alergias-lista" style="font-size:12px;color:var(--danger)"></div>
-    </div>
-
     <div class="grid-2">
       <div>
         <div class="panel">
@@ -961,6 +955,7 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
     </div>
     <!-- ESCUELITA -->
     <div id="fab-menu-escuelita" style="display:none;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="fab-row"><span class="fab-label">Nueva sesión</span><button class="fab-icon" id="fab-esc-sesion" onclick="closeFab();setPage('esc-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Nuevo grupo</span><button class="fab-icon" id="fab-esc-grupo" onclick="closeFab();abrirModalNuevoGrupo()"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/><path d="M13 3v4M11 5h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Ver grupos</span><button class="fab-icon" id="fab-esc-grupos" onclick="closeFab();setPage('esc-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Administrar grupos</span><button class="fab-icon" id="fab-esc-admin" onclick="closeFab();setPage('esc-admin-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="2"/><path d="M5 8h6M8 5v6"/></svg></button></div>
@@ -3614,7 +3609,6 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 async function loadDashboardExtras() {
   cargarTopRanking();
   cargarCumpleanos();
-  cargarAlertaAlergias();
 }
 
 async function cargarTopRanking() {
@@ -4579,9 +4573,13 @@ async function loadEscInicio() {
   const escAlerta = document.getElementById('esc-alerta-alergias');
   const escAlertaLista = document.getElementById('esc-alerta-lista');
   if (!sesHoy?.length) { contFichas.innerHTML='<div class="empty">Sin grupos activos hoy</div>'; escAlerta.style.display='none'; return; }
-  const grupoIds = [...new Set(sesHoy.map(s=>s.grupo_id))];
-  const {data:ninosMed} = await sb.from('grupo_ninos').select('nombre,alergias,medicacion,observaciones_medicas,grupo_id,grupos(nombre)').in('grupo_id',grupoIds).eq('activo',true);
-  const conMed = (ninosMed||[]).filter(n=>n.alergias?.trim()||n.medicacion?.trim()||n.observaciones_medicas?.trim());
+  const grupoIds2 = [...new Set(sesHoy.map(s=>s.grupo_id))];
+  const {data:ninosMed} = await sb.from('grupo_ninos').select('nombre,alergias,medicacion,condiciones_medicas,observaciones,grupo_id,grupos(nombre)').in('grupo_id',grupoIds2).eq('activo',true);
+  const tieneInfo = n => {
+    const vals = [n.alergias, n.medicacion, n.condiciones_medicas, n.observaciones];
+    return vals.some(v => v && v.trim() && v.toLowerCase() !== 'ninguna' && v.toLowerCase() !== 'ninguno');
+  };
+  const conMed = (ninosMed||[]).filter(tieneInfo);
   if (!conMed.length) { contFichas.innerHTML='<div class="empty">Ningún niño con condiciones médicas hoy</div>'; escAlerta.style.display='none'; }
   else {
     escAlerta.style.display='block';
@@ -4594,7 +4592,7 @@ async function loadEscInicio() {
         </div>
         ${n.alergias?`<div style="font-size:11px;color:var(--danger);margin-bottom:2px">⚠ ${n.alergias}</div>`:''}
         ${n.medicacion?`<div style="font-size:11px;color:var(--muted)">💊 ${n.medicacion}</div>`:''}
-        ${n.observaciones_medicas?`<div style="font-size:11px;color:var(--silver);margin-top:2px">${n.observaciones_medicas}</div>`:''}
+        ${n.observaciones?`<div style="font-size:11px;color:var(--silver);margin-top:2px">${n.observaciones}</div>`:''}
       </div>`).join('');
   }
 }
