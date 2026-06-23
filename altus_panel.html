@@ -4192,12 +4192,12 @@ async function abrirDetalleClasesInstructor(instId, nombre, desdeDefault, hastaD
     modal.className = 'modal-overlay';
     modal.style.display = 'flex';
     modal.innerHTML = `
-      <div class="modal" style="max-width:560px">
+      <div class="modal" style="max-width:560px;animation:none">
         <div class="modal-head"><span class="modal-title" id="dci-titulo">Clases</span><button class="modal-close" onclick="document.getElementById('modal-detalle-clases-inst').remove()">&times;</button></div>
         <div class="modal-body" style="max-height:75vh;overflow-y:auto">
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button id="dci-tab-semana" onclick="setDciTab('semana')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Esta semana</button>
-            <button id="dci-tab-mes" onclick="setDciTab('mes')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Este mes</button>
+            <button id="dci-tab-mes" onclick="setDciTab('mes')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:var(--ice);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;font-weight:500">Este mes</button>
           </div>
           <div id="dci-stats" style="display:flex;gap:10px;margin-bottom:16px"></div>
           <div id="dci-lista" style="border:1px solid var(--line);border-radius:8px;overflow:hidden"></div>
