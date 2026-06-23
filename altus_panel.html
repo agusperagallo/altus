@@ -4621,6 +4621,37 @@ document.getElementById('f-fecha-ses').value = fechaISO;
 document.getElementById('f-fecha-esc').addEventListener('change', loadEscGruposHoy);
 document.getElementById('f-fecha-ses').addEventListener('change', loadEscSesiones);
 document.getElementById('f-estado-ses').addEventListener('change', loadEscSesiones);
+
+// Bloquear overscroll bounce en iOS cuando está en el tope
+(function() {
+  let lastY = 0;
+  document.addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    const scrollable = e.target.closest('.modal-body, .sidebar, #pres-lista, #dci-lista, #mci-lista, [style*="overflow-y:auto"]');
+    if (scrollable) return;
+    if (e.touches[0].clientY > lastY && window.scrollY <= 0) e.preventDefault();
+  }, { passive: false });
+})();
+
+// Realtime: actualización en vivo sin polling (WebSocket, no gasta I/O)
+sb.channel('altus-live')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, () => {
+    if (document.getElementById('pg-asignacion')?.style.display !== 'none') initClasesHoy();
+    if (document.getElementById('pg-clases')?.style.display !== 'none') loadClases();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia' }, () => {
+    if (document.getElementById('pg-asignacion')?.style.display !== 'none') initPresencia();
+    if (document.getElementById('pg-asistencia')?.style.display !== 'none') loadAsistencia();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'sesiones_escuelita' }, () => {
+    if (document.getElementById('pg-esc-inicio')?.style.display !== 'none') loadEscInicio();
+    if (document.getElementById('pg-esc-grupos')?.style.display !== 'none') loadEscGruposHoy();
+    if (document.getElementById('pg-esc-sesiones')?.style.display !== 'none') loadEscSesiones();
+  })
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'asistencia_ninos' }, () => {
+    if (document.getElementById('pg-esc-asistencia')?.style.display !== 'none') loadAsistEscNinos();
+  })
+  .subscribe();
 </script>
 </body>
 </html>

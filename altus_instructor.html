@@ -776,15 +776,25 @@ function toggleDark() {
 
     body.innerHTML = ninos.map(n => {
       const estado = asistMap[n.id];
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--ice2)">
-        <div>
-          <div style="font-size:14px;font-weight:500">${n.nombre}</div>
-          <div style="font-size:11px;color:var(--silver)">${n.edad} años</div>
+      const alertas = [];
+      if (n.alergias && n.alergias.toLowerCase() !== 'ninguna') alertas.push(`⚠️ ${n.alergias}`);
+      if (n.medicacion && n.medicacion.toLowerCase() !== 'ninguna') alertas.push(`💊 ${n.medicacion}`);
+      if (n.condiciones_medicas) alertas.push(`🏥 ${n.condiciones_medicas}`);
+      if (n.observaciones) alertas.push(`📋 ${n.observaciones}`);
+      return `<div style="border-bottom:1px solid var(--ice2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px ${alertas.length?'6px':'12px'} 20px">
+          <div>
+            <div style="font-size:14px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">${n.edad} años</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="marcarAsistNinoInst('${n.id}',true,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:16px">✓</button>
+            <button onclick="marcarAsistNinoInst('${n.id}',false,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===false?'#E24B4A':'var(--line)'};background:${estado===false?'#FEE2E2':'#fff'};color:${estado===false?'#E24B4A':'var(--silver)'};cursor:pointer;font-size:16px">✕</button>
+          </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="marcarAsistNinoInst('${n.id}',true,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:16px">✓</button>
-          <button onclick="marcarAsistNinoInst('${n.id}',false,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===false?'#E24B4A':'var(--line)'};background:${estado===false?'#FEE2E2':'#fff'};color:${estado===false?'#E24B4A':'var(--silver)'};cursor:pointer;font-size:16px">✕</button>
-        </div>
+        ${alertas.length ? `<div style="margin:0 20px 10px;background:#FFF8E0;border:1px solid #F0D080;border-radius:6px;padding:7px 10px;display:flex;flex-direction:column;gap:3px">
+          ${alertas.map(a=>`<div style="font-size:11px;color:#7A5800">${a}</div>`).join('')}
+        </div>` : ''}
       </div>`;
     }).join('');
   };
