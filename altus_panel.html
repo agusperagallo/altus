@@ -601,7 +601,9 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
     </div>
     <div class="page-filters">
       <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="new-password" name="search-field-no-fill-2" data-lpignore="true" data-form-type="other"></div>
-      <div class="filter-group"><label>Estado</label><select id="f-activo-inst"><option value="">Todos</option><option value="true">Activos</option><option value="false">Inactivos</option></select></div>
+      <div class="filter-group"><label>Estado</label><select id="f-activo-inst" style="display:none"><option value="true" selected>Activos</option><option value="false">Inactivos</option><option value="">Todos</option></select>
+        <button id="btn-mostrar-inactivos" onclick="toggleInactivos()" style="height:42px;padding:0 16px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap">Ver inactivos</button>
+      </div>
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Instructores</span><span class="panel-meta" id="inst-ct">—</span></div>
@@ -3916,6 +3918,20 @@ async function loadInstructores() {
 }
 document.getElementById('f-buscar-inst').addEventListener('input',loadInstructores);
 document.getElementById('f-activo-inst').addEventListener('change',loadInstructores);
+
+let mostrandoInactivos = false;
+function toggleInactivos() {
+  mostrandoInactivos = !mostrandoInactivos;
+  const sel = document.getElementById('f-activo-inst');
+  const btn = document.getElementById('btn-mostrar-inactivos');
+  sel.value = mostrandoInactivos ? 'false' : 'true';
+  btn.textContent = mostrandoInactivos ? 'Ver activos' : 'Ver inactivos';
+  btn.style.background = mostrandoInactivos ? 'var(--ice)' : '#fff';
+  btn.style.color = mostrandoInactivos ? 'var(--navy)' : 'var(--muted)';
+  btn.style.borderColor = mostrandoInactivos ? 'var(--navy)' : 'var(--line)';
+  loadInstructores();
+}
+window.toggleInactivos = toggleInactivos;
 
 async function loadClientes() {
   const buscar = document.getElementById('f-buscar-cli').value.toLowerCase();
