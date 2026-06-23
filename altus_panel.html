@@ -256,7 +256,7 @@ input:focus,select:focus{border-color:var(--accent)}
 .modal-body{padding:22px}
 .tag-btn{padding:6px 13px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
 .tag-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.paso-tab{flex:1;padding:9px;text-align:center;font-size:12px;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;font-family:'DM Sans',sans-serif;border:none}
+.paso-tab{flex:1;padding:9px;text-align:center;font-size:12px;cursor:pointer;background:var(--white);color:var(--muted);transition:all .15s;font-family:'DM Sans',sans-serif;border:none}
 .paso-tab.active{background:var(--navy);color:#fff}
 .btn-save{width:100%;height:40px;background:var(--accent);color:#fff;border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:14px}
 .fab-container{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
@@ -342,6 +342,39 @@ body.dark .stat-label{color:#505D78}
 body.dark .stat-value{color:#DDE3EE}
 body.dark .empty{color:#3A4560}
 body.dark .sidebar-footer{color:#2C3048;border-color:#1E2235}
+/* Elementos con background:#fff hardcodeado */
+body.dark .profile-menu{background:#1E2235!important}
+body.dark .inst-action-btn{background:#1A1D27!important;border-color:#2C3048!important;color:#8B9BB8!important}
+body.dark .inst-action-btn:hover{background:#22263A!important}
+body.dark .nivel-btn{background:#1A1D27!important;border-color:#2C3048!important;color:#8B9BB8!important}
+body.dark .nivel-btn.active{background:var(--navy)!important;color:#fff!important;border-color:var(--navy)!important}
+body.dark .tag-btn{background:#1A1D27!important;border-color:#2C3048!important;color:#8B9BB8!important}
+body.dark .tag-btn.active{background:var(--navy)!important;color:#fff!important}
+/* Inputs inline con background:#fff */
+body.dark input[style*="background:#fff"],body.dark input[style*="background: #fff"],
+body.dark select[style*="background:#fff"],body.dark select[style*="background: #fff"]{background:#13151E!important;color:#DDE3EE!important;border-color:#2C3048!important}
+/* Botón ver inactivos */
+body.dark #btn-mostrar-inactivos{background:#1A1D27!important;border-color:#2C3048!important;color:#8B9BB8!important}
+/* Flatpickr dark mode */
+body.dark .flatpickr-calendar{background:#1E2235!important;border-color:#2C3048!important;box-shadow:0 8px 30px rgba(0,0,0,.4)!important}
+body.dark .flatpickr-day{color:#DDE3EE!important}
+body.dark .flatpickr-day:hover{background:#2C3048!important;color:#DDE3EE!important}
+body.dark .flatpickr-day.prevMonthDay,body.dark .flatpickr-day.nextMonthDay{color:#2C3048!important}
+body.dark .flatpickr-day.today{color:var(--accent2)!important}
+/* Paso tabs dark mode */
+body.dark .paso-tab{background:#1E2235;color:#505D78;border-color:#2C3048}
+body.dark .paso-tab.active{background:#4A7FA5;color:#fff}
+/* Badges de puntaje (fondo amarillo/verde/rojo) */
+body.dark span[style*="background:#FFF8E0"],body.dark span[style*="background:#fff8e0"]{background:#2A2410!important;color:#D4A843!important;border-color:#3A3018!important}
+body.dark span[style*="background:#E1F5EE"],body.dark span[style*="background:#e1f5ee"]{background:#0D2E22!important;color:#3AA880!important;border-color:#1A4030!important}
+body.dark span[style*="background:#FFE8E8"],body.dark span[style*="background:#ffe8e8"]{background:#2E1010!important;color:#E05555!important;border-color:#3E1818!important}
+body.dark span[style*="background:#E8ECFF"],body.dark span[style*="background:#e8ecff"]{background:#1A1E35!important;color:#7B8FD4!important;border-color:#2A3060!important}
+/* Badges de presencia */
+body.dark .pres-ok{background:#0D2E22!important;color:#3AA880!important;border-color:#1A4030!important}
+body.dark .pres-aus{background:#2E1010!important;color:#E05555!important;border-color:#3E1818!important}
+body.dark .pres-pend{background:#1E2235!important;color:#505D78!important;border-color:#2C3048!important}
+/* Native select dropdown options */
+body.dark select option{background:#1E2235;color:#DDE3EE}
 
 </style>
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
@@ -609,7 +642,7 @@ body.dark .sidebar-footer{color:#2C3048;border-color:#1E2235}
 
   <!-- INSTRUCTORES -->
   <div id="pg-instructores" style="display:none" class="page-content">
-    <div id="plan-indicator" style="display:none;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px">
+    <div id="plan-indicator" style="display:none;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:12px;font-weight:500;color:var(--muted)" id="plan-label">Plan</span>
         <span style="font-size:12px;font-weight:600;color:var(--navy)" id="plan-contador">— / —</span>
@@ -901,7 +934,7 @@ body.dark .sidebar-footer{color:#2C3048;border-color:#1E2235}
     <div class="modal-head"><span class="modal-title">Confirmar asignación</span><button class="modal-close" id="ma-close">&times;</button></div>
     <div class="modal-body">
       <div style="font-size:12px;color:var(--silver);margin-bottom:12px">Instructor seleccionado</div>
-      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--accent);background:#F0FBF7;border-radius:7px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--accent);background:var(--ice);border-radius:7px;margin-bottom:18px">
         <div style="width:40px;height:40px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:#fff" id="ma-av">VR</div>
         <div style="flex:1"><div style="font-size:14px;font-weight:500" id="ma-nom">—</div><div style="font-size:12px;color:var(--silver);margin-top:2px" id="ma-meta">—</div></div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--navy)" id="ma-sc">—</div>
@@ -4087,7 +4120,7 @@ async function loadAsistencia() {
   document.getElementById('asist-period').textContent=`${anio} — ${mn[mes-1]}`;
   const tabla=document.getElementById('asist-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
-  const {data:insts}=await sb.from('instructores').select('id, nombre, created_at').eq('activo',true).order('nombre');
+  const {data:insts}=await sb.from('instructores').select('id, nombre, creado_en').eq('activo',true).order('nombre');
   // Tabla asistencia = fuente de verdad (marcada por supervisor)
   const {data:registros}=await sb.from('asistencia').select('instructor_id, tipo, registrado_en').gte('registrado_en',desde+'T00:00:00').lte('registrado_en',hasta+'T23:59:59');
   // Horas siguen saliendo de clases
@@ -4100,7 +4133,7 @@ async function loadAsistencia() {
   const isMobile = window.innerWidth < 768;
   tabla.innerHTML=insts.map(inst=>{
     // Fecha de inicio efectiva: la mayor entre el inicio del período y la creación del instructor
-    const fechaCreacion = inst.created_at ? inst.created_at.split('T')[0] : desde;
+    const fechaCreacion = inst.creado_en ? inst.creado_en.split('T')[0] : desde;
     const desdeEfectivo = fechaCreacion > desde ? fechaCreacion : desde;
     const diasInst = Math.max(0, Math.round((new Date(fechaHasta) - new Date(desdeEfectivo)) / 86400000) + 1);
     // Un registro por día (el más reciente si hay varios)
