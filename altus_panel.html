@@ -4380,21 +4380,27 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
     <div style="font-size:13px;font-weight:500;margin-bottom:3px">${cliente}</div>
     <div style="font-size:12px;color:var(--muted)">${hora} hs · ${disciplina} · ${nivel}</div>`;
   openModal('modal-cambiar-inst');
-
-  // Cargar instructores disponibles
   const lista = document.getElementById('mci-lista');
   lista.innerHTML='<div class="empty">Cargando...</div>';
+  const {data:claseActual} = await sb.from('clases').select('instructor_id,fecha,hora_inicio,hora_fin,duracion_horas').eq('id',claseId).single();
+  const instActualId = claseActual?.instructor_id;
+  const {data:conflictos} = await sb.from('clases').select('instructor_id').eq('fecha',claseActual?.fecha).neq('id',claseId).neq('estado','cancelada').lt('hora_inicio',claseActual?.hora_fin).gt('hora_fin',claseActual?.hora_inicio);
+  const ocupados = new Set((conflictos||[]).map(c=>c.instructor_id));
   const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*)').eq('activo',true).order('nombre');
   if (!insts?.length) { lista.innerHTML='<div class="empty">No hay instructores</div>'; return; }
   lista.innerHTML=insts.map(inst=>{
     const snap=inst.ranking_snapshot?.[inst.ranking_snapshot.length-1];
     const total=snap?.puntaje_total?.toFixed(1)||'—';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s" 
-      onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''"
-      onclick="confirmarCambioInstructor('${inst.id}','${inst.nombre}')">
+    const esActual = inst.id === instActualId;
+    const ocupado = ocupados.has(inst.id);
+    const disabled = esActual || ocupado;
+    const sub = esActual ? 'Instructor actual' : ocupado ? 'Ocupado en este horario' : `Niv. ${inst.nivel_certificado}`;
+    const col = esActual ? 'var(--silver)' : ocupado ? 'var(--danger)' : 'var(--text)';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);${disabled?'opacity:0.5;':'cursor:pointer;'}transition:background .1s"
+      ${!disabled?`onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''" onclick="confirmarCambioInstructor('${inst.id}','${inst.nombre}')"`:''}>
       <div>
-        <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
-        <div style="font-size:11px;color:var(--silver);margin-top:2px">Niv. ${inst.nivel_certificado}</div>
+        <div style="font-size:13px;font-weight:500;color:${col}">${inst.nombre}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:2px">${sub}</div>
       </div>
       <span class="pill ${parseFloat(total)>=7?'pill-ok':parseFloat(total)>=5?'pill-mid':'pill-low'}">${total}</span>
     </div>`;
