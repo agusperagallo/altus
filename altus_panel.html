@@ -4559,12 +4559,12 @@ async function loadEscInicio() {
   }
 
   // Grupos de hoy (resumen)
-  const {data:gruposHoy} = await sb.from('sesiones_escuelita').select('grupos(nombre,instructores(nombre)),estado').eq('fecha',hoy).neq('estado','cancelada');
+  const {data:gruposHoy} = await sb.from('sesiones_escuelita').select('grupos(id,nombre,edad_min,edad_max,instructores(nombre)),estado').eq('fecha',hoy).neq('estado','cancelada');
   const contGrupos = document.getElementById('esc-dash-grupos-lista');
   document.getElementById('esc-dash-grupos-ct').textContent = `${gruposHoy?.length||0} grupos`;
   if (!gruposHoy?.length) contGrupos.innerHTML='<div class="empty">Sin sesiones hoy</div>';
   else contGrupos.innerHTML = gruposHoy.map(s=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--ice)">
+    <div onclick="abrirDetalleGrupo('${s.grupos?.id}','${s.grupos?.nombre||'—'}','${s.grupos?.instructores?.nombre||'Sin instructor'}','${s.grupos?.edad_min||'?'}-${s.grupos?.edad_max||'?'} años')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div>
         <div style="font-size:13px;font-weight:500">${s.grupos?.nombre||'—'}</div>
         <div style="font-size:11px;color:var(--silver)">${s.grupos?.instructores?.nombre||'Sin instructor'}</div>
