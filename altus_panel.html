@@ -1823,7 +1823,7 @@ async function loadFamilias() {
     if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500;color:var(--navy)">${n.nombre} <span style="font-size:12px;color:var(--silver);font-weight:400">${n.edad} años</span></div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${n.nombre} <span style="font-size:12px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${n.grupos?.nombre||'—'}</div>
           ${n.tutor1_nombre ? `<div style="font-size:12px;color:var(--silver);margin-top:2px">${n.tutor1_nombre}${n.tutor1_relacion?' ('+n.tutor1_relacion+')':''}</div>` : ''}
           ${alertas.length ? `<div style="font-size:11px;color:var(--danger);margin-top:4px">${alertas.join(' · ')}</div>` : ''}
@@ -1837,7 +1837,7 @@ async function loadFamilias() {
 
     return `<div class="t-row">
       <div style="flex:1">
-        <div style="font-weight:500">${n.nombre} <span style="font-size:11px;color:var(--silver);font-weight:400">${n.edad} años</span></div>
+        <div style="font-weight:500">${n.nombre} <span style="font-size:11px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
         ${alertas.length ? `<div style="font-size:10px;color:var(--danger);margin-top:2px">${alertas.join(' · ')}</div>` : ''}
       </div>
       <div style="flex:1;font-size:12px;color:var(--muted)">${n.grupos?.nombre||'—'}</div>
@@ -2202,17 +2202,17 @@ async function abrirDetalleSesionAsist(grupoId, fecha, fechaStr) {
     ${presentes.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✓ Presentes</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
-        ${presentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${n.edad} años</span></div>`).join('')}
+        ${presentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
     ${ausentes.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✕ Ausentes</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
-        ${ausentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${n.edad} años</span></div>`).join('')}
+        ${ausentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
     ${sinRegistro.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">— Sin registrar</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden">
-        ${sinRegistro.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px;color:var(--silver)">${n.nombre} <span style="font-size:11px">${n.edad} años</span></div>`).join('')}
+        ${sinRegistro.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px;color:var(--silver)">${n.nombre} <span style="font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
   `;
 }
@@ -2669,7 +2669,7 @@ async function cargarNinosGrupo(grupoId) {
           ${n.nombre}
           ${tieneInfo ? `<span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:500">Ficha</span>` : ''}
         </div>
-        <div style="font-size:11px;color:var(--silver);margin-top:2px">${n.edad} años${diasTxt ? ' · '+diasTxt : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
+        <div style="font-size:11px;color:var(--silver);margin-top:2px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años${diasTxt ? ' · '+diasTxt : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         <button onclick="marcarAsistenciaNino('${n.id}',true,this)" style="width:30px;height:30px;border-radius:6px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:14px" title="Presente">✓</button>
@@ -2699,7 +2699,7 @@ async function buscarNinoExistente() {
   if (!data?.length) { res.innerHTML='<div style="font-size:12px;color:var(--silver);padding:4px 0">Sin resultados</div>'; return; }
   res.innerHTML = data.map(n => `
     <div onclick="cargarNinoExistente('${n.id}')" style="padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;background:#fff;transition:background .15s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background='#fff'">
-      <div style="font-size:13px;font-weight:500">${n.nombre} <span style="color:var(--silver);font-weight:400">${n.edad} años</span></div>
+      <div style="font-size:13px;font-weight:500">${n.nombre} <span style="color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
       <div style="font-size:11px;color:var(--muted)">${n.grupos?.nombre||'Sin grupo'}</div>
     </div>`).join('');
 }
@@ -3687,7 +3687,7 @@ async function cargarCumpleanos() {
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
       <div>
         <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
-        <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${n.edad} años</div>
+        <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</div>
       </div>
       <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
     </div>`;
@@ -4551,7 +4551,7 @@ async function loadEscInicio() {
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
         <div>
           <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
-          <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${n.edad} años · ${n.grupos?.nombre||'—'}</div>
+          <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años · ${n.grupos?.nombre||'—'}</div>
         </div>
         <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
       </div>`;
