@@ -111,6 +111,7 @@
     .pref-edit-btn:hover { text-decoration:underline; }
 
     /* MODAL */
+    html.modal-lock, html.modal-lock body { overflow: hidden !important; position: fixed !important; width: 100% !important; }
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(22,31,46,0.6); z-index:300; align-items:flex-end; justify-content:center; touch-action:none; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--white); border-radius:14px 14px 0 0; width:100%; max-width:680px; max-height:85vh; overflow-y:auto; animation:slideUp 0.22s ease; overscroll-behavior:contain; touch-action:pan-y; }
@@ -757,16 +758,11 @@ function toggleDark() {
           </div>
           <div id="lista-ninos-body" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0"></div>
         </div>`;
-      document.body.appendChild(modal);
-      _bindOverlay(modal);
-      modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
-    }
-    // Bloquear scroll del fondo
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    modal._scrollY = scrollY;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
+  }
+    _lockScroll();
+    modal._scrollY = _scrollY;
     modal.style.display = 'flex';
     document.getElementById('lista-ninos-titulo').textContent = nombreGrupo;
     const body = document.getElementById('lista-ninos-body');
@@ -836,11 +832,7 @@ window.cerrarListaNinos = function() {
     const modal = document.getElementById('modal-lista-ninos');
     if (!modal) return;
     modal.style.display = 'none';
-    const scrollY = modal._scrollY || 0;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, scrollY);
+    _unlockScroll();
   };
 
   window.finalizarSesionInst = async function(sesionId, btn) {
@@ -1325,33 +1317,21 @@ window.cerrarListaNinos = function() {
   };
 
   // --- MODALES ---
+  // iOS scroll lock — la técnica más confiable: fijar html Y body
+  let _scrollY = 0;
   function _lockScroll() {
-    const sy = window.scrollY;
-    document.body.style.cssText += ';position:fixed;top:-'+sy+'px;width:100%;overflow:hidden';
-    document.body.dataset.sy = sy;
+    _scrollY = window.scrollY;
+    document.body.style.top = `-${_scrollY}px`;
+    document.documentElement.classList.add('modal-lock');
   }
   function _unlockScroll() {
-    const sy = parseInt(document.body.dataset.sy||'0');
-    document.body.style.position='';document.body.style.top='';
-    document.body.style.width='';document.body.style.overflow='';
-    window.scrollTo(0,sy);
-  }
-  // Añadir bloqueo directo de touchmove a cada overlay
-  function _bindOverlay(el) {
-    let sy0=0;
-    el.addEventListener('touchstart',e=>{sy0=e.touches[0].clientY;},{passive:true});
-    el.addEventListener('touchmove',function(e){
-      const sc=e.target.closest('.modal,#lista-ninos-body');
-      if(!sc){e.preventDefault();return;}
-      const up=e.touches[0].clientY>sy0, dn=e.touches[0].clientY<sy0;
-      if(sc.scrollTop<=0&&up){e.preventDefault();return;}
-      if(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1&&dn){e.preventDefault();}
-    },{passive:false});
+    document.documentElement.classList.remove('modal-lock');
+    document.body.style.top = '';
+    window.scrollTo(0, _scrollY);
   }
 
   window.abrirModal = function(id) {
-    const el=document.getElementById(id);
-    el.classList.add('open');
+    document.getElementById(id).classList.add('open');
     _lockScroll();
   };
   window.closeModal = function(id) {
@@ -1361,7 +1341,6 @@ window.cerrarListaNinos = function() {
   window.cerrarModal = function(id) { closeModal(id); };
 
   document.querySelectorAll('.modal-overlay').forEach(el=>{
-    _bindOverlay(el);
     el.addEventListener('click',function(e){if(e.target===this)cerrarModal(this.id);});
   });
 
