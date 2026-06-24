@@ -3325,13 +3325,19 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
   lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">Buscando...</div>';
   const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
   if (!insts?.length) { lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">No hay instructores</div>'; return; }
+  // Convertir nivel texto a número para comparar con nivel_max
+  const nivelNum = {principiante:1, intermedio:2, avanzado:3};
+  const nivelReq = nivelNum[nivelCliente] || 0;
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   let filtrados=insts.filter(i=>{
-    if (emergenciaActiva) return true; // emergencia: mostrar todos sin filtro de perfil
-    if (!disc) return true;
-    return (i.instructor_preferencias||[]).some(p=>
-      p.disciplina?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') ===
-      disc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    );
+    if (emergenciaActiva) return true;
+    const prefs = i.instructor_preferencias||[];
+    if (!prefs.length) return false;
+    return prefs.some(p => {
+      const discOk = !disc || norm(p.disciplina) === norm(disc);
+      const nivelOk = !nivelReq || (p.nivel_max||5) >= nivelReq;
+      return discOk && nivelOk;
+    });
   });
   filtrados.sort((a,b)=>(b.ranking_snapshot?.[b.ranking_snapshot.length-1]?.puntaje_total||0)-(a.ranking_snapshot?.[a.ranking_snapshot.length-1]?.puntaje_total||0));
   lista.innerHTML=filtrados.map((inst,i)=>{
@@ -3339,10 +3345,11 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
     const total=s?.puntaje_total?.toFixed(1)||'—';
     const asist=s?.puntaje_asistencia?.toFixed(1)||'—';
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
-    const fueraDePerfil = emergenciaActiva && disc && !(inst.instructor_preferencias||[]).some(p=>
-      p.disciplina?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') ===
-      disc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    );
+    const fueraDePerfil = emergenciaActiva && (inst.instructor_preferencias||[]).length > 0 && !(inst.instructor_preferencias||[]).some(p => {
+      const discOk = !disc || norm(p.disciplina) === norm(disc);
+      const nivelOk = !nivelReq || (p.nivel_max||5) >= nivelReq;
+      return discOk && nivelOk;
+    });
     return `<div class="rk-row" data-instid="${inst.id}" data-nom="${inst.nombre}" data-sc="${total}" data-meta="Niv.${inst.nivel_certificado} · ${discs}">
       <div class="rk-num ${i<3?'top':''}">${i+1}</div>
       <div><div class="inst-name">${inst.nombre}${fueraDePerfil?` <span style="font-size:10px;color:var(--warn);font-weight:500">⚠ fuera de perfil</span>`:''}</div><div class="inst-meta">Niv.${inst.nivel_certificado} · ${discs}</div></div>
