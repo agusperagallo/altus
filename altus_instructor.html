@@ -111,7 +111,7 @@
     .pref-edit-btn:hover { text-decoration:underline; }
 
     /* MODAL */
-    html.modal-lock, html.modal-lock body { overflow: hidden !important; position: fixed !important; width: 100% !important; }
+    html.modal-lock body { overflow: hidden !important; position: fixed !important; width: 100% !important; }
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(22,31,46,0.6); z-index:300; align-items:flex-end; justify-content:center; touch-action:none; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--white); border-radius:14px 14px 0 0; width:100%; max-width:680px; max-height:85vh; overflow-y:auto; animation:slideUp 0.22s ease; overscroll-behavior:contain; touch-action:pan-y; }
@@ -834,6 +834,13 @@ window.cerrarListaNinos = function() {
     _unlockScroll();
   };
 
+  window.cerrarFichaNinoInst = function() {
+    const modal = document.getElementById('modal-ficha-nino-inst');
+    if (!modal) return;
+    modal.style.display = 'none';
+    _unlockScroll();
+  };
+
   window.finalizarSesionInst = async function(sesionId, btn) {
     btn.textContent = 'Guardando...'; btn.disabled = true;
     await sb.from('sesiones_escuelita').update({estado:'completada'}).eq('id', sesionId);
@@ -899,15 +906,16 @@ window.cerrarListaNinos = function() {
         <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
           <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:15px;font-weight:600" id="ffi-titulo">Ficha</span>
-            <button onclick="document.getElementById('modal-ficha-nino-inst').remove()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+            <button onclick="cerrarFichaNinoInst()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
           </div>
           <div id="ffi-body" style="overflow-y:auto;padding:16px 20px"></div>
         </div>`;
       document.body.appendChild(modal);
-      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      modal.addEventListener('click', e => { if (e.target === modal) cerrarFichaNinoInst(); });
     } else {
       modal.style.display = 'flex';
     }
+    _lockScroll();
     const body = document.getElementById('ffi-body');
     body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
 
