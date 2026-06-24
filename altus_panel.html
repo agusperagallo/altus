@@ -3167,6 +3167,14 @@ const pill = v => { const n=parseFloat(v); const c=isNaN(n)?'pill-mid':n>=7?'pil
 const badge = (t,c,b) => `<span style="font-size:11px;font-weight:500;color:${c};background:${b};padding:2px 9px;border-radius:20px">${t}</span>`;
 const t2m = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
 const m2t = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+function calcEdad(fechaNac) {
+  if (!fechaNac) return null;
+  const hoy = new Date();
+  const nac = new Date(fechaNac + 'T12:00:00');
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) edad--;
+  return edad;
+}
 function toast(msg,type='ok') {
   const t=document.createElement('div');
   t.style.cssText=`position:fixed;bottom:24px;right:24px;background:${type==='ok'?'#0F6E56':'#B91C1C'};color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:999;font-family:'DM Sans',sans-serif`;
