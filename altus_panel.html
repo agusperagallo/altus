@@ -3324,6 +3324,7 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
   const {data:insts}=await sb.from('instructores').select('*, ranking_snapshot(*), instructor_preferencias(*)').eq('activo',true);
   if (!insts?.length) { lista.innerHTML='<div style="padding:16px 0;text-align:center;color:var(--silver);font-size:13px">No hay instructores</div>'; return; }
   let filtrados=insts.filter(i=>{
+    if (emergenciaActiva) return true; // emergencia: mostrar todos sin filtro de perfil
     if (!disc) return true;
     return (i.instructor_preferencias||[]).some(p=>
       p.disciplina?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') ===
@@ -3336,9 +3337,13 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
     const total=s?.puntaje_total?.toFixed(1)||'—';
     const asist=s?.puntaje_asistencia?.toFixed(1)||'—';
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
+    const fueraDePerfil = emergenciaActiva && disc && !(inst.instructor_preferencias||[]).some(p=>
+      p.disciplina?.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'') ===
+      disc.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    );
     return `<div class="rk-row" data-instid="${inst.id}" data-nom="${inst.nombre}" data-sc="${total}" data-meta="Niv.${inst.nivel_certificado} · ${discs}">
       <div class="rk-num ${i<3?'top':''}">${i+1}</div>
-      <div><div class="inst-name">${inst.nombre}</div><div class="inst-meta">Niv.${inst.nivel_certificado} · ${discs}</div></div>
+      <div><div class="inst-name">${inst.nombre}${fueraDePerfil?` <span style="font-size:10px;color:var(--warn);font-weight:500">⚠ fuera de perfil</span>`:''}</div><div class="inst-meta">Niv.${inst.nivel_certificado} · ${discs}</div></div>
       <div style="text-align:center">${pill(total)}</div>
       <div style="text-align:center">${pill(asist)}</div>
       <div style="text-align:center"><span class="disp-st disp-ok">Disponible</span></div>
@@ -3413,8 +3418,9 @@ document.getElementById('ma-confirm').addEventListener('click', async()=>{
 });
 
 // Emergencia
-document.getElementById('btn-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='flex'; });
-document.getElementById('btn-desact-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='none'; });
+document.getElementById('btn-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='flex'; emergenciaActiva=true; });
+document.getElementById('btn-desact-emerg').addEventListener('click',()=>{ document.getElementById('emerg-banner').style.display='none'; emergenciaActiva=false; });
+let emergenciaActiva = false;
 
 // FAB
 document.getElementById('fab-btn').addEventListener('click',()=>{
