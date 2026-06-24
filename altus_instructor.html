@@ -28,7 +28,7 @@
     @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
     .sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e7eb 50%,#f0f2f5 75%);background-size:1200px 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:block}
     body { font-family:'DM Sans',sans-serif; background:var(--ice2); color:var(--text); min-height:100vh; }
-    body.modal-open { overflow:hidden; }
+
 
     .topbar { background:var(--navy); padding:0 20px; height:56px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
     .brand-name { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:white; letter-spacing:0.12em; }
@@ -342,7 +342,7 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   <div class="panel" id="panel-perfil" style="display:none">
     <div class="panel-header">
       <span class="panel-title">Mi perfil</span>
-      <button class="pref-edit-btn" onclick="abrirModal('modal-pref')">Editar preferencias</button>
+      <button class="pref-edit-btn" onclick="abrirPrefModal()">Editar preferencias</button>
     </div>
     <div class="pref-sec">
       <div class="pref-label">Datos</div>
@@ -405,30 +405,28 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
       <div class="modal-section">
         <div class="modal-section-label">Disciplinas</div>
         <div class="tags">
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Esquí</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Snowboard</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Freestyle</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Telemark</button>
+          <button class="modal-tag active" data-tipo="disc" data-val="Esqui" onclick="this.classList.toggle('active')">Esquí</button>
+          <button class="modal-tag" data-tipo="disc" data-val="Snowboard" onclick="this.classList.toggle('active')">Snowboard</button>
+          <button class="modal-tag" data-tipo="disc" data-val="Freestyle" onclick="this.classList.toggle('active')">Freestyle</button>
         </div>
       </div>
       <div class="modal-section">
         <div class="modal-section-label">Niveles que acepta</div>
         <div class="tags">
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Nivel 1</button>
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Nivel 2</button>
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Nivel 3</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Nivel 4</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Nivel 5</button>
+          <button class="modal-tag active" data-tipo="nivel" data-val="1" onclick="this.classList.toggle('active')">Nivel 1</button>
+          <button class="modal-tag active" data-tipo="nivel" data-val="2" onclick="this.classList.toggle('active')">Nivel 2</button>
+          <button class="modal-tag active" data-tipo="nivel" data-val="3" onclick="this.classList.toggle('active')">Nivel 3</button>
+          <button class="modal-tag" data-tipo="nivel" data-val="4" onclick="this.classList.toggle('active')">Nivel 4</button>
+          <button class="modal-tag" data-tipo="nivel" data-val="5" onclick="this.classList.toggle('active')">Nivel 5</button>
         </div>
-        <div style="font-size:11px;color:var(--silver);margin-top:8px">Solo hasta tu nivel certificado (Nivel 3)</div>
       </div>
       <div class="modal-section">
         <div class="modal-section-label">Rangos etarios</div>
         <div class="tags">
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Niños (4-12)</button>
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Adolescentes (13-17)</button>
-          <button class="modal-tag active" onclick="this.classList.toggle('active')">Adultos (18-60)</button>
-          <button class="modal-tag" onclick="this.classList.toggle('active')">Adultos mayores (60+)</button>
+          <button class="modal-tag active" data-tipo="rango" data-val="ninos" onclick="this.classList.toggle('active')">Niños (4-12)</button>
+          <button class="modal-tag active" data-tipo="rango" data-val="adolescentes" onclick="this.classList.toggle('active')">Adolescentes (13-17)</button>
+          <button class="modal-tag active" data-tipo="rango" data-val="adultos" onclick="this.classList.toggle('active')">Adultos (18-60)</button>
+          <button class="modal-tag" data-tipo="rango" data-val="mayores" onclick="this.classList.toggle('active')">Adultos mayores (60+)</button>
         </div>
       </div>
       <button class="btn-save" onclick="guardarPref()">Guardar cambios</button>
@@ -760,6 +758,7 @@ function toggleDark() {
           <div id="lista-ninos-body" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0"></div>
         </div>`;
       document.body.appendChild(modal);
+      _bindOverlay(modal);
       modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
     }
     // Bloquear scroll del fondo
@@ -1259,13 +1258,50 @@ function toggleDark() {
 
   // --- GUARDAR PREFERENCIAS ---
   window.guardarPref = async function() {
-    if (INSTRUCTOR_ID) {
-      const disciplinas = [...document.querySelectorAll('#modal-pref .modal-tag.active')]
-        .map(b => b.textContent.trim());
-      // Aquí iría la actualización a Supabase cuando tengamos login
+    if (!INSTRUCTOR_ID) { cerrarModal('modal-pref'); return; }
+
+    const disciplinas = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="disc"]')].map(b=>b.dataset.val);
+    const rangos     = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="rango"]')].map(b=>b.dataset.val);
+    const nivelMax   = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="nivel"]')]
+      .map(b=>parseInt(b.dataset.val)).reduce((a,b)=>Math.max(a,b), 1);
+
+    // Borrar prefs actuales y reinsertar
+    await sb.from('instructor_preferencias').delete().eq('instructor_id', INSTRUCTOR_ID);
+
+    if (disciplinas.length && rangos.length) {
+      const prefs = [];
+      disciplinas.forEach(d => rangos.forEach(r => prefs.push({
+        instructor_id: INSTRUCTOR_ID, disciplina: d,
+        nivel_min: 1, nivel_max: nivelMax, rango_etario: r
+      })));
+      const {error} = await sb.from('instructor_preferencias').insert(prefs);
+      if (error) { toast('Error al guardar','err'); return; }
     }
+
     cerrarModal('modal-pref');
-    toast('Preferencias actualizadas');
+    toast('Preferencias guardadas ✓');
+  };
+
+  // Cargar preferencias actuales al abrir el modal
+  window.abrirPrefModal = async function() {
+    if (INSTRUCTOR_ID) {
+      const {data:prefs} = await sb.from('instructor_preferencias').select('*').eq('instructor_id', INSTRUCTOR_ID);
+      const discs  = [...new Set((prefs||[]).map(p=>p.disciplina))];
+      const rangos = [...new Set((prefs||[]).map(p=>p.rango_etario))];
+      const nivelMax = (prefs||[]).reduce((m,p)=>Math.max(m,p.nivel_max||1), 1);
+
+      const discMap = {'Esqui':'Esquí','Snowboard':'Snowboard','Freestyle':'Freestyle'};
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="disc"]').forEach(b => {
+        b.classList.toggle('active', discs.includes(b.dataset.val));
+      });
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="rango"]').forEach(b => {
+        b.classList.toggle('active', rangos.includes(b.dataset.val));
+      });
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="nivel"]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.val) <= nivelMax);
+      });
+    }
+    abrirModal('modal-pref');
   };
 
   // --- TABS ---
@@ -1279,54 +1315,44 @@ function toggleDark() {
   };
 
   // --- MODALES ---
-  window.abrirModal = function(id) {
-    document.getElementById(id).classList.add('open');
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.dataset.scrollY = scrollY;
+  function _lockScroll() {
+    const sy = window.scrollY;
+    document.body.style.cssText += ';position:fixed;top:-'+sy+'px;width:100%;overflow:hidden';
+    document.body.dataset.sy = sy;
   }
+  function _unlockScroll() {
+    const sy = parseInt(document.body.dataset.sy||'0');
+    document.body.style.position='';document.body.style.top='';
+    document.body.style.width='';document.body.style.overflow='';
+    window.scrollTo(0,sy);
+  }
+  // Añadir bloqueo directo de touchmove a cada overlay
+  function _bindOverlay(el) {
+    let sy0=0;
+    el.addEventListener('touchstart',e=>{sy0=e.touches[0].clientY;},{passive:true});
+    el.addEventListener('touchmove',function(e){
+      const sc=e.target.closest('.modal,#lista-ninos-body');
+      if(!sc){e.preventDefault();return;}
+      const up=e.touches[0].clientY>sy0, dn=e.touches[0].clientY<sy0;
+      if(sc.scrollTop<=0&&up){e.preventDefault();return;}
+      if(sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1&&dn){e.preventDefault();}
+    },{passive:false});
+  }
+
+  window.abrirModal = function(id) {
+    const el=document.getElementById(id);
+    el.classList.add('open');
+    _lockScroll();
+  };
   window.closeModal = function(id) {
     document.getElementById(id).classList.remove('open');
-    const scrollY = document.body.dataset.scrollY || 0;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, parseInt(scrollY));
+    _unlockScroll();
   };
+  window.cerrarModal = function(id) { closeModal(id); };
 
-  // Bloquear scroll del fondo cuando cualquier overlay está abierto (iOS fix)
-  let touchStartY = 0;
-  document.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
-  document.addEventListener('touchmove', function(e) {
-    const openOverlay = document.querySelector('.modal-overlay.open');
-    const listaNinos = document.getElementById('modal-lista-ninos');
-    const listaNinosOpen = listaNinos && listaNinos.style.display !== 'none';
-    if (!openOverlay && !listaNinosOpen) return;
-
-    // Encontrar si el toque está dentro de un contenedor con scroll propio
-    const scrollable = e.target.closest('.modal, #lista-ninos-body');
-    if (!scrollable) { e.preventDefault(); return; }
-
-    // Dentro del modal: bloquear solo si está en los extremos del scroll
-    const atTop = scrollable.scrollTop <= 0;
-    const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
-    const movingDown = e.touches[0].clientY < touchStartY; // dedo hacia arriba = scroll hacia abajo
-    const movingUp = e.touches[0].clientY > touchStartY;
-
-    if ((atTop && movingUp) || (atBottom && movingDown)) e.preventDefault();
-  }, { passive: false });
-
-  window.cerrarModal = function(id) {
-    closeModal(id);
-    document.body.classList.remove('modal-open');
-  };
-
-  document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', function(e) {
-      if (e.target === this) window.cerrarModal(this.id);
-    });
+  document.querySelectorAll('.modal-overlay').forEach(el=>{
+    _bindOverlay(el);
+    el.addEventListener('click',function(e){if(e.target===this)cerrarModal(this.id);});
   });
 
   // --- TOAST ---

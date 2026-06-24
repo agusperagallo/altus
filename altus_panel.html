@@ -33,7 +33,7 @@ body.dark .sk{background:linear-gradient(90deg,#1A1D27 25%,#22263A 50%,#1A1D27 7
   --success-bg:#E1F5EE;--sidebar:240px;
 }
 body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);min-height:100vh;display:flex}
-body.no-scroll{overflow:hidden}
+
 .sidebar{width:var(--sidebar);background:var(--navy);min-height:100vh;max-height:100vh;position:fixed;top:0;left:0;z-index:200;display:flex;flex-direction:column;transition:transform .25s;overflow-y:auto;overscroll-behavior:contain}
 .brand{padding:24px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
 .brand-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#fff;letter-spacing:.12em}
@@ -3169,8 +3169,22 @@ function toast(msg,type='ok') {
   t.style.cssText=`position:fixed;bottom:24px;right:24px;background:${type==='ok'?'#0F6E56':'#B91C1C'};color:white;padding:12px 18px;border-radius:8px;font-size:13px;z-index:999;font-family:'DM Sans',sans-serif`;
   t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
-function openModal(id) { document.getElementById(id).classList.add('open'); document.body.classList.add('no-scroll'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.classList.remove('no-scroll'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  const sy = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = `-${sy}px`;
+  document.body.style.width = '100%';
+  document.body.dataset.modalScrollY = sy;
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  const sy = parseInt(document.body.dataset.modalScrollY || '0');
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, sy);
+}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 
 // Sidebar navigation
@@ -3665,37 +3679,6 @@ async function cargarCumpleanos() {
   }).join('');
 }
 
-async function cargarAlertaAlergias() {
-  const banner = document.getElementById('alerta-alergias-hoy');
-  const lista = document.getElementById('alerta-alergias-lista');
-  if (!banner) return;
-
-  const {data:sesiones} = await sb.from('sesiones_escuelita')
-    .select('grupo_id, grupos(nombre)')
-    .eq('fecha', fechaISO)
-    .neq('estado','cancelada');
-
-  if (!sesiones?.length) { banner.style.display = 'none'; return; }
-
-  const grupoIds = [...new Set(sesiones.map(s => s.grupo_id))];
-  const {data:ninos} = await sb.from('grupo_ninos')
-    .select('nombre, alergias, condiciones_medicas, grupo_id')
-    .in('grupo_id', grupoIds)
-    .eq('activo', true)
-    .or('alergias.not.is.null,condiciones_medicas.not.is.null');
-
-  const conInfo = (ninos||[]).filter(n => n.alergias?.trim() || n.condiciones_medicas?.trim());
-  if (!conInfo.length) { banner.style.display = 'none'; return; }
-
-  const grupoNombre = {};
-  sesiones.forEach(s => { grupoNombre[s.grupo_id] = s.grupos?.nombre; });
-
-  lista.innerHTML = conInfo.map(n => {
-    const detalle = [n.alergias, n.condiciones_medicas].filter(Boolean).join(' · ');
-    return `<div style="margin-bottom:4px"><strong>${n.nombre}</strong> (${grupoNombre[n.grupo_id]||'—'}): ${detalle}</div>`;
-  }).join('');
-  banner.style.display = 'block';
-}
 
 async function initClasesHoy() {
   const {data:cd}=await sb.from('clases').select('instructor_id, hora_inicio, hora_fin').eq('fecha',fechaISO);
