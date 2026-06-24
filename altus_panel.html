@@ -575,17 +575,20 @@ body.dark select option{background:#1E2235;color:#DDE3EE}
             </div>
             <button onclick="abrirPreviewClienteDesdeForm()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--accent2);font-weight:500;font-family:'DM Sans',sans-serif">Modificar →</button>
           </div>
-          <!-- Campos editables (se ocultan si el cliente viene sin modificar) -->
+          <!-- Campos editables (solo nombre y tel se ocultan si el cliente viene sin modificar) -->
           <div id="cli-campos-edicion">
             <input type="hidden" id="cli-id-existente">
             <div class="form-grid">
               <div class="fg"><label>Nombre</label><input type="text" id="cli-nombre" placeholder="Nombre del cliente"></div>
               <div class="fg"><label>Teléfono</label><input type="text" id="cli-tel" placeholder="+54 9 ..."></div>
-              <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
-              <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
             </div>
-            <div style="margin-bottom:16px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
           </div>
+          <!-- Disciplina, rango y nivel siempre visibles (definen la clase, no el perfil) -->
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
+            <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
+          </div>
+          <div style="margin-bottom:16px;margin-top:14px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
           <input type="hidden" id="cli-id-existente-hidden">
           <div class="form-grid">
             <div class="fg"><label>Fecha</label><input type="date" id="cli-fecha"></div>
@@ -2356,11 +2359,10 @@ function resetTipoCliente() {
   document.getElementById('cli-buscar').value = '';
   document.getElementById('cli-id-existente').value = '';
   // Re-habilitar campos que puedan haber quedado bloqueados
-  ['cli-nombre','cli-tel','cli-disc','cli-rango'].forEach(cid => {
+  ['cli-nombre','cli-tel'].forEach(cid => {
     const el = document.getElementById(cid);
     if (el) { el.disabled = false; el.style.background = ''; el.style.color = ''; }
   });
-  document.querySelectorAll('.nivel-btn[data-nivel]').forEach(b => { b.style.pointerEvents=''; b.style.opacity=''; });
   document.getElementById('rk-lista').innerHTML = '<div style="padding:18px 0;text-align:center;color:var(--silver);font-size:13px">Completá los datos y buscá instructores</div>';
 }
 window.resetTipoCliente = resetTipoCliente;
