@@ -761,9 +761,8 @@ function toggleDark() {
     document.body.appendChild(modal);
     modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
   }
-    _lockScroll();
-    modal._scrollY = _scrollY;
-    modal.style.display = 'flex';
+  _lockScroll();
+  modal.style.display = 'flex';
     document.getElementById('lista-ninos-titulo').textContent = nombreGrupo;
     const body = document.getElementById('lista-ninos-body');
     body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
