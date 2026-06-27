@@ -39,6 +39,7 @@
       <button class="nav-item" data-page="asistencia"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 6l-5 5-3-3"/><circle cx="8" cy="8" r="7"/></svg>Asistencia</button>
       <div class="nav-sec">Sistema</div>
       <button class="nav-item" data-page="resenas"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l1.8 3.6 4 .6-2.9 2.8.7 4L8 10l-3.6 1.9.7-4L2.1 5.2l4-.6z"/></svg>Reseñas</button>
+      <button class="nav-item" data-page="reporte"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 1h7l3 3v11H3V1z"/><path d="M10 1v3h3"/><path d="M5 7h6M5 10h4"/></svg>Reporte mensual</button>
       <button class="nav-item" data-page="usuarios" id="nav-usuarios" style="display:none"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg>Usuarios</button>
     </div>
     <!-- NAV ESCUELITA -->
@@ -372,6 +373,29 @@
     </div>
   </div>
   <!-- USUARIOS -->
+  <!-- REPORTE MENSUAL -->
+  <div id="pg-reporte" style="display:none" class="page-content">
+    <div class="page-filters">
+      <div class="filter-group"><label>Mes</label><select id="rep-mes">
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select></div>
+      <div class="filter-group"><label>Año</label><select id="rep-anio"></select></div>
+      <div class="filter-group" style="justify-content:flex-end;align-items:flex-end">
+        <button id="btn-descargar-pdf" onclick="descargarReportePDF()" style="height:42px;padding:0 20px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+          Descargar PDF
+        </button>
+      </div>
+    </div>
+
+    <div id="rep-contenido">
+      <div class="empty">Seleccioná un mes y año para generar el reporte</div>
+    </div>
+  </div>
+
   <div id="pg-usuarios" style="display:none" class="page-content">
     <div class="page-table">
       <div class="table-head">
@@ -1249,6 +1273,9 @@ function toggleDark() {
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="js/altus_audit.js"></script>
+<script src="js/altus_reporte.js"></script>
 <script>
 const { createClient } = supabase;
 const hoy = new Date();
@@ -2790,19 +2817,7 @@ const pill = v => { const n=parseFloat(v); const c=isNaN(n)?'pill-mid':n>=7?'pil
 const badge = (t,c,b) => `<span style="font-size:11px;font-weight:500;color:${c};background:${b};padding:2px 9px;border-radius:20px">${t}</span>`;
 const t2m = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
 const m2t = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-async function audit(accion, tabla, registroId, detalle) {
-  try {
-    const { data: { user } } = await sb.auth.getUser();
-    await sb.from('audit_log').insert({
-      usuario_id: user?.id || null,
-      usuario_email: user?.email || null,
-      accion,
-      tabla: tabla || null,
-      registro_id: registroId || null,
-      detalle: detalle || null
-    });
-  } catch(e) { console.warn('Audit log error:', e); }
-}
+/* audit() → js/altus_audit.js */
 
 function calcEdad(fechaNac) {
   if (!fechaNac) return null;
@@ -2833,9 +2848,9 @@ function closeModal(id) {
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id);}));
 
 // Sidebar navigation
-const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
-const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
-const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
+const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','reporte','esc-grupos','esc-sesiones','esc-admin-grupos','usuarios'];
+const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas',reporte:'Reporte mensual','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
+const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,reporte:loadReporte,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
 
 function setPage(page, fromSidebarNav) {
   localStorage.setItem('altus_page', page);
@@ -4246,6 +4261,8 @@ async function loadEscInicio() {
 }
 window.loadEscInicio = loadEscInicio;
 
+/* loadReporte(), descargarReportePDF() → js/altus_reporte.js */
+
 loadDashboardExtras();
 
 // Restaurar modo y página
@@ -4256,7 +4273,7 @@ if (savedModo === 'escuelita') {
   setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-inicio');
 } else {
   setModo('cerro');
-  setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','usuarios'].includes(savedPage) ? savedPage : 'asignacion');
+  setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','reporte','usuarios'].includes(savedPage) ? savedPage : 'asignacion');
 }
 // Mostrar contenido una vez restaurado
 requestAnimationFrame(() => {
