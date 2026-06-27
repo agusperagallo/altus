@@ -3167,6 +3167,20 @@ const pill = v => { const n=parseFloat(v); const c=isNaN(n)?'pill-mid':n>=7?'pil
 const badge = (t,c,b) => `<span style="font-size:11px;font-weight:500;color:${c};background:${b};padding:2px 9px;border-radius:20px">${t}</span>`;
 const t2m = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
 const m2t = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
+async function audit(accion, tabla, registroId, detalle) {
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    await sb.from('audit_log').insert({
+      usuario_id: user?.id || null,
+      usuario_email: user?.email || null,
+      accion,
+      tabla: tabla || null,
+      registro_id: registroId || null,
+      detalle: detalle || null
+    });
+  } catch(e) { console.warn('Audit log error:', e); }
+}
+
 function calcEdad(fechaNac) {
   if (!fechaNac) return null;
   const hoy = new Date();
@@ -3274,6 +3288,7 @@ async function toggleActivoInstructor(id, activo) {
   if (!confirm(msg)) return;
   const {error}=await sb.from('instructores').update({activo: nuevoEstado}).eq('id',id);
   if (error) { toast('Error al actualizar','err'); return; }
+  audit(nuevoEstado?'instructor_reactivado':'instructor_baja','instructores',id,{activo:nuevoEstado});
   toast(nuevoEstado ? 'Instructor reactivado' : 'Instructor dado de baja');
   loadInstructores();
 }
@@ -3417,8 +3432,9 @@ document.getElementById('ma-confirm').addEventListener('click', async()=>{
     cliId=nc?.id;
   }
 
-  const {error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada'});
+  const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada'}).select('id').single();
   if (eCl) { toast('Error al guardar la clase: '+eCl.message,'err'); btn.textContent='Confirmar asignación'; btn.disabled=false; return; }
+  audit('clase_asignada','clases',claseNueva?.id,{instructor:instrSel.nombre,cliente:nom,fecha,hora,disciplina:disc,nivel:nivelCliente});
 
   closeModal('modal-asignar');
   btn.textContent='Confirmar asignación'; btn.disabled=false;
@@ -3471,6 +3487,7 @@ async function applyCorr(st) {
     tipo: st,
     registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
   });
+  audit('presencia_marcada','asistencia',corrInstId,{tipo:st,fecha:hoyAR});
   const msgs = {presente:'Presente marcado ✓', ausente:'Ausente marcado', franco:'Franco registrado ☀'};
   toast(msgs[st]||'Presencia actualizada');
   corrBtn=null; corrInstId=null;
@@ -3601,6 +3618,7 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
     toast('Error al guardar el perfil','err');
     btn.disabled=false; btn.innerHTML=originalText; return;
   }
+  audit('instructor_creado','instructores',inst?.id,{nombre:nom,email,nivel:nivelCert});
 
   // 3. Crear preferencias
   const discs=[...document.querySelectorAll('#ni-disc .tag-btn.active')].map(b=>b.dataset.val);
@@ -4369,6 +4387,7 @@ document.getElementById('mcc-confirm').addEventListener('click', async()=>{
   const btn = document.getElementById('mcc-confirm');
   btn.textContent='Cancelando...'; btn.disabled=true;
   await sb.from('clases').update({estado:'cancelada'}).eq('id',claseACancelar);
+  audit('clase_cancelada','clases',claseACancelar,{});
   closeModal('modal-cancelar');
   btn.textContent='Confirmar cancelación'; btn.disabled=false;
   toast('Clase cancelada');
@@ -4425,6 +4444,7 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
 async function confirmarCambioInstructor(instId, instNombre) {
   if (!claseACambiar) return;
   await sb.from('clases').update({instructor_id:instId}).eq('id',claseACambiar);
+  audit('instructor_cambiado','clases',claseACambiar,{nuevo_instructor_id:instId,nuevo_instructor:instNombre});
   closeModal('modal-cambiar-inst');
   toast(`Instructor cambiado a ${instNombre}`);
   loadClases(); initClasesHoy();
@@ -4458,6 +4478,7 @@ function abrirFinalizarAdmin(claseId, instructor, cliente, hora, detalle) {
 async function finalizarClase(claseId) {
   const {error} = await sb.from('clases').update({estado:'completada'}).eq('id',claseId);
   if (error) { toast('Error al finalizar','err'); return; }
+  audit('clase_completada','clases',claseId,{});
   try { await sb.rpc('calcular_ranking'); } catch(e) {}
 
   // Generar link de reseña
