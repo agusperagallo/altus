@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Altus — Panel del Instructor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="altus_instructor.css">
-<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzFBMUYyRSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiMxRDlFNzUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSIxIj5BPC90ZXh0Pgo8L3N2Zz4=">
+  <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1A1F2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -407,6 +408,8 @@ function toggleDark() {
 })();
 </script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/altus_audit.js"></script>
+<script src="js/altus_offline.js"></script>
 <script>
   const { createClient } = supabase;
   const sb = createClient(
@@ -416,6 +419,11 @@ function toggleDark() {
 
   // ID del instructor logueado
   const INSTRUCTOR_ID = localStorage.getItem('altus_instructor_id') || null;
+
+  // Registrar Service Worker para modo offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+  }
 
   // Auth check y datos del usuario
   sb.auth.getSession().then(({ data }) => {
@@ -611,7 +619,9 @@ function toggleDark() {
     const body = document.getElementById('lista-ninos-body');
     body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
 
-    const {data:ninos} = await sb.from('grupo_ninos').select('*').eq('grupo_id', grupoId).eq('activo', true).order('nombre');
+    const {data:ninos} = altusOffline.estaOnline()
+      ? await sb.from('grupo_ninos').select('*').eq('grupo_id', grupoId).eq('activo', true).order('nombre')
+      : { data: await altusOffline.obtenerNinosOffline(grupoId) };
     if (!ninos?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Sin niños en este grupo</div>'; return; }
 
     const ids = ninos.map(n=>n.id);
@@ -645,20 +655,26 @@ function toggleDark() {
   };
 
   window.marcarAsistNinoInst = async function(ninoId, presente, btn) {
-    await sb.from('asistencia_ninos').upsert({
-      nino_id: ninoId, fecha: fechaISO, presente,
-      registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
-    }, {onConflict:'nino_id,fecha'});
-    toast(presente ? 'Presente registrado' : 'Ausente registrado');
+    const grupoId = btn.closest('[data-grupo-id]')?.dataset.grupoId || null;
+    if (altusOffline.estaOnline()) {
+      await sb.from('asistencia_ninos').upsert({
+        nino_id: ninoId, fecha: fechaISO, presente,
+        registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
+      }, {onConflict:'nino_id,fecha'});
+      toast(presente ? 'Presente registrado' : 'Ausente registrado');
+    } else {
+      await altusOffline.marcarAsistenciaOffline(ninoId, grupoId, presente, fechaISO);
+      toast(presente ? '✓ Presente (se enviará al reconectar)' : '✗ Ausente (se enviará al reconectar)');
+    }
     // Refrescar botones visualmente
     const parent = btn.parentElement;
     const btns = parent.querySelectorAll('button');
     btns[0].style.borderColor = presente ? '#0F6E56' : 'var(--line)';
-    btns[0].style.background = presente ? '#E1F5EE' : '#fff';
-    btns[0].style.color = presente ? '#0F6E56' : 'var(--silver)';
+    btns[0].style.background  = presente ? '#E1F5EE' : '#fff';
+    btns[0].style.color       = presente ? '#0F6E56' : 'var(--silver)';
     btns[1].style.borderColor = !presente ? '#E24B4A' : 'var(--line)';
-    btns[1].style.background = !presente ? '#FEE2E2' : '#fff';
-    btns[1].style.color = !presente ? '#E24B4A' : 'var(--silver)';
+    btns[1].style.background  = !presente ? '#FEE2E2' : '#fff';
+    btns[1].style.color       = !presente ? '#E24B4A' : 'var(--silver)';
   };
 
   // Calcular edad desde fecha_nacimiento
@@ -899,7 +915,17 @@ window.cerrarListaNinos = function() {
   async function cargarClases() {
     if (!INSTRUCTOR_ID) return;
 
-    const { data: clases, error } = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).order('hora_inicio');
+    let clases, error;
+
+    if (altusOffline.estaOnline()) {
+      // Con conexión: traer de Supabase y cachear
+      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).order('hora_inicio');
+      clases = res.data; error = res.error;
+      if (clases?.length) altusOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
+    } else {
+      // Sin conexión: usar caché local
+      clases = await altusOffline.obtenerClasesOffline();
+    }
 
     if (error) return;
 
