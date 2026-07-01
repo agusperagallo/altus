@@ -208,3 +208,205 @@ async function descargarReportePDF() {
 
 window.loadReporte = loadReporte;
 window.descargarReportePDF = descargarReportePDF;
+
+
+// ── RESUMEN DE TEMPORADA ─────────────────────────────────────
+async function descargarReporteTemporada() {
+  const btn = document.getElementById('btn-descargar-temporada');
+  const originalHTML = btn.innerHTML;
+  btn.textContent = 'Generando...'; btn.disabled = true;
+
+  try {
+    // Obtener fecha de inicio de temporada
+    const {data:cfg, error:cfgErr} = await sb.from('configuracion')
+      .select('temporada_inicio,temporada_nombre').single();
+
+    if (cfgErr || !cfg?.temporada_inicio) {
+      toast('Configurá el inicio de temporada primero', 'err');
+      btn.innerHTML = originalHTML; btn.disabled = false;
+      return;
+    }
+
+    const desde = cfg.temporada_inicio;
+    const hasta  = new Date().toISOString().split('T')[0];
+    const nombreTemp = cfg.temporada_nombre || 'Temporada 2026';
+    const hoy = new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
+    const diasTotal = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
+
+    // Fetch datos — queries simples sin joins complejos
+    const [{data:clases},{data:insts},{data:registrosAsist}] = await Promise.all([
+      sb.from('clases').select('instructor_id, duracion_horas, disciplina, estado, instructores(nombre)')
+        .gte('fecha', desde).lte('fecha', hasta),
+      sb.from('instructores').select('id, nombre, creado_en, ranking_snapshot(*)')
+        .eq('activo', true).order('nombre'),
+      sb.from('asistencia').select('instructor_id, tipo')
+        .gte('registrado_en', desde+'T00:00:00').lte('registrado_en', hasta+'T23:59:59'),
+    ]);
+
+    // Estadísticas generales
+    const clasesTotal = clases?.length || 0;
+    const completadas = (clases||[]).filter(c=>c.estado==='completada').length;
+    const canceladas  = (clases||[]).filter(c=>c.estado==='cancelada').length;
+    const horasTotal  = (clases||[]).reduce((s,c)=>s+(parseFloat(c.duracion_horas)||0),0);
+
+    // Por disciplina
+    const porDisc = {};
+    (clases||[]).forEach(c => {
+      if (!c.disciplina) return;
+      porDisc[c.disciplina] = (porDisc[c.disciplina]||0)+1;
+    });
+
+    // Por instructor
+    const porInst = {};
+    (clases||[]).forEach(c => {
+      const nom = c.instructores?.nombre||'—';
+      if (!porInst[nom]) porInst[nom] = {clases:0, horas:0};
+      porInst[nom].clases++;
+      porInst[nom].horas += parseFloat(c.duracion_horas)||0;
+    });
+
+    // Asistencia por instructor
+    const asistMap = {};
+    (registrosAsist||[]).forEach(r => {
+      if (!asistMap[r.instructor_id]) asistMap[r.instructor_id] = {pres:0,francos:0};
+      if (r.tipo==='presente') asistMap[r.instructor_id].pres++;
+      if (r.tipo==='franco')   asistMap[r.instructor_id].francos++;
+    });
+
+    // Ranking
+    const barColor = p => p>=80?'#0F6E56':p>=50?'#F59E0B':'#EF4444';
+    const pctBar   = (n,d) => d>0?Math.round((n/d)*100):0;
+
+    const ranking = (insts||[]).map(i => {
+      const snap = i.ranking_snapshot?.[i.ranking_snapshot.length-1];
+      const a = asistMap[i.id]||{pres:0,francos:0};
+      // Días laborables desde su alta
+      const altaDate = i.creado_en ? i.creado_en.split('T')[0] : desde;
+      const desdeEfectivo = altaDate > desde ? altaDate : desde;
+      const diasInst = Math.max(0, Math.round((new Date(hasta)-new Date(desdeEfectivo))/86400000)+1);
+      const totalDias = diasInst - a.francos;
+      const pct = pctBar(a.pres, totalDias);
+      const d = porInst[i.nombre]||{clases:0,horas:0};
+      return {nombre:i.nombre, id:i.id, total:snap?.puntaje_total||0,
+              clases:d.clases, horas:d.horas, pct, color:barColor(pct)};
+    }).sort((a,b)=>b.total-a.total);
+
+    // HTML del PDF — usando tablas en vez de grid para compatibilidad con html2pdf
+    const el = document.createElement('div');
+    el.style.cssText = 'font-family:Helvetica,Arial,sans-serif;padding:0;width:1050px';
+
+    el.innerHTML = `
+      <div style="background:#1A1F2E;padding:20px 24px;margin-bottom:16px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6B7280;margin-bottom:3px">Cerro Bayo — Villa La Angostura</div>
+        <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:2px">${nombreTemp} · Resumen parcial</div>
+        <div style="font-size:12px;color:#1D9E75">Al ${hoy} · Período: ${new Date(desde+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})} → hoy</div>
+      </div>
+
+      <!-- Stats -->
+      <table width="100%" cellpadding="0" cellspacing="8" style="margin-bottom:16px">
+        <tr>
+          ${[
+            ['Clases totales', clasesTotal, `${completadas} completadas · ${canceladas} canceladas`],
+            ['Horas trabajadas', horasTotal.toFixed(1)+' hs', 'en la temporada'],
+            ['Días transcurridos', diasTotal, 'desde el inicio'],
+            ['Instructores activos', insts?.length||0, 'en el sistema'],
+          ].map(([l,v,s])=>`<td width="25%" style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;padding:12px 14px;vertical-align:top">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#6B7280;margin-bottom:3px">${l}</div>
+            <div style="font-size:20px;font-weight:700;color:#1A1F2E">${v}</div>
+            <div style="font-size:10px;color:#9CA3AF">${s}</div>
+          </td>`).join('')}
+        </tr>
+      </table>
+
+      <!-- Dos columnas -->
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr valign="top">
+          <td width="48%" style="padding-right:12px">
+
+            <!-- Disciplinas -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:6px;overflow:hidden;margin-bottom:12px">
+              <tr><td colspan="3" style="padding:10px 14px;border-bottom:1px solid #E5E7EB;font-size:12px;font-weight:700;color:#1A1F2E;background:#F9FAFB">Clases por disciplina</td></tr>
+              ${Object.entries(porDisc).sort((a,b)=>b[1]-a[1]).map(([disc,n])=>`
+                <tr style="border-bottom:1px solid #F3F4F6">
+                  <td style="padding:8px 14px;font-size:11px;font-weight:500;width:110px">${disc}</td>
+                  <td style="padding:8px 4px"><div style="height:6px;background:#E5E7EB;border-radius:3px"><div style="height:6px;width:${pctBar(n,clasesTotal)}%;background:#1D9E75;border-radius:3px"></div></div></td>
+                  <td style="padding:8px 14px;font-size:11px;font-weight:700;text-align:right;width:30px">${n}</td>
+                </tr>`).join('')}
+            </table>
+
+            <!-- Horas -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:6px;overflow:hidden">
+              <tr><td colspan="3" style="padding:10px 14px;border-bottom:1px solid #E5E7EB;font-size:12px;font-weight:700;color:#1A1F2E;background:#F9FAFB">Horas por instructor</td></tr>
+              ${Object.entries(porInst).sort((a,b)=>b[1].horas-a[1].horas).map(([nom,d])=>`
+                <tr style="border-bottom:1px solid #F3F4F6">
+                  <td style="padding:8px 14px;font-size:11px;font-weight:500">${nom}</td>
+                  <td style="padding:8px 4px;font-size:10px;color:#6B7280;text-align:right">${d.clases} clases</td>
+                  <td style="padding:8px 14px;font-size:11px;font-weight:700;color:#1A1F2E;text-align:right;white-space:nowrap">${d.horas.toFixed(1)} hs</td>
+                </tr>`).join('')}
+            </table>
+
+          </td>
+          <td width="4%"></td>
+          <td width="48%">
+
+            <!-- Ranking -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:6px;overflow:hidden;margin-bottom:12px">
+              <tr><td colspan="4" style="padding:10px 14px;border-bottom:1px solid #E5E7EB;font-size:12px;font-weight:700;color:#1A1F2E;background:#F9FAFB">Ranking de la temporada</td></tr>
+              ${ranking.map((i,idx)=>`
+                <tr style="border-bottom:1px solid #F3F4F6">
+                  <td style="padding:8px 10px;font-size:12px;font-weight:800;color:${idx===0?'#B45309':idx===1?'#6B7280':idx===2?'#92400E':'#D1D5DB'};width:22px">${idx+1}</td>
+                  <td style="padding:8px 4px;font-size:11px;font-weight:500">${i.nombre}</td>
+                  <td style="padding:8px 4px;font-size:10px;color:#6B7280;text-align:right">${i.clases} clases</td>
+                  <td style="padding:8px 10px;text-align:right">
+                    <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${i.total>=7?'#E1F5EE':i.total>=5?'#FFF8E0':'#FFE8E8'};color:${i.total>=7?'#0F6E56':i.total>=5?'#92400E':'#991B1B'}">${i.total.toFixed(1)}</span>
+                  </td>
+                </tr>`).join('')}
+            </table>
+
+            <!-- Asistencia -->
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:6px;overflow:hidden">
+              <tr><td colspan="2" style="padding:10px 14px;border-bottom:1px solid #E5E7EB;font-size:12px;font-weight:700;color:#1A1F2E;background:#F9FAFB">Asistencia de la temporada</td></tr>
+              ${ranking.map(i=>`
+                <tr style="border-bottom:1px solid #F3F4F6">
+                  <td style="padding:8px 14px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                      <span style="font-size:11px;font-weight:500">${i.nombre}</span>
+                      <span style="font-size:10px;font-weight:700;color:${i.color}">${i.pct}%</span>
+                    </div>
+                    <div style="height:5px;background:#E5E7EB;border-radius:3px"><div style="height:5px;width:${i.pct}%;background:${i.color};border-radius:3px"></div></div>
+                  </td>
+                </tr>`).join('')}
+            </table>
+
+          </td>
+        </tr>
+      </table>
+
+      <div style="text-align:center;font-size:9px;color:#9CA3AF;margin-top:14px;padding:8px">
+        Generado por Altus · ${hoy}
+      </div>`;
+
+    document.body.appendChild(el);
+
+    await html2pdf().set({
+      margin: [6,6,6,6],
+      filename: `Altus_Temporada_${desde}_al_${hasta}.pdf`,
+      image: {type:'jpeg', quality:0.98},
+      html2canvas: {scale:2, useCORS:true, logging:false},
+      jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}
+    }).from(el).save();
+
+    try { audit('reporte_temporada_descargado', null, null, {desde, hasta}); } catch(e){}
+
+  } catch(e) {
+    console.error('Error resumen temporada:', e);
+    toast('Error al generar el PDF', 'err');
+  }
+
+  const el2 = document.getElementById('rep-print')?.parentElement?.querySelector('[style*="1050px"]');
+  if (el2) document.body.removeChild(el2);
+
+  btn.innerHTML = originalHTML;
+  btn.disabled = false;
+}
+window.descargarReporteTemporada = descargarReporteTemporada;
