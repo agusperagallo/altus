@@ -386,6 +386,8 @@ async function descargarReporteTemporada() {
         Generado por Altus · ${hoy}
       </div>`;
 
+    // Ocultar el elemento fuera de la vista para que no bloquee la pantalla
+    el.style.cssText += ';position:fixed;left:-9999px;top:0;z-index:-1';
     document.body.appendChild(el);
 
     await html2pdf().set({
@@ -397,14 +399,14 @@ async function descargarReporteTemporada() {
     }).from(el).save();
 
     try { audit('reporte_temporada_descargado', null, null, {desde, hasta}); } catch(e){}
+    document.body.removeChild(el);
 
   } catch(e) {
     console.error('Error resumen temporada:', e);
     toast('Error al generar el PDF', 'err');
+    // Limpiar cualquier elemento huérfano
+    document.querySelectorAll('[style*="left:-9999px"]').forEach(el => el.remove());
   }
-
-  const el2 = document.getElementById('rep-print')?.parentElement?.querySelector('[style*="1050px"]');
-  if (el2) document.body.removeChild(el2);
 
   btn.innerHTML = originalHTML;
   btn.disabled = false;
