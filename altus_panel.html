@@ -384,10 +384,14 @@
         <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
       </select></div>
       <div class="filter-group"><label>Año</label><select id="rep-anio"></select></div>
-      <div class="filter-group" style="justify-content:flex-end;align-items:flex-end">
+      <div class="filter-group" style="justify-content:flex-end;align-items:flex-end;display:flex;gap:8px">
         <button id="btn-descargar-pdf" onclick="descargarReportePDF()" style="height:42px;padding:0 20px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
-          Descargar PDF
+          PDF mensual
+        </button>
+        <button id="btn-descargar-temporada" onclick="descargarReporteTemporada()" style="height:42px;padding:0 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+          Resumen temporada
         </button>
       </div>
     </div>
@@ -965,6 +969,11 @@
         <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Temporada activa</div>
         <div style="font-size:16px;font-weight:500;color:var(--navy)" id="mt-nombre-activa">Cargando...</div>
         <div style="font-size:12px;color:var(--silver);margin-top:3px" id="mt-fecha-activa">—</div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center">
+          <label style="font-size:11px;color:var(--muted)">Inicio:</label>
+          <input type="date" id="mt-inicio-fecha" style="height:32px;font-size:12px;padding:0 8px;border:1px solid var(--line);border-radius:6px;font-family:'DM Sans',sans-serif">
+          <button onclick="guardarInicioTemporada()" style="height:32px;padding:0 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+        </div>
       </div>
 
       <!-- Cerrar temporada -->
@@ -1309,7 +1318,23 @@ document.getElementById('pm-temporada').addEventListener('click', async() => {
   document.getElementById('profile-menu').classList.remove('open');
   openModal('modal-temporada');
   await cargarTemporadas();
+  // Cargar fecha de inicio actual
+  const {data:cfg} = await sb.from('configuracion').select('temporada_inicio,temporada_nombre').single();
+  if (cfg?.temporada_inicio) {
+    document.getElementById('mt-inicio-fecha').value = cfg.temporada_inicio;
+  }
 });
+
+async function guardarInicioTemporada() {
+  const fecha = document.getElementById('mt-inicio-fecha').value;
+  if (!fecha) { toast('Seleccioná una fecha','err'); return; }
+  const {error} = await sb.from('configuracion').update({ temporada_inicio: fecha }).not('id','is',null);
+  if (error) { toast('Error al guardar','err'); return; }
+  toast('Inicio de temporada guardado ✓');
+  audit('temporada_inicio_actualizado', 'configuracion', null, { fecha });
+  closeModal('modal-temporada');
+}
+window.guardarInicioTemporada = guardarInicioTemporada;
 
 document.getElementById('mt-close').addEventListener('click', () => closeModal('modal-temporada'));
 
