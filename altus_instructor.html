@@ -101,16 +101,6 @@
       <div class="stat-value" id="stat-puntaje">—</div>
       <div class="stat-sub" id="stat-posicion">—</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Clases hoy</div>
-      <div class="stat-value" id="stat-clases-hoy">—</div>
-      <div class="stat-sub" id="stat-clases-sub">—</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Reseñas</div>
-      <div class="stat-value" id="stat-resenas">—</div>
-      <div class="stat-sub" id="stat-resenas-sub">—</div>
-    </div>
   </div>
 
   <!-- CLASES -->
@@ -176,13 +166,6 @@
   </div>
 
   <!-- RESEÑAS -->
-  <div class="panel" id="panel-resenas" style="display:none">
-    <div class="panel-header">
-      <span class="panel-title">Mis reseñas</span>
-      <span class="panel-meta" id="resenas-meta">—</span>
-    </div>
-    <div id="lista-resenas"><div style="padding:16px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div></div>
-  </div>
 
   <!-- PERFIL -->
   <div class="panel" id="panel-perfil" style="display:none">
@@ -201,7 +184,7 @@
     </div>
     <div class="pref-sec">
       <div class="pref-label">Disciplinas</div>
-      <div class="tags"><span class="tag active">Esquí</span><span class="tag">Snowboard</span><span class="tag">Freestyle</span></div>
+      <div class="tags"><span class="tag active">Esquí</span><span class="tag">Snowboard</span><span class="tag">Esquí Adaptado</span></div>
     </div>
     <div class="pref-sec">
       <div class="pref-label">Niveles que acepta</div>
@@ -229,10 +212,6 @@
     <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg>
     <span class="nav-tab-label">Puntaje</span>
   </button>
-  <button class="nav-tab" id="tab-resenas" onclick="setTab('resenas')">
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 2h12v9H9l-3 3v-3H2z"/></svg>
-    <span class="nav-tab-label">Reseñas</span>
-  </button>
   <button class="nav-tab" id="tab-perfil" onclick="setTab('perfil')">
     <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
     <span class="nav-tab-label">Perfil</span>
@@ -253,7 +232,8 @@
         <div class="tags">
           <button class="modal-tag active" data-tipo="disc" data-val="Esqui" onclick="this.classList.toggle('active')">Esquí</button>
           <button class="modal-tag" data-tipo="disc" data-val="Snowboard" onclick="this.classList.toggle('active')">Snowboard</button>
-          <button class="modal-tag" data-tipo="disc" data-val="Freestyle" onclick="this.classList.toggle('active')">Freestyle</button>
+          <button class="modal-tag" data-tipo="disc" data-val="Esqui Adaptado" onclick="this.classList.toggle('active')">Esquí Adaptado</button>
+          
         </div>
       </div>
       <div class="modal-section">
@@ -1025,7 +1005,7 @@ window.cerrarListaNinos = function() {
     });
 
     if (count > 0) {
-      document.querySelector('#panel-resenas .panel-meta').textContent =
+      document.querySelector('#panel-resenas .panel-meta')?.textContent ||
         `${count} reseñas · Prom. ${(total/count).toFixed(1)}`;
     }
   }
@@ -1061,11 +1041,11 @@ window.cerrarListaNinos = function() {
     );
     if (resenas?.length) {
       const prom = resenas.reduce((s,r) => s + (r.puntaje_clase + r.puntaje_trato) / 2, 0) / resenas.length;
-      document.getElementById('stat-resenas').textContent = resenas.length;
-      document.getElementById('stat-resenas-sub').textContent = `Prom. ${prom.toFixed(1)}/5`;
+      // stat-resenas removed
+      // stat-resenas-sub removed
     } else {
-      document.getElementById('stat-resenas').textContent = '0';
-      document.getElementById('stat-resenas-sub').textContent = 'Sin reseñas aún';
+      // stat-resenas removed
+      // stat-resenas-sub removed
     }
   }
 
@@ -1169,7 +1149,7 @@ window.cerrarListaNinos = function() {
       const rangos = [...new Set((prefs||[]).map(p=>p.rango_etario))];
       const nivelMax = (prefs||[]).reduce((m,p)=>Math.max(m,p.nivel_max||1), 1);
 
-      const discMap = {'Esqui':'Esquí','Snowboard':'Snowboard','Freestyle':'Freestyle'};
+      const discMap = {'Esqui':'Esquí','Snowboard':'Snowboard','Esqui Adaptado':'Esquí Adaptado'};
       document.querySelectorAll('#modal-pref .modal-tag[data-tipo="disc"]').forEach(b => {
         b.classList.toggle('active', discs.includes(b.dataset.val));
       });
@@ -1184,7 +1164,7 @@ window.cerrarListaNinos = function() {
   };
 
   // --- TABS ---
-  const allPanels = ['clases','grupos','ranking','resenas','perfil'];
+  const allPanels = ['clases','grupos','ranking','perfil'];
   window.setTab = function(tab) {
     allPanels.forEach(p => {
       document.getElementById(`panel-${p}`).style.display = p === tab ? 'block' : 'none';
@@ -1248,7 +1228,7 @@ window.cerrarListaNinos = function() {
   try {
     document.getElementById('stat-puntaje').innerHTML='<span class="sk" style="display:inline-block;width:50px;height:32px"></span>';
     document.getElementById('stat-clases-hoy').innerHTML='<span class="sk" style="display:inline-block;width:30px;height:32px"></span>';
-    document.getElementById('stat-resenas').innerHTML='<span class="sk" style="display:inline-block;width:30px;height:32px"></span>';
+    // stat-resenas removed
     document.getElementById('lista-clases').innerHTML=`
       ${[1,2,3].map(()=>`<div style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;gap:14px;align-items:center">
         <div><div class="sk" style="width:44px;height:14px;margin-bottom:6px"></div><div class="sk" style="width:24px;height:10px"></div></div>

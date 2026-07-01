@@ -211,7 +211,7 @@
           </div>
           <!-- Disciplina, rango y nivel siempre visibles (definen la clase, no el perfil) -->
           <div class="form-grid" style="margin-bottom:0">
-            <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
+            <div class="fg"><label>Disciplina</label><select id="cli-disc"><option value="">Seleccionar...</option><option>Esqui</option><option>Snowboard</option><option value="Esqui Adaptado">Esquí Adaptado</option></select></div>
             <div class="fg"><label>Rango etario</label><select id="cli-rango"><option value="">Seleccionar...</option><option value="ninos">Niños (4-12)</option><option value="adolescentes">Adolescentes (13-17)</option><option value="adultos">Adultos (18-60)</option><option value="mayores">Adultos mayores (60+)</option></select></div>
           </div>
           <div style="margin-bottom:16px;margin-top:14px"><label style="display:block;margin-bottom:7px">Nivel del cliente</label><div class="nivel-row"><button class="nivel-btn" data-nivel="principiante">Principiante</button><button class="nivel-btn" data-nivel="intermedio">Intermedio</button><button class="nivel-btn" data-nivel="avanzado">Avanzado</button></div></div>
@@ -239,7 +239,7 @@
   <!-- RANKING -->
   <div id="pg-ranking" style="display:none" class="page-content">
     <div class="page-filters">
-      <div class="filter-group"><label>Disciplina</label><select id="f-disc"><option value="">Todas</option><option>Esqui</option><option>Snowboard</option><option>Freestyle</option></select></div>
+      <div class="filter-group"><label>Disciplina</label><select id="f-disc"><option value="">Todas</option><option>Esqui</option><option>Snowboard</option><option value="Esqui Adaptado">Esquí Adaptado</option></select></div>
       <div class="filter-group"><label>Nivel</label><select id="f-nivel"><option value="">Todos</option><option value="principiante">Principiante</option><option value="intermedio">Intermedio</option><option value="avanzado">Avanzado</option></select></div>
     </div>
     <div class="page-table">
@@ -308,7 +308,7 @@
           <option value="">Todas</option>
           <option value="Esqui">Esqui</option>
           <option value="Snowboard">Snowboard</option>
-          <option value="Freestyle">Freestyle</option>
+          <option value="Esqui Adaptado">Esquí Adaptado</option>
         </select>
       </div>
       <div class="filter-group"><label>Ordenar por</label>
@@ -736,7 +736,7 @@
       <!-- PASO 2 — PERFIL -->
       <div id="inst-p2" style="display:none">
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc"><button class="nivel-btn" data-niv="0">0</button><button class="nivel-btn" data-niv="1">1</button><button class="nivel-btn" data-niv="2">2</button><button class="nivel-btn" data-niv="3">3</button><button class="nivel-btn" data-niv="4">4</button><button class="nivel-btn" data-niv="5">5</button></div><div style="font-size:11px;color:var(--silver);margin-top:4px">0 = Sin nivel certificado</div></div>
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Freestyle">Freestyle</button></div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Esqui Adaptado">Esquí Adaptado</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
         <div style="margin-bottom:18px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
           <div>
