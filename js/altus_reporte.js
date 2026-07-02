@@ -211,17 +211,15 @@ window.descargarReportePDF = descargarReportePDF;
 
 
 // ── RESUMEN DE TEMPORADA ─────────────────────────────────────
-async function descargarReporteTemporada() {
-  const btn = document.getElementById('btn-descargar-temporada');
-  const originalHTML = btn.innerHTML;
-  btn.textContent = 'Cargando...'; btn.disabled = true;
+// Muestra el resumen en pantalla primero, igual que el reporte mensual
+// El PDF se descarga desde lo que ya está renderizado
 
+async function loadReporteTemporada() {
   const {data:cfg} = await sb.from('configuracion')
     .select('temporada_inicio,temporada_nombre').single();
 
   if (!cfg?.temporada_inicio) {
-    toast('Configurá el inicio de temporada primero', 'err');
-    btn.innerHTML = originalHTML; btn.disabled = false;
+    document.getElementById('rep-contenido').innerHTML = '<div class="empty">Configurá el inicio de temporada desde el menú del avatar.</div>';
     return;
   }
 
@@ -230,6 +228,9 @@ async function descargarReporteTemporada() {
   const nombreTemp = cfg.temporada_nombre || 'Temporada 2026';
   const hoy = new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
   const diasTotal = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
+
+  const cont = document.getElementById('rep-contenido');
+  cont.innerHTML = '<div class="empty">Cargando temporada...</div>';
 
   const [{data:clases},{data:insts},{data:registrosAsist}] = await Promise.all([
     sb.from('clases').select('instructor_id, duracion_horas, disciplina, estado, instructores(nombre)')
@@ -246,10 +247,7 @@ async function descargarReporteTemporada() {
   const horasTotal  = (clases||[]).reduce((s,c)=>s+(parseFloat(c.duracion_horas)||0),0);
 
   const porDisc = {};
-  (clases||[]).forEach(c => {
-    if (!c.disciplina) return;
-    porDisc[c.disciplina] = (porDisc[c.disciplina]||0)+1;
-  });
+  (clases||[]).forEach(c => { if (c.disciplina) porDisc[c.disciplina] = (porDisc[c.disciplina]||0)+1; });
 
   const porInst = {};
   (clases||[]).forEach(c => {
@@ -281,10 +279,6 @@ async function descargarReporteTemporada() {
             clases:d.clases, horas:d.horas, pct, color:barColor(pct)};
   }).sort((a,b)=>b.total-a.total);
 
-  // Guardar contenido actual y reemplazar con el de temporada
-  const cont = document.getElementById('rep-contenido');
-  const contenidoAnterior = cont.innerHTML;
-
   cont.innerHTML = `<div id="rep-print" style="font-family:'DM Sans',sans-serif">
     <div class="panel" style="padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
       <div>
@@ -293,22 +287,12 @@ async function descargarReporteTemporada() {
         <div style="font-size:12px;color:var(--accent);margin-top:2px">Al ${hoy} · Desde ${new Date(desde+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'long'})}</div>
       </div>
     </div>
-
     <div class="stats" style="margin-bottom:16px">
-      <div class="stat"><div class="stat-label">Clases totales</div>
-        <div class="stat-val">${clasesTotal}</div>
-        <div class="stat-sub">${completadas} completadas · ${canceladas} canceladas</div></div>
-      <div class="stat"><div class="stat-label">Horas trabajadas</div>
-        <div class="stat-val">${horasTotal.toFixed(1)} hs</div>
-        <div class="stat-sub">en la temporada</div></div>
-      <div class="stat"><div class="stat-label">Días transcurridos</div>
-        <div class="stat-val">${diasTotal}</div>
-        <div class="stat-sub">desde el inicio</div></div>
-      <div class="stat"><div class="stat-label">Instructores</div>
-        <div class="stat-val">${insts?.length||0}</div>
-        <div class="stat-sub">activos</div></div>
+      <div class="stat"><div class="stat-label">Clases totales</div><div class="stat-val">${clasesTotal}</div><div class="stat-sub">${completadas} completadas · ${canceladas} canceladas</div></div>
+      <div class="stat"><div class="stat-label">Horas trabajadas</div><div class="stat-val">${horasTotal.toFixed(1)} hs</div><div class="stat-sub">en la temporada</div></div>
+      <div class="stat"><div class="stat-label">Días transcurridos</div><div class="stat-val">${diasTotal}</div><div class="stat-sub">desde el inicio</div></div>
+      <div class="stat"><div class="stat-label">Instructores</div><div class="stat-val">${insts?.length||0}</div><div class="stat-sub">activos</div></div>
     </div>
-
     <div class="grid-2">
       <div>
         <div class="panel"><div class="panel-head"><span class="panel-title">Clases por disciplina</span></div>
@@ -366,28 +350,37 @@ async function descargarReporteTemporada() {
       Generado por Altus · ${hoy}
     </div>
   </div>`;
+}
 
-  btn.textContent = 'Generando PDF...';
+async function descargarReporteTemporada() {
+  const btn = document.getElementById('btn-descargar-temporada');
+  const originalHTML = btn.innerHTML;
 
-  // Usar el mismo mecanismo que el reporte mensual
+  // Primero cargar el reporte de temporada en pantalla
+  await loadReporteTemporada();
+
   const el = document.getElementById('rep-print');
+  if (!el) { toast('Error al generar el reporte', 'err'); return; }
+
+  btn.textContent = 'Generando PDF...'; btn.disabled = true;
+
   try {
     await html2pdf().set({
       margin: [10,10,10,10],
-      filename: `Altus_Temporada_${desde}_al_${hasta}.pdf`,
+      filename: `Altus_Temporada_${new Date().toISOString().split('T')[0]}.pdf`,
       image: {type:'jpeg', quality:0.98},
       html2canvas: {scale:2, useCORS:true},
       jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
     }).from(el).save();
-    try { audit('reporte_temporada_descargado', null, null, {desde, hasta}); } catch(e){}
+    try { audit('reporte_temporada_descargado', null, null, {}); } catch(e){}
   } catch(e) {
-    console.error('Error generando PDF temporada:', e);
+    console.error('Error PDF temporada:', e);
     toast('Error al generar el PDF', 'err');
   }
 
-  // Restaurar contenido anterior
-  cont.innerHTML = contenidoAnterior;
   btn.innerHTML = originalHTML;
   btn.disabled = false;
 }
+
+window.loadReporteTemporada = loadReporteTemporada;
 window.descargarReporteTemporada = descargarReporteTemporada;
