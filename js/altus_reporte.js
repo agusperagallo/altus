@@ -1,3 +1,16 @@
+// ── TABS DEL REPORTE ─────────────────────────────────────────
+function setRepTab(tab) {
+  const isMensual = tab === 'mensual';
+  document.getElementById('rep-panel-mensual').style.display   = isMensual ? '' : 'none';
+  document.getElementById('rep-panel-temporada').style.display = isMensual ? 'none' : '';
+  document.getElementById('rep-tab-mensual').style.cssText   = `padding:10px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:${isMensual?'600':'500'};color:${isMensual?'var(--accent)':'var(--silver)'};border-bottom:${isMensual?'2px solid var(--accent)':'none'};margin-bottom:-2px;cursor:pointer`;
+  document.getElementById('rep-tab-temporada').style.cssText = `padding:10px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:${isMensual?'500':'600'};color:${isMensual?'var(--silver)':'var(--accent)'};border-bottom:${isMensual?'none':'2px solid var(--accent)'};margin-bottom:-2px;cursor:pointer`;
+  if (!isMensual && document.getElementById('rep-contenido-temporada').innerHTML.includes('Cargando')) {
+    loadReporteTemporada();
+  }
+}
+window.setRepTab = setRepTab;
+
 // ── Altus Reporte Mensual ────────────────────────────────────
 // Genera el reporte mensual de gestión del cerro
 
@@ -27,7 +40,7 @@ async function loadReporte() {
   const nombreMes   = new Date(anio, mes-1).toLocaleString('es-AR', { month:'long' });
   const diasMes     = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
 
-  const cont = document.getElementById('rep-contenido');
+  const cont = document.getElementById('rep-contenido-temporada');
   cont.innerHTML = '<div class="empty">Cargando reporte...</div>';
 
   const [
@@ -188,7 +201,7 @@ async function descargarReportePDF() {
   const mes  = parseInt(document.getElementById('rep-mes').value);
   const anio = parseInt(document.getElementById('rep-anio').value);
   const nombreMes = new Date(anio, mes-1).toLocaleString('es-AR',{month:'long'});
-  const el = document.getElementById('rep-print');
+  const el = document.getElementById('rep-print-temporada');
   if (!el) { toast('Generá el reporte primero','err'); return; }
   const btn = document.getElementById('btn-descargar-pdf');
   btn.textContent = 'Generando...'; btn.disabled = true;
@@ -229,7 +242,7 @@ async function loadReporteTemporada() {
   const hoy = new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
   const diasTotal = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
 
-  const cont = document.getElementById('rep-contenido');
+  const cont = document.getElementById('rep-contenido-temporada');
   cont.innerHTML = '<div class="empty">Cargando temporada...</div>';
 
   const [{data:clases},{data:insts},{data:registrosAsist}] = await Promise.all([
@@ -279,7 +292,7 @@ async function loadReporteTemporada() {
             clases:d.clases, horas:d.horas, pct, color:barColor(pct)};
   }).sort((a,b)=>b.total-a.total);
 
-  cont.innerHTML = `<div id="rep-print" style="font-family:'DM Sans',sans-serif">
+  cont.innerHTML = `<div id="rep-print-temporada" style="font-family:'DM Sans',sans-serif">
     <div class="panel" style="padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--silver);font-weight:500">Cerro Bayo — Villa La Angostura</div>
@@ -359,7 +372,7 @@ async function descargarReporteTemporada() {
   // Primero cargar el reporte de temporada en pantalla
   await loadReporteTemporada();
 
-  const el = document.getElementById('rep-print');
+  const el = document.getElementById('rep-print-temporada');
   if (!el) { toast('Error al generar el reporte', 'err'); return; }
 
   btn.textContent = 'Generando PDF...'; btn.disabled = true;
