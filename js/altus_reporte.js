@@ -386,26 +386,36 @@ async function descargarReporteTemporada() {
         Generado por Altus · ${hoy}
       </div>`;
 
-    // Ocultar el elemento fuera de la vista para que no bloquee la pantalla
-    el.style.cssText += ';position:fixed;left:-9999px;top:0;z-index:-1';
+    // Overlay de carga para evitar que el usuario interactúe mientras genera
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = '<div style="background:#fff;border-radius:12px;padding:28px 36px;text-align:center;font-family:DM Sans,sans-serif"><div style="font-size:15px;font-weight:600;color:#1A1F2E;margin-bottom:6px">Generando PDF...</div><div style="font-size:12px;color:#6B7280">Puede tardar unos segundos</div></div>';
+    document.body.appendChild(overlay);
+
+    // El elemento debe estar visible para que html2canvas lo capture correctamente
+    el.style.cssText = 'font-family:Helvetica,Arial,sans-serif;padding:0;width:1050px;position:absolute;top:0;left:0;background:#fff';
     document.body.appendChild(el);
+
+    // Esperar que el DOM se pinte completamente
+    await new Promise(r => setTimeout(r, 500));
 
     await html2pdf().set({
       margin: [6,6,6,6],
       filename: `Altus_Temporada_${desde}_al_${hasta}.pdf`,
       image: {type:'jpeg', quality:0.98},
-      html2canvas: {scale:2, useCORS:true, logging:false},
+      html2canvas: {scale:2, useCORS:true, logging:false, allowTaint:true},
       jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}
     }).from(el).save();
 
-    try { audit('reporte_temporada_descargado', null, null, {desde, hasta}); } catch(e){}
     document.body.removeChild(el);
+    document.body.removeChild(overlay);
+    try { audit('reporte_temporada_descargado', null, null, {desde, hasta}); } catch(e){}
 
   } catch(e) {
     console.error('Error resumen temporada:', e);
     toast('Error al generar el PDF', 'err');
-    // Limpiar cualquier elemento huérfano
-    document.querySelectorAll('[style*="left:-9999px"]').forEach(el => el.remove());
+    document.querySelectorAll('[style*="z-index:-9999"]').forEach(n => n.remove());
+    document.querySelectorAll('[style*="rgba(0,0,0,.6)"]').forEach(n => n.remove());
   }
 
   btn.innerHTML = originalHTML;
