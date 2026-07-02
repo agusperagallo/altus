@@ -376,28 +376,41 @@
   <!-- USUARIOS -->
   <!-- REPORTE MENSUAL -->
   <div id="pg-reporte" style="display:none" class="page-content">
-    <div class="page-filters">
-      <div class="filter-group"><label>Mes</label><select id="rep-mes">
-        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
-        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
-        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
-        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
-      </select></div>
-      <div class="filter-group"><label>Año</label><select id="rep-anio"></select></div>
-      <div class="filter-group" style="justify-content:flex-end;align-items:flex-end;display:flex;gap:8px">
-        <button id="btn-descargar-pdf" onclick="descargarReportePDF()" style="height:42px;padding:0 20px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
-          PDF mensual
-        </button>
-        <button id="btn-descargar-temporada" onclick="descargarReporteTemporada()" style="height:42px;padding:0 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
-          Resumen temporada
-        </button>
-      </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:2px;margin-bottom:20px;border-bottom:2px solid var(--line)">
+      <button id="rep-tab-mensual" onclick="setRepTab('mensual')" style="padding:10px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--accent);border-bottom:2px solid var(--accent);margin-bottom:-2px;cursor:pointer">Reporte mensual</button>
+      <button id="rep-tab-temporada" onclick="setRepTab('temporada')" style="padding:10px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--silver);cursor:pointer">Resumen temporada</button>
     </div>
 
-    <div id="rep-contenido">
-      <div class="empty">Seleccioná un mes y año para generar el reporte</div>
+    <!-- Panel mensual -->
+    <div id="rep-panel-mensual">
+      <div class="page-filters" style="margin-bottom:20px">
+        <div class="filter-group"><label>Mes</label><select id="rep-mes">
+          <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+          <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+          <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+          <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+        </select></div>
+        <div class="filter-group"><label>Año</label><select id="rep-anio"></select></div>
+        <div class="filter-group" style="justify-content:flex-end;align-items:flex-end">
+          <button id="btn-descargar-pdf" onclick="descargarReportePDF()" style="height:42px;padding:0 20px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+            Descargar PDF
+          </button>
+        </div>
+      </div>
+      <div id="rep-contenido"><div class="empty">Seleccioná un mes y año para generar el reporte</div></div>
+    </div>
+
+    <!-- Panel temporada -->
+    <div id="rep-panel-temporada" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button id="btn-descargar-temporada" onclick="descargarReporteTemporada()" style="height:42px;padding:0 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:8px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+          Descargar PDF
+        </button>
+      </div>
+      <div id="rep-contenido-temporada"><div class="empty">Cargando resumen de temporada...</div></div>
     </div>
   </div>
 
