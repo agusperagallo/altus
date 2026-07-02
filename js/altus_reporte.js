@@ -27,6 +27,9 @@ async function loadReporte() {
     document.getElementById('rep-mes').value = new Date().getMonth() + 1;
     selAnio.addEventListener('change', loadReporte);
     document.getElementById('rep-mes').addEventListener('change', loadReporte);
+    // Auto-cargar al entrar a la página
+    setTimeout(loadReporte, 50);
+    return;
   }
 
   const mes  = parseInt(document.getElementById('rep-mes').value);
@@ -201,7 +204,7 @@ async function descargarReportePDF() {
   const mes  = parseInt(document.getElementById('rep-mes').value);
   const anio = parseInt(document.getElementById('rep-anio').value);
   const nombreMes = new Date(anio, mes-1).toLocaleString('es-AR',{month:'long'});
-  const el = document.getElementById('rep-print-temporada');
+  const el = document.querySelector('#rep-panel-mensual #rep-print');
   if (!el) { toast('Generá el reporte primero','err'); return; }
   const btn = document.getElementById('btn-descargar-pdf');
   btn.textContent = 'Generando...'; btn.disabled = true;
@@ -372,7 +375,7 @@ async function descargarReporteTemporada() {
   // Primero cargar el reporte de temporada en pantalla
   await loadReporteTemporada();
 
-  const el = document.getElementById('rep-print-temporada');
+  const el = document.querySelector('#rep-panel-temporada #rep-print-temporada');
   if (!el) { toast('Error al generar el reporte', 'err'); return; }
 
   btn.textContent = 'Generando PDF...'; btn.disabled = true;
