@@ -8,6 +8,7 @@ function setRepTab(tab) {
   if (!isMensual && document.getElementById('rep-contenido-temporada').innerHTML.includes('Cargando')) {
     loadReporteTemporada();
   }
+  if (isMensual) loadReporte();
 }
 window.setRepTab = setRepTab;
 
@@ -25,11 +26,6 @@ async function loadReporte() {
       selAnio.appendChild(opt);
     }
     document.getElementById('rep-mes').value = new Date().getMonth() + 1;
-    selAnio.addEventListener('change', loadReporte);
-    document.getElementById('rep-mes').addEventListener('change', loadReporte);
-    // Auto-cargar al entrar a la página
-    setTimeout(loadReporte, 50);
-    return;
   }
 
   const mes  = parseInt(document.getElementById('rep-mes').value);
