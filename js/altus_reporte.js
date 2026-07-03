@@ -91,16 +91,21 @@ async function loadReporte() {
   const barColor  = (p) => p>=80 ? '#0F6E56' : p>=50 ? '#F59E0B' : '#EF4444';
   const diffLabel = (v) => v===null ? '' : `<span style="font-size:11px;color:${v>=0?'#0F6E56':'#EF4444'};margin-left:6px">${v>=0?'↑':'↓'}${Math.abs(v)}% vs mes ant.</span>`;
 
-  cont.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:12px 16px;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:10px">
+  // Banner fuera del rep-print (no aparece en el PDF)
+  const bannerEl = document.createElement('div');
+  bannerEl.id = 'rep-banner-mensual';
+  bannerEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:12px 16px;margin-bottom:16px">
         <span style="font-size:18px">✓</span>
         <div>
           <div style="font-size:13px;font-weight:600;color:#065F46">Reporte generado correctamente</div>
           <div style="font-size:11px;color:#047857;margin-top:1px">Revisá el contenido y descargalo cuando estés listo</div>
         </div>
-      </div>
-    </div>
+      </div>`;
+  const existingBanner = document.getElementById('rep-banner-mensual');
+  if (existingBanner) existingBanner.remove();
+  cont.parentElement.insertBefore(bannerEl, cont);
+
+  cont.innerHTML = `
     <div id="rep-print" style="font-family:'DM Sans',sans-serif">
 
       <!-- ENCABEZADO -->
