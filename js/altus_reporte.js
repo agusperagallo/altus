@@ -92,6 +92,15 @@ async function loadReporte() {
   const diffLabel = (v) => v===null ? '' : `<span style="font-size:11px;color:${v>=0?'#0F6E56':'#EF4444'};margin-left:6px">${v>=0?'↑':'↓'}${Math.abs(v)}% vs mes ant.</span>`;
 
   cont.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">✓</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#065F46">Reporte generado correctamente</div>
+          <div style="font-size:11px;color:#047857;margin-top:1px">Revisá el contenido y descargalo cuando estés listo</div>
+        </div>
+      </div>
+    </div>
     <div id="rep-print" style="font-family:'DM Sans',sans-serif">
 
       <!-- ENCABEZADO -->
@@ -214,6 +223,7 @@ async function descargarReportePDF() {
       html2canvas: { scale:2, useCORS:true },
       jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
     }).from(el).save();
+    toast('PDF mensual descargado ✓');
     audit('reporte_descargado', null, null, { mes, anio });
   } catch(e) { toast('Error al generar PDF','err'); }
   btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v9M5 7l3 3 3-3"/><path d="M2 12v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg> Descargar PDF';
@@ -293,7 +303,16 @@ async function loadReporteTemporada() {
             clases:d.clases, horas:d.horas, pct, color:barColor(pct)};
   }).sort((a,b)=>b.total-a.total);
 
-  cont.innerHTML = `<div id="rep-print-temporada" style="font-family:'DM Sans',sans-serif">
+  cont.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">✓</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#065F46">Reporte generado correctamente</div>
+          <div style="font-size:11px;color:#047857;margin-top:1px">Revisá el contenido y descargalo cuando estés listo</div>
+        </div>
+      </div>
+    </div>
+    <div id="rep-print-temporada" style="font-family:'DM Sans',sans-serif">
     <div class="panel" style="padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--silver);font-weight:500">Cerro Bayo — Villa La Angostura</div>
@@ -386,6 +405,7 @@ async function descargarReporteTemporada() {
       html2canvas: {scale:2, useCORS:true},
       jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
     }).from(el).save();
+    toast('PDF de temporada descargado ✓');
     try { audit('reporte_temporada_descargado', null, null, {}); } catch(e){}
   } catch(e) {
     console.error('Error PDF temporada:', e);
