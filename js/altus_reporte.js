@@ -200,8 +200,10 @@ async function descargarReportePDF() {
   const mes  = parseInt(document.getElementById('rep-mes').value);
   const anio = parseInt(document.getElementById('rep-anio').value);
   const nombreMes = new Date(anio, mes-1).toLocaleString('es-AR',{month:'long'});
-  const el = document.querySelector('#rep-panel-mensual #rep-print');
-  if (!el) { toast('Generá el reporte primero','err'); return; }
+  // Si no hay reporte en pantalla, generarlo primero
+  if (!document.getElementById('rep-print')) await loadReporte();
+  const el = document.getElementById('rep-print');
+  if (!el) { toast('No se pudo generar el reporte','err'); return; }
   const btn = document.getElementById('btn-descargar-pdf');
   btn.textContent = 'Generando...'; btn.disabled = true;
   try {
