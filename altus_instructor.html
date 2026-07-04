@@ -397,7 +397,59 @@ function toggleDark() {
 
   // Registrar Service Worker para modo offline
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        // Solicitar permiso para notificaciones después de que cargue todo
+        setTimeout(() => suscribirPushNotifications(reg), 3000);
+      })
+      .catch(e => console.warn('SW:', e));
+  }
+
+  // ── PUSH NOTIFICATIONS ────────────────────────────────────
+  async function suscribirPushNotifications(reg) {
+    if (!INSTRUCTOR_ID) return;
+    if (!('PushManager' in window)) return; // no soportado
+
+    // Verificar si ya está suscripto
+    const existente = await reg.pushManager.getSubscription();
+    if (existente) {
+      await guardarSuscripcion(existente);
+      return;
+    }
+
+    // Pedir permiso
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') return;
+
+    // Suscribir
+    try {
+      const VAPID_PUBLIC = 'g2n7yKqwra9a67-6K60O8FH4LG0qNywg5vXUtYZs17x7KU2VjyMAYzXQPLQrdPBzZJZudsuhLvkapHpmdoTo1w';
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+      await guardarSuscripcion(sub);
+      console.log('[Altus Push] Suscripción registrada ✓');
+    } catch(e) {
+      console.warn('[Altus Push] Error al suscribir:', e);
+    }
+  }
+
+  async function guardarSuscripcion(sub) {
+    const json = sub.toJSON();
+    await sb.from('push_subscriptions').upsert({
+      instructor_id: INSTRUCTOR_ID,
+      endpoint: json.endpoint,
+      p256dh:   json.keys?.p256dh,
+      auth:     json.keys?.auth,
+    }, { onConflict: 'instructor_id,endpoint' });
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = window.atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
   // Auth check y datos del usuario

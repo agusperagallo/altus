@@ -3079,6 +3079,16 @@ async function calcDiasBaja(instId, desde, hasta) {
 }
 window.calcDiasBaja = calcDiasBaja;
 
+async function enviarPushInstructor(instructorId, title, body) {
+  try {
+    await sb.functions.invoke('send-push', {
+      body: { instructor_id: instructorId, title, body }
+    });
+  } catch(e) {
+    console.warn('Push notification error:', e);
+  }
+}
+
 async function toggleActivoInstructor(id, activo) {
   const nuevoEstado = !activo;
   const msg = nuevoEstado ? '¿Reactivar este instructor?' : '¿Dar de baja este instructor? No se perderá su historial.';
@@ -3232,6 +3242,8 @@ document.getElementById('ma-confirm').addEventListener('click', async()=>{
   const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada',tipo_clase:document.getElementById('ma-requerida')?.checked?'requerida':'asignada'}).select('id').single();
   if (eCl) { toast('Error al guardar la clase: '+eCl.message,'err'); btn.textContent='Confirmar asignación'; btn.disabled=false; return; }
   audit('clase_asignada','clases',claseNueva?.id,{instructor:instrSel.nombre,cliente:nom,fecha,hora,disciplina:disc,nivel:nivelCliente});
+  // Enviar push al instructor
+  enviarPushInstructor(instrSel.id, '📅 Nueva clase asignada', `${disc} · ${nivelCliente} · ${hora} hs`);
 
   closeModal('modal-asignar');
   btn.textContent='Confirmar asignación'; btn.disabled=false;
@@ -4195,6 +4207,9 @@ document.getElementById('mcc-confirm').addEventListener('click', async()=>{
   btn.textContent='Cancelando...'; btn.disabled=true;
   await sb.from('clases').update({estado:'cancelada'}).eq('id',claseACancelar);
   audit('clase_cancelada','clases',claseACancelar,{});
+  // Notificar al instructor de la cancelación
+  const {data:claseCancelada} = await sb.from('clases').select('instructor_id,hora_inicio,disciplina').eq('id',claseACancelar).single();
+  if (claseCancelada) enviarPushInstructor(claseCancelada.instructor_id, '❌ Clase cancelada', `${claseCancelada.disciplina} · ${claseCancelada.hora_inicio?.slice(0,5)} hs`);
   closeModal('modal-cancelar');
   btn.textContent='Confirmar cancelación'; btn.disabled=false;
   toast('Clase cancelada');
