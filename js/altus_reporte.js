@@ -39,7 +39,7 @@ async function loadReporte() {
   const nombreMes   = new Date(anio, mes-1).toLocaleString('es-AR', { month:'long' });
   const diasMes     = Math.round((new Date(hasta) - new Date(desde)) / 86400000) + 1;
 
-  const cont = document.getElementById('rep-contenido-temporada');
+  const cont = document.getElementById('rep-contenido');
   cont.innerHTML = '<div class="empty">Cargando reporte...</div>';
 
   const [
@@ -69,9 +69,12 @@ async function loadReporte() {
   (clases||[]).forEach(c => {
     if (c.disciplina) porDisc[c.disciplina] = (porDisc[c.disciplina]||0) + 1;
     const nom = c.instructores?.nombre || 'Sin asignar';
-    if (!porInst[nom]) porInst[nom] = { clases:0, horas:0 };
+    if (!porInst[nom]) porInst[nom] = { clases:0, horas:0, requeridas:0, porDisc:{} };
     porInst[nom].clases++;
-    porInst[nom].horas += parseFloat(c.duracion_horas)||0;
+    const hs = parseFloat(c.duracion_horas)||0;
+    porInst[nom].horas += hs;
+    if (c.tipo_clase === 'requerida') porInst[nom].requeridas += hs;
+    if (c.disciplina) porInst[nom].porDisc[c.disciplina] = (porInst[nom].porDisc[c.disciplina]||0) + hs;
   });
 
   const asistPorInst = {};
@@ -348,10 +351,16 @@ async function loadReporteTemporada() {
         <div class="panel"><div class="panel-head"><span class="panel-title">Horas por instructor</span></div>
           <div style="padding:8px 0">
             ${Object.entries(porInst).sort((a,b)=>b[1].horas-a[1].horas).map(([nom,d])=>`
-              <div style="display:flex;align-items:center;gap:12px;padding:9px 18px;border-bottom:1px solid var(--ice)">
-                <div style="font-size:13px;font-weight:500;flex:1">${nom}</div>
-                <div style="font-size:12px;color:var(--muted)">${d.clases} clases</div>
-                <div style="font-size:13px;font-weight:600;color:var(--navy);min-width:50px;text-align:right">${d.horas.toFixed(1)} hs</div>
+              <div style="padding:10px 18px;border-bottom:1px solid var(--ice)">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+                  <div style="font-size:13px;font-weight:500;flex:1">${nom}</div>
+                  <div style="font-size:12px;color:var(--muted)">${d.clases} clases</div>
+                  <div style="font-size:13px;font-weight:600;color:var(--navy)">${d.horas.toFixed(1)} hs</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  ${d.requeridas>0?`<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:#FEF3C7;color:#92400E">⭐ ${d.requeridas.toFixed(1)} hs requeridas</span>`:''}
+                  ${Object.entries(d.porDisc).map(([disc,hs])=>`<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--ice);color:var(--muted)">${disc} ${hs.toFixed(1)} hs</span>`).join('')}
+                </div>
               </div>`).join('')||'<div class="empty">Sin datos</div>'}
           </div>
         </div>
