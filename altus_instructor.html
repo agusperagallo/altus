@@ -423,7 +423,7 @@ function toggleDark() {
 
     // Suscribir
     try {
-      const VAPID_PUBLIC = 'g2n7yKqwra9a67-6K60O8FH4LG0qNywg5vXUtYZs17x7KU2VjyMAYzXQPLQrdPBzZJZudsuhLvkapHpmdoTo1w';
+      const VAPID_PUBLIC = 'BNvZ7Uu2fD5M39jlDtxq7r9N1x1SQKrD-7sBexYjDkiDG-6rQk_asIdYTF905hvuD_KskIvQi7Xmgy_fCU3VPHE';
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
@@ -959,8 +959,8 @@ window.cerrarListaNinos = function() {
     // Actualizar stat de clases
     const total = clases?.length || 0;
     const confirmadas = clases?.filter(c => c.instructor_confirmo).length || 0;
-    document.getElementById('stat-clases-hoy').textContent = total;
-    document.getElementById('stat-clases-sub').textContent = total === 0 ? 'Sin clases hoy' : `${confirmadas} confirmada${confirmadas !== 1 ? 's' : ''}`;
+    document.getElementById('stat-clases-hoy') && (document.getElementById('stat-clases-hoy').textContent = total);
+    document.getElementById('stat-clases-sub') && (document.getElementById('stat-clases-sub').textContent = total === 0 ? 'Sin clases hoy' : `${confirmadas} confirmada${confirmadas !== 1 ? 's' : ''}`);
 
     const lista = document.getElementById('lista-clases');
     lista.innerHTML = '';
