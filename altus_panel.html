@@ -845,6 +845,32 @@
 </div>
 
 <!-- MODAL EDITAR INSTRUCTOR -->
+<div class="modal-overlay" id="modal-baja-temporal">
+  <div class="modal">
+    <div class="modal-head"><span class="modal-title">Baja temporal</span><button class="modal-close" onclick="closeModal('modal-baja-temporal')">&times;</button></div>
+    <div class="modal-body">
+      <div style="font-size:13px;font-weight:500;color:var(--navy);margin-bottom:14px" id="bt-nombre">—</div>
+      <div class="form-grid">
+        <div class="fg"><label>Fecha inicio</label><input type="date" id="bt-inicio"></div>
+        <div class="fg"><label>Fecha fin <span style="color:var(--silver);font-weight:400">(opcional)</span></label><input type="date" id="bt-fin"></div>
+      </div>
+      <div class="fg" style="margin-top:10px"><label>Motivo</label>
+        <select id="bt-motivo" style="width:100%">
+          <option value="lesion">Lesión</option>
+          <option value="enfermedad">Enfermedad</option>
+          <option value="personal">Motivo personal</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div id="bt-bajas-activas" style="margin-top:14px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+        <button class="btn btn-outline" onclick="closeModal('modal-baja-temporal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarBajaTemporal()">Registrar baja</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-edit-inst">
   <div class="modal" style="max-width:480px">
     <div class="modal-head"><span class="modal-title">Editar instructor</span><button class="modal-close" id="mei-close">&times;</button></div>
@@ -2972,6 +2998,87 @@ async function editarInstructor(id, nombre, nivel, telefono, email) {
   openModal('modal-edit-inst');
 }
 
+// ── BAJAS TEMPORALES ────────────────────────────────────────
+let instBajaTempId = null;
+
+async function abrirBajaTemporal(instId, instNombre) {
+  instBajaTempId = instId;
+  document.getElementById('bt-nombre').textContent = instNombre;
+  document.getElementById('bt-inicio').value = new Date().toISOString().split('T')[0];
+  document.getElementById('bt-fin').value = '';
+
+  // Mostrar bajas activas de este instructor
+  const {data:bajas} = await sb.from('bajas_temporales')
+    .select('*').eq('instructor_id', instId).order('fecha_inicio', {ascending:false}).limit(5);
+
+  const cont = document.getElementById('bt-bajas-activas');
+  if (bajas?.length) {
+    cont.innerHTML = `
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--silver);margin-bottom:6px">Bajas registradas</div>
+      ${bajas.map(b=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--ice);border-radius:6px;margin-bottom:4px;font-size:12px">
+          <div>
+            <span style="font-weight:500">${b.motivo||'—'}</span>
+            <span style="color:var(--muted);margin-left:8px">${b.fecha_inicio} → ${b.fecha_fin||'en curso'}</span>
+          </div>
+          ${!b.fecha_fin ? `<button onclick="cerrarBajaTemporal('${b.id}')" style="font-size:11px;padding:2px 8px;border:1px solid var(--accent);background:none;color:var(--accent);border-radius:4px;cursor:pointer">Dar de alta</button>` : ''}
+        </div>`).join('')}`;
+  } else {
+    cont.innerHTML = '';
+  }
+
+  openModal('modal-baja-temporal');
+}
+window.abrirBajaTemporal = abrirBajaTemporal;
+
+async function guardarBajaTemporal() {
+  const inicio = document.getElementById('bt-inicio').value;
+  const fin    = document.getElementById('bt-fin').value;
+  const motivo = document.getElementById('bt-motivo').value;
+  if (!inicio) { toast('Ingresá la fecha de inicio','err'); return; }
+
+  const {error} = await sb.from('bajas_temporales').insert({
+    instructor_id: instBajaTempId, fecha_inicio: inicio,
+    fecha_fin: fin || null, motivo
+  });
+  if (error) { toast('Error al registrar','err'); return; }
+  audit('baja_temporal_registrada','bajas_temporales', instBajaTempId, {inicio, fin, motivo});
+  toast('Baja temporal registrada ✓');
+  closeModal('modal-baja-temporal');
+}
+window.guardarBajaTemporal = guardarBajaTemporal;
+
+async function cerrarBajaTemporal(bajaId) {
+  const hoy = new Date().toISOString().split('T')[0];
+  const {error} = await sb.from('bajas_temporales').update({fecha_fin: hoy}).eq('id', bajaId);
+  if (error) { toast('Error al actualizar','err'); return; }
+  toast('Alta registrada ✓');
+  abrirBajaTemporal(instBajaTempId, document.getElementById('bt-nombre').textContent);
+}
+window.cerrarBajaTemporal = cerrarBajaTemporal;
+
+// Función helper para calcular días de baja en un rango
+async function calcDiasBaja(instId, desde, hasta) {
+  const {data:bajas} = await sb.from('bajas_temporales')
+    .select('fecha_inicio, fecha_fin')
+    .eq('instructor_id', instId)
+    .lte('fecha_inicio', hasta)
+    .or(`fecha_fin.gte.${desde},fecha_fin.is.null`);
+
+  let diasBaja = 0;
+  const desdeD = new Date(desde);
+  const hastaD = new Date(hasta);
+
+  (bajas||[]).forEach(b => {
+    const bInicio = new Date(Math.max(new Date(b.fecha_inicio), desdeD));
+    const bFin    = new Date(Math.min(b.fecha_fin ? new Date(b.fecha_fin) : hastaD, hastaD));
+    if (bFin >= bInicio) diasBaja += Math.round((bFin - bInicio) / 86400000) + 1;
+  });
+
+  return diasBaja;
+}
+window.calcDiasBaja = calcDiasBaja;
+
 async function toggleActivoInstructor(id, activo) {
   const nuevoEstado = !activo;
   const msg = nuevoEstado ? '¿Reactivar este instructor?' : '¿Dar de baja este instructor? No se perderá su historial.';
@@ -3709,7 +3816,8 @@ async function loadInstructores() {
       <div style="width:80px;text-align:center;flex-shrink:0">${badge(inst.activo?'Activo':'Inactivo',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}</div>
       <div style="width:120px;text-align:center;flex-shrink:0;display:flex;gap:5px;justify-content:center">
         <button class="inst-action-btn" onclick="editarInstructor('${inst.id}','${inst.nombre}','${inst.nivel_certificado}','${inst.telefono||''}','${inst.email||''}')">Editar</button>
-        <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})">${inst.activo?'Dar de baja':'Activar'}</button>
+        ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')" title="Baja temporal">🤕</button>` : ''}
+        <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})">${inst.activo?'Baja':'Activar'}</button>
       </div>
     </div>`;
   }).join('');
@@ -3869,6 +3977,8 @@ async function loadAsistencia() {
   const {data:insts}=await sb.from('instructores').select('id, nombre, creado_en').eq('activo',true).order('nombre');
   // Tabla asistencia = fuente de verdad (marcada por supervisor)
   const {data:registros}=await sb.from('asistencia').select('instructor_id, tipo, registrado_en').gte('registrado_en',desde+'T00:00:00').lte('registrado_en',hasta+'T23:59:59');
+  // Bajas temporales en el período
+  const {data:bajasTemporales}=await sb.from('bajas_temporales').select('instructor_id, fecha_inicio, fecha_fin').lte('fecha_inicio',hasta).or(`fecha_fin.gte.${desde},fecha_fin.is.null`);
   // Horas siguen saliendo de clases
   const {data:clases}=await sb.from('clases').select('instructor_id, duracion_horas').gte('fecha',desde).lte('fecha',hasta);
   if (!insts?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
@@ -3882,6 +3992,13 @@ async function loadAsistencia() {
     const fechaCreacion = inst.creado_en ? inst.creado_en.split('T')[0] : desde;
     const desdeEfectivo = fechaCreacion > desde ? fechaCreacion : desde;
     const diasInst = Math.max(0, Math.round((new Date(fechaHasta) - new Date(desdeEfectivo)) / 86400000) + 1);
+    // Calcular días de baja temporal en el período
+    const diasBaja = (bajasTemporales||[]).filter(b=>b.instructor_id===inst.id).reduce((total, b)=>{
+      const bInicio = new Date(Math.max(new Date(b.fecha_inicio), new Date(desdeEfectivo)));
+      const bFin    = new Date(Math.min(b.fecha_fin ? new Date(b.fecha_fin) : new Date(fechaHasta), new Date(fechaHasta)));
+      if (bFin >= bInicio) return total + Math.round((bFin-bInicio)/86400000) + 1;
+      return total;
+    }, 0);
     // Un registro por día (el más reciente si hay varios)
     const regsInst=(registros||[]).filter(r=>r.instructor_id===inst.id && r.registrado_en.split('T')[0]<=fechaHasta && r.registrado_en.split('T')[0]>=desdeEfectivo);
     // Agrupar por día y tomar el último registro
@@ -3889,7 +4006,7 @@ async function loadAsistencia() {
     regsInst.forEach(r=>{ const d=r.registrado_en.split('T')[0]; porDia[d]=r.tipo; });
     const francos=Object.values(porDia).filter(t=>t==='franco').length;
     const pres=Object.values(porDia).filter(t=>t==='presente').length;
-    const total=diasInst-francos; // días laborables reales desde que ingresó
+    const total=Math.max(0, diasInst-francos-diasBaja); // días laborables reales descontando francos y bajas
     const hs=(clases||[]).filter(x=>x.instructor_id===inst.id).reduce((s,x)=>s+(parseFloat(x.duracion_horas)||0),0);
     const pct=total>0?Math.round((pres/total)*100):0;
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
