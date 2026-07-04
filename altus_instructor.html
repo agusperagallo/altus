@@ -149,20 +149,9 @@
   <div class="panel" id="panel-ranking" style="display:none">
     <div class="panel-header">
       <span class="panel-title">Mi puntaje</span>
-      <span class="panel-meta">Período de calibración</span>
+      <span class="panel-meta" id="rank-periodo">—</span>
     </div>
-    <div class="rank-body">
-      <div style="display:flex;align-items:baseline;gap:6px">
-        <div class="rank-num">9.2</div>
-        <div class="rank-max">/ 10</div>
-      </div>
-      <div class="rank-pos">Posición 1 del ranking</div>
-      <div class="bar-row"><div class="bar-label">Opinión clientes</div><div class="bar-track"><div class="bar-fill" style="width:92%"></div></div><div class="bar-val">9.2</div></div>
-      <div class="bar-row"><div class="bar-label">Asistencia</div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div><div class="bar-val">9.5</div></div>
-      <div class="bar-row"><div class="bar-label">Fidelización</div><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><div class="bar-val">8.0</div></div>
-      <div class="bar-row"><div class="bar-label">Historial</div><div class="bar-track"><div class="bar-fill" style="width:88%"></div></div><div class="bar-val">8.8</div></div>
-      <div class="bar-row"><div class="bar-label">Perfil</div><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><div class="bar-val">9.0</div></div>
-    </div>
+    <div id="rank-body-content"><div class="empty">Cargando...</div></div>
   </div>
 
   <!-- RESEÑAS -->
@@ -1163,7 +1152,103 @@ window.cerrarListaNinos = function() {
     abrirModal('modal-pref');
   };
 
-  // --- TABS ---
+  // ── RANKING ──────────────────────────────────────────────────
+  async function loadRankingInst() {
+    if (!INSTRUCTOR_ID) return;
+    const cont = document.getElementById('rank-body-content');
+    cont.innerHTML = '<div class="empty">Cargando...</div>';
+
+    // Traer todos los instructores con su ranking
+    const {data:insts} = await sb.from('instructores')
+      .select('id, nombre, ranking_snapshot(*)')
+      .eq('activo', true);
+
+    if (!insts?.length) { cont.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+
+    // Ordenar por puntaje
+    const ranked = insts.map(i => {
+      const snap = i.ranking_snapshot?.[i.ranking_snapshot.length-1];
+      return {
+        id: i.id,
+        nombre: i.nombre,
+        total: snap?.puntaje_total||0,
+        opinion: snap?.puntaje_opinion||0,
+        asistencia: snap?.puntaje_asistencia||0,
+        fidelizacion: snap?.puntaje_fidelizacion||0,
+        historial: snap?.puntaje_historial||0,
+        perfil: snap?.puntaje_perfil||0,
+      };
+    }).sort((a,b) => b.total - a.total);
+
+    const miPos = ranked.findIndex(i => i.id === INSTRUCTOR_ID);
+    const yo    = ranked[miPos];
+    const arriba = ranked.slice(0, miPos); // instructores con mejor ranking
+
+    // Ver quiénes arriba tienen clase ahora mismo
+    const hoyISO = new Date().toISOString().split('T')[0];
+    const horaAhora = new Date().toLocaleTimeString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit'});
+    const {data:clasesActivas} = await sb.from('clases')
+      .select('instructor_id')
+      .eq('fecha', hoyISO)
+      .eq('estado', 'asignada')
+      .lte('hora_inicio', horaAhora)
+      .gte('hora_fin', horaAhora);
+
+    const ocupadosAhora = new Set((clasesActivas||[]).map(c => c.instructor_id));
+    const arribaLibres   = arriba.filter(i => !ocupadosAhora.has(i.id));
+    const arribaOcupados = arriba.filter(i => ocupadosAhora.has(i.id));
+
+    if (!yo) { cont.innerHTML = '<div class="empty">Sin datos de ranking</div>'; return; }
+
+    const bar = (val) => `<div class="bar-row">
+      <div class="bar-label">${val.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,(val.v||0)*10)}%"></div></div>
+      <div class="bar-val">${(val.v||0).toFixed(1)}</div>
+    </div>`;
+
+    cont.innerHTML = `
+      <div class="rank-body">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div class="rank-num">${yo.total.toFixed(1)}</div>
+          <div class="rank-max">/ 10</div>
+        </div>
+        <div class="rank-pos">Posición ${miPos+1} del ranking</div>
+        ${bar({label:'Opinión clientes', v:yo.opinion})}
+        ${bar({label:'Asistencia', v:yo.asistencia})}
+        ${bar({label:'Fidelización', v:yo.fidelizacion})}
+        ${bar({label:'Historial', v:yo.historial})}
+        ${bar({label:'Perfil', v:yo.perfil})}
+      </div>
+
+      <!-- DISPONIBILIDAD -->
+      <div style="margin-top:16px;padding:14px 16px;background:var(--ice);border-radius:10px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--silver);font-weight:500;margin-bottom:10px">Instructores arriba ahora</div>
+        ${arriba.length === 0
+          ? `<div style="font-size:13px;font-weight:600;color:var(--accent)">🥇 Sos el primero del ranking</div>`
+          : `
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;background:#ECFDF5;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#0F6E56">${arribaLibres.length}</div>
+            <div style="font-size:10px;color:#047857;margin-top:2px">disponibles</div>
+          </div>
+          <div style="flex:1;background:#FEF3C7;border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#92400E">${arribaOcupados.length}</div>
+            <div style="font-size:10px;color:#B45309;margin-top:2px">con clase</div>
+          </div>
+        </div>
+        ${arribaLibres.length === 0
+          ? `<div style="font-size:12px;color:var(--accent);font-weight:500">✓ Todos los de arriba están ocupados — es probable que te llamen pronto</div>`
+          : `<div style="font-size:12px;color:var(--muted)">Hay ${arribaLibres.length} instructor${arribaLibres.length>1?'es':''} libre${arribaLibres.length>1?'s':''} antes que vos</div>`
+        }`}
+      </div>`;
+  }
+
+  // Llamar loadRankingInst al abrir la pestaña ranking
+  const _origSetTab = window.setTab;
+  window.setTab = function(tab) {
+    _origSetTab(tab);
+    if (tab === 'ranking') loadRankingInst();
+  };
   const allPanels = ['clases','grupos','ranking','perfil'];
   window.setTab = function(tab) {
     allPanels.forEach(p => {
