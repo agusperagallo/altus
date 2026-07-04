@@ -3235,14 +3235,7 @@ document.getElementById('ma-confirm').addEventListener('click', async()=>{
     cliId=nc?.id;
   }
 
-  // Calcular hora_fin
-  function calcHoraFin(horaInicio, durHoras) {
-    const [h,m] = horaInicio.split(':').map(Number);
-    const totalMin = h*60 + m + Math.round(parseFloat(durHoras)*60);
-    return `${String(Math.floor(totalMin/60)).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
-  }
-
-  const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,hora_fin:calcHoraFin(hora,dur),duracion_horas:dur,estado:'asignada',tipo_clase:document.getElementById('ma-requerida')?.checked?'requerida':'asignada'}).select('id').single();
+  const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada',tipo_clase:document.getElementById('ma-requerida')?.checked?'requerida':'asignada'}).select('id').single();
   if (eCl) { toast('Error al guardar la clase: '+eCl.message,'err'); btn.textContent='Confirmar asignación'; btn.disabled=false; return; }
   audit('clase_asignada','clases',claseNueva?.id,{instructor:instrSel.nombre,cliente:nom,fecha,hora,disciplina:disc,nivel:nivelCliente});
   // Enviar push al instructor
@@ -3526,7 +3519,7 @@ async function cargarCumpleanos() {
 
 
 async function initClasesHoy() {
-  const {data:cd}=await sb.from('clases').select('instructor_id, hora_inicio, hora_fin').eq('fecha',fechaISO);
+  const {data:cd}=await sb.from('clases').select('instructor_id, hora_inicio, hora_fin').eq('fecha',fechaISO).neq('estado','cancelada');
   clasesHoy=cd||[];
   document.getElementById('stat-clases').textContent=clasesHoy.length;
   const {data:cf}=await sb.from('clases').select('*, instructores(nombre), clientes(nombre)').eq('fecha',fechaISO).order('hora_inicio');
