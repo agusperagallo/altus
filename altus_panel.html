@@ -283,14 +283,14 @@
       </div>
     </div>
     <div class="page-filters">
-      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="new-password" name="search-field-no-fill-2" data-lpignore="true" data-form-type="other"></div>
+      <div class="filter-group" style="flex:2"><label>Buscar</label><input type="text" id="f-buscar-inst" placeholder="Nombre..." autocomplete="new-password" name="search-field-no-fill-2" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')"></div>
       <div class="filter-group"><label>Estado</label><select id="f-activo-inst" style="display:none"><option value="true" selected>Activos</option><option value="false">Inactivos</option><option value="">Todos</option></select>
         <button id="btn-mostrar-inactivos" onclick="toggleInactivos()" style="height:42px;padding:0 16px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap">Ver inactivos</button>
       </div>
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Instructores</span><span class="panel-meta" id="inst-ct">—</span></div>
-      <div class="t-cols"><div style="flex:1">Nombre</div><div style="width:70px;text-align:center;flex-shrink:0">Nivel</div><div style="width:140px;flex-shrink:0">Disciplinas</div><div style="width:130px;flex-shrink:0">Teléfono</div><div style="width:80px;text-align:center;flex-shrink:0">Estado</div><div style="width:120px;text-align:center;flex-shrink:0">Acciones</div></div>
+      <div class="t-cols" style="overflow:hidden"><div style="flex:1;min-width:0">Nombre</div><div style="width:50px;text-align:center;flex-shrink:0">Niv.</div><div style="width:120px;flex-shrink:0">Disciplinas</div><div style="width:110px;flex-shrink:0">Teléfono</div><div style="width:70px;text-align:center;flex-shrink:0">Estado</div><div style="width:180px;text-align:center;flex-shrink:0">Acciones</div></div>
       <div id="inst-tabla"><div class="empty">Cargando...</div></div>
     </div>
   </div>
@@ -3808,15 +3808,15 @@ async function loadInstructores() {
   if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
   tabla.innerHTML=filtrados.map(inst=>{
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
-    return `<div class="t-row">
-      <div style="flex:1;font-weight:500">${inst.nombre}</div>
-      <div style="width:70px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
-      <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted)">${discs}</div>
-      <div style="width:130px;flex-shrink:0;font-size:12px;color:var(--muted)">${inst.telefono||'—'}</div>
-      <div style="width:80px;text-align:center;flex-shrink:0">${badge(inst.activo?'Activo':'Inactivo',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}</div>
-      <div style="width:120px;text-align:center;flex-shrink:0;display:flex;gap:5px;justify-content:center">
+    return `<div class="t-row" style="overflow:hidden">
+      <div style="flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
+      <div style="width:50px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
+      <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${discs}</div>
+      <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${inst.telefono||'—'}</div>
+      <div style="width:70px;text-align:center;flex-shrink:0">${badge(inst.activo?'Activo':'Inact.',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}</div>
+      <div style="width:180px;text-align:center;flex-shrink:0;display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
         <button class="inst-action-btn" onclick="editarInstructor('${inst.id}','${inst.nombre}','${inst.nivel_certificado}','${inst.telefono||''}','${inst.email||''}')">Editar</button>
-        ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')" title="Baja temporal">Baja temp.</button>` : ''}
+        ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')">Baja temp.</button>` : ''}
         <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})">${inst.activo?'Baja':'Activar'}</button>
       </div>
     </div>`;
