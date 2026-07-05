@@ -15,7 +15,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(CACHE_STATIC))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // Activar inmediatamente sin esperar
   );
 });
 
@@ -25,6 +25,10 @@ self.addEventListener('activate', e => {
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
+  // Notificar a todos los clientes que hay una nueva versión
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+  });
 });
 
 self.addEventListener('fetch', e => {

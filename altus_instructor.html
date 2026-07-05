@@ -399,10 +399,34 @@ function toggleDark() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .then(reg => {
-        // Solicitar permiso para notificaciones después de que cargue todo
         setTimeout(() => suscribirPushNotifications(reg), 3000);
+
+        // Detectar nueva versión del SW
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              mostrarBannerActualizacion();
+            }
+          });
+        });
       })
       .catch(e => console.warn('SW:', e));
+
+    // Escuchar mensaje del SW cuando se activa
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'SW_UPDATED') mostrarBannerActualizacion();
+    });
+  }
+
+  function mostrarBannerActualizacion() {
+    let banner = document.getElementById('update-banner');
+    if (banner) return;
+    banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#1D9E75;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;font-family:"DM Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:12px';
+    banner.innerHTML = '✨ Hay una nueva versión de Altus <button onclick="window.location.reload()" style="background:#fff;color:#0F6E56;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Actualizar</button>';
+    document.body.prepend(banner);
   }
 
   // ── PUSH NOTIFICATIONS ────────────────────────────────────
@@ -946,7 +970,7 @@ window.cerrarListaNinos = function() {
 
     if (altusOffline.estaOnline()) {
       // Con conexión: traer de Supabase y cachear
-      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).order('hora_inicio');
+      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).neq('estado','cancelada').order('hora_inicio');
       clases = res.data; error = res.error;
       if (clases?.length) altusOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
     } else {
@@ -1297,6 +1321,18 @@ window.cerrarListaNinos = function() {
   }
 
   // Llamar al cargar el dashboard y al abrir pestaña ranking
+  // ── REALTIME — refrescar cuando se asigna/cancela una clase ──
+  sb.channel('clases-instructor')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'clases',
+      filter: `instructor_id=eq.${INSTRUCTOR_ID}`
+    }, () => {
+      cargarClases();
+    })
+    .subscribe();
+
   loadRankingInst();
 
   const allPanels = ['clases','grupos','ranking','perfil'];
