@@ -654,16 +654,15 @@
       </div>
       <!-- Tipo de clase -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ice);border:1px solid var(--line);border-radius:7px;margin-bottom:18px">
-        <label for="ma-requerida" style="flex:1;cursor:pointer">
+        <div style="flex:1;cursor:pointer" onclick="toggleRequerida()">
           <div style="font-size:13px;font-weight:500;color:var(--navy)">El cliente solicitó este instructor</div>
           <div style="font-size:11px;color:var(--silver);margin-top:2px">Clase requerida — impacta en el reporte de horas</div>
-        </label>
-        <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-left:12px">
+        </div>
+        <div onclick="toggleRequerida()" style="position:relative;width:44px;height:24px;flex-shrink:0;margin-left:12px;cursor:pointer">
           <input type="checkbox" id="ma-requerida" style="opacity:0;width:0;height:0;position:absolute">
-          <span onclick="this.previousElementSibling.checked=!this.previousElementSibling.checked;this.style.background=this.previousElementSibling.checked?'var(--accent)':'#CBD5E1';this.querySelector('span').style.left=this.previousElementSibling.checked?'22px':'2px'" style="position:absolute;inset:0;background:#CBD5E1;border-radius:24px;cursor:pointer;transition:.2s">
-            <span style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
-          </span>
-        </label>
+          <div id="ma-slider-track" style="position:absolute;inset:0;background:#CBD5E1;border-radius:24px;transition:.2s"></div>
+          <div id="ma-slider-dot" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+        </div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-outline" id="ma-cancel">Cancelar</button>
@@ -3205,8 +3204,16 @@ function openModalAsignar(inst) {
   document.getElementById('ma-horario').textContent=hora&&fin?`${hora} — ${fin}`:'—';
   openModal('modal-asignar');
 }
-document.getElementById('ma-close').addEventListener('click',()=>{ closeModal('modal-asignar'); const cb=document.getElementById('ma-requerida'); cb.checked=false; const slider=cb.nextElementSibling; if(slider){slider.style.background='#CBD5E1';slider.querySelector('span').style.left='2px';} });
-document.getElementById('ma-cancel').addEventListener('click',()=>{ closeModal('modal-asignar'); const cb=document.getElementById('ma-requerida'); cb.checked=false; const slider=cb.nextElementSibling; if(slider){slider.style.background='#CBD5E1';slider.querySelector('span').style.left='2px';} });
+function toggleRequerida(force) {
+  const cb = document.getElementById('ma-requerida');
+  cb.checked = force !== undefined ? force : !cb.checked;
+  document.getElementById('ma-slider-track').style.background = cb.checked ? 'var(--accent)' : '#CBD5E1';
+  document.getElementById('ma-slider-dot').style.left = cb.checked ? '22px' : '2px';
+}
+window.toggleRequerida = toggleRequerida;
+
+document.getElementById('ma-close').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); });
+document.getElementById('ma-cancel').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); });
 document.getElementById('ma-confirm').addEventListener('click', async()=>{
   if (!instrSel) return;
   const nom=document.getElementById('cli-nombre').value.trim();
