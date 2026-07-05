@@ -163,3 +163,4 @@ body.dark .modal-body{background:#1A1F2E}
 body.dark .btn-outline{background:#1A1F2E;border-color:#2A2F3E;color:#9AABBD}
 body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 
+html,body { overscroll-behavior: none; }

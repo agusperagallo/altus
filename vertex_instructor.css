@@ -16,7 +16,8 @@
       --danger:    #E24B4A;
       --danger-bg: #FEE2E2;
     }
-    html,body { overflow-x:hidden; max-width:100vw; }
+    html,body { overflow-x:hidden; max-width:100vw; overscroll-behavior:none; }
+    body { -webkit-overflow-scrolling:auto; }
     @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
     .sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e7eb 50%,#f0f2f5 75%);background-size:1200px 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:block}
     body { font-family:'DM Sans',sans-serif; background:var(--ice2); color:var(--text); min-height:100vh; }

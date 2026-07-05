@@ -1,7 +1,8 @@
 /* Vertex Panel — Supervisor */
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden;max-width:100vw}
+html,body{overflow-x:hidden;max-width:100vw;overscroll-behavior:none}
+body{-webkit-overflow-scrolling:auto}
 /* Scrollbar dark mode */
 body.dark ::-webkit-scrollbar{width:8px;height:8px}
 body.dark ::-webkit-scrollbar-track{background:#13151E}

@@ -1,7 +1,7 @@
 /* Vertex Reseña */
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden;min-height:100vh}
+html,body{overflow-x:hidden;overscroll-behavior:none;min-height:100vh}
 :root{
   --navy:#1A1F2E;--accent:#1D9E75;--accent2:#0F6E56;
   --ice:#F0F2F5;--line:#E0E4EA;--silver:#8090A8;
