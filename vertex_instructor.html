@@ -1083,41 +1083,8 @@ window.cerrarListaNinos = function() {
 
   // --- CARGAR RANKING ---
   async function cargarRanking() {
-    if (!INSTRUCTOR_ID) return;
-
-    // Cargar puntaje
-    const { data } = await sb.from('ranking_snapshot').select('*').eq('instructor_id', INSTRUCTOR_ID).order('calculado_en', { ascending: false }).limit(1).single();
-    if (data) {
-      document.getElementById('stat-puntaje').textContent = data.puntaje_total?.toFixed(1) || '—';
-      // Calcular posición
-      const { data: todos } = await sb.from('ranking_snapshot').select('instructor_id, puntaje_total').order('puntaje_total', { ascending: false });
-      if (todos) {
-        const pos = todos.findIndex(r => r.instructor_id === INSTRUCTOR_ID) + 1;
-        document.getElementById('stat-posicion').textContent = `Posición ${pos}`;
-      }
-      const rankNum = document.querySelector('.rank-num');
-      if (rankNum) rankNum.textContent = data.puntaje_total?.toFixed(1) || '—';
-      const barras = { 'Opinion': data.puntaje_opinion, 'Asistencia': data.puntaje_asistencia, 'Fidelizacion': data.puntaje_fidelizacion, 'Historial': data.puntaje_historico, 'Perfil': data.puntaje_perfil };
-      const fills = document.querySelectorAll('.bar-fill');
-      const vals  = document.querySelectorAll('.bar-val');
-      Object.values(barras).forEach((v, i) => {
-        if (fills[i]) fills[i].style.width = `${(v||0) * 10}%`;
-        if (vals[i])  vals[i].textContent = (v||0).toFixed(1);
-      });
-    }
-
-    // Cargar reseñas
-    const { data: resenas } = await sb.from('resenas').select('puntaje_clase, puntaje_trato').in('clase_id',
-      (await sb.from('clases').select('id').eq('instructor_id', INSTRUCTOR_ID)).data?.map(c=>c.id) || []
-    );
-    if (resenas?.length) {
-      const prom = resenas.reduce((s,r) => s + (r.puntaje_clase + r.puntaje_trato) / 2, 0) / resenas.length;
-      // stat-resenas removed
-      // stat-resenas-sub removed
-    } else {
-      // stat-resenas removed
-      // stat-resenas-sub removed
-    }
+    // Fuente única: loadRankingInst() actualiza dashboard y pestaña Puntaje
+    await loadRankingInst();
   }
 
   // --- CONFIRMAR CLASE ---
@@ -1297,6 +1264,10 @@ window.cerrarListaNinos = function() {
     }
 
     if (!yo || !cont) return;
+
+    // Actualizar stat del dashboard
+    document.getElementById('stat-puntaje') && (document.getElementById('stat-puntaje').textContent = yo.total.toFixed(1));
+    document.getElementById('stat-posicion') && (document.getElementById('stat-posicion').textContent = `Posición ${miPos+1}`);
 
     // ── Actualizar panel de pestaña Puntaje ─────────────────
     const bar = (label, v) => `<div class="bar-row">
