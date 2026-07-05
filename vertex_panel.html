@@ -62,6 +62,12 @@
 </aside>
 
 <main class="main" id="main-content" style="opacity:0;transition:opacity .2s">
+<!-- Mini header flotante (solo mobile) -->
+<div id="mini-header-panel" style="position:fixed;top:0;left:0;right:0;z-index:250;background:var(--navy);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 56px;transform:translateY(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 12px rgba(0,0,0,.25)">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:1px">V</div>
+  <div id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AD</div>
+</div>
+
   <div class="topbar">
     <span class="topbar-title" id="page-title">Panel de asignación</span>
     <!-- SWITCH CERRO / ESCUELITA -->
@@ -4508,6 +4514,21 @@ window.loadEscInicio = loadEscInicio;
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
   }
+
+// ── MINI HEADER MOBILE ───────────────────────────────────
+const miniHeaderPanel = document.getElementById('mini-header-panel');
+const miniAvatarPanel = document.getElementById('mini-avatar-panel');
+const topbarEl = document.querySelector('.topbar');
+if (miniHeaderPanel && topbarEl) {
+  window.addEventListener('scroll', () => {
+    if (window.innerWidth >= 768) { miniHeaderPanel.style.transform = 'translateY(-100%)'; return; }
+    miniHeaderPanel.style.transform = topbarEl.getBoundingClientRect().bottom < 0 ? 'translateY(0)' : 'translateY(-100%)';
+  }, { passive: true });
+  const avatarObs = new MutationObserver(() => {
+    miniAvatarPanel.textContent = document.getElementById('user-avatar').textContent;
+  });
+  avatarObs.observe(document.getElementById('user-avatar'), { childList: true, characterData: true, subtree: true });
+}
 
 loadDashboardExtras();
 
