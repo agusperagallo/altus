@@ -4451,6 +4451,12 @@ window.loadEscInicio = loadEscInicio;
 
 /* loadReporte(), descargarReportePDF() → js/altus_reporte.js */
 
+
+  // Registrar Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
+  }
+
 loadDashboardExtras();
 
 // Restaurar modo y página
@@ -4508,8 +4514,3 @@ sb.channel('altus-live')
 </script>
 </body>
 </html>
-
-  // Registrar Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(e => console.warn('SW:', e));
-  }
