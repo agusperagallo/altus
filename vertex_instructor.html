@@ -17,6 +17,12 @@
 </head>
 <body>
 
+<!-- Mini header flotante -->
+<div id="mini-header">
+  <div class="mini-logo">V</div>
+  <div class="mini-avatar" id="mini-avatar" onclick="document.getElementById('inst-avatar').click()">VR</div>
+</div>
+
 <div class="topbar">
   <div>
     <div class="brand-name">VERTEX</div>
@@ -1303,6 +1309,29 @@ window.cerrarListaNinos = function() {
       cargarClases();
     })
     .subscribe();
+
+  // ── MINI HEADER AL HACER SCROLL ──────────────────────────
+  const miniHeader = document.getElementById('mini-header');
+  const miniAvatar = document.getElementById('mini-avatar');
+  const topbar = document.querySelector('.topbar');
+  let lastScroll = 0;
+
+  window.addEventListener('scroll', () => {
+    const currentScroll = window.scrollY;
+    const topbarBottom = topbar.getBoundingClientRect().bottom;
+    if (topbarBottom < 0) {
+      miniHeader.classList.add('visible');
+    } else {
+      miniHeader.classList.remove('visible');
+    }
+    lastScroll = currentScroll;
+  }, { passive: true });
+
+  // Sincronizar iniciales del avatar con el mini header
+  const observer = new MutationObserver(() => {
+    miniAvatar.textContent = document.getElementById('inst-avatar').textContent;
+  });
+  observer.observe(document.getElementById('inst-avatar'), { childList: true, characterData: true, subtree: true });
 
   loadRankingInst();
 

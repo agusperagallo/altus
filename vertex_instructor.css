@@ -156,3 +156,40 @@ body.dark .modal-body{background:#1A1F2E}
 body.dark .btn-outline{background:#1A1F2E;border-color:#2A2F3E;color:#9AABBD}
 body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
 
+
+/* Mini header flotante al hacer scroll */
+#mini-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 150;
+  background: var(--navy);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  transform: translateY(-100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+#mini-header.visible { transform: translateY(0); }
+#mini-header .mini-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+#mini-header .mini-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
