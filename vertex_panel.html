@@ -3839,8 +3839,26 @@ async function loadInstructores() {
   document.getElementById('inst-ct').textContent=`${filtrados?.length||0} instructores`;
   cargarIndicadorPlan();
   if (!filtrados?.length) { tabla.innerHTML='<div class="empty">No hay instructores</div>'; return; }
+  const isMobile = window.innerWidth < 768;
   tabla.innerHTML=filtrados.map(inst=>{
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
+    if (isMobile) {
+      return `<div style="padding:16px;border-bottom:1px solid var(--ice)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--navy)">${inst.nombre}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">Niv. ${inst.nivel_certificado} · ${discs}</div>
+            <div style="font-size:12px;color:var(--silver);margin-top:2px">${inst.telefono||'Sin teléfono'}</div>
+          </div>
+          ${badge(inst.activo?'Activo':'Inact.',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="inst-action-btn" onclick="editarInstructor('${inst.id}','${inst.nombre}','${inst.nivel_certificado}','${inst.telefono||''}','${inst.email||''}')" style="flex:1">Editar</button>
+          ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')" style="flex:1">Baja temp.</button>` : ''}
+          <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})" style="flex:1">${inst.activo?'Dar de baja':'Activar'}</button>
+        </div>
+      </div>`;
+    }
     return `<div class="t-row" style="overflow:hidden">
       <div style="flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
       <div style="width:50px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
@@ -4045,17 +4063,29 @@ async function loadAsistencia() {
     const pC=pct>=90?'#0F6E56':pct>=70?'var(--warn)':'var(--danger)';
     const pB=pct>=90?'#E1F5EE':pct>=70?'var(--warn-bg)':'var(--danger-bg)';
     const onclick = `onclick="abrirDetalleClasesInstructor('${inst.id}','${inst.nombre.replace(/'/g,"\\'")}','${desde}','${hasta}')" style="cursor:pointer"`;
-    if (isMobile) return `<div ${onclick} style="padding:14px 16px;border-bottom:1px solid var(--ice)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:14px;font-weight:500;color:var(--navy)">${inst.nombre}</div>
-        ${badge(pct+'%',pC,pB)}
+    if (isMobile) return `<div ${onclick} style="padding:18px 16px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:600;color:var(--navy)">${inst.nombre}</div>
+        <span style="font-size:16px;font-weight:700;color:${pC}">${pct}%</span>
       </div>
-      <div style="display:flex;gap:16px">
-        <div style="font-size:12px;color:var(--muted)">✓ <span style="font-weight:600;color:#0F6E56">${pres}</span> pres.</div>
-        <div style="font-size:12px;color:var(--muted)">✗ <span style="font-weight:600;color:var(--danger)">${total-pres}</span> aus.</div>
-        ${francos>0?`<div style="font-size:12px;color:var(--muted)">☀ <span style="font-weight:600;color:#4A5FAD">${francos}</span> franco</div>`:''}
-        <div style="font-size:12px;color:var(--silver)">${total} días</div>
+      <div style="height:6px;background:var(--ice);border-radius:3px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${pct}%;background:${pC};border-radius:3px;transition:width .3s"></div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--ice);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#0F6E56">${pres}</div>
+          <div style="font-size:10px;color:var(--silver);margin-top:2px">Presentes</div>
+        </div>
+        <div style="background:var(--ice);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--danger)">${total-pres}</div>
+          <div style="font-size:10px;color:var(--silver);margin-top:2px">Ausentes</div>
+        </div>
+        <div style="background:var(--ice);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:var(--navy)">${hs.toFixed(1)}</div>
+          <div style="font-size:10px;color:var(--silver);margin-top:2px">Horas</div>
+        </div>
+      </div>
+      ${francos>0?`<div style="font-size:11px;color:#4A5FAD;margin-top:8px">☀ ${francos} franco${francos>1?'s':''} · ${total} días laborables</div>`:`<div style="font-size:11px;color:var(--silver);margin-top:8px">${total} días laborables</div>`}
     </div>`;
     return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="flex:1;font-weight:500">${inst.nombre}</div>
