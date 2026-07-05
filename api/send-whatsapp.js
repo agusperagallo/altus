@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken  = process.env.TWILIO_AUTH_TOKEN;
   const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER; // whatsapp:+14155238886
-  const appUrl     = process.env.APP_URL || 'https://altus-cb.vercel.app';
+  const appUrl     = process.env.APP_URL || 'https://vertex-cb.vercel.app';
 
   if (!accountSid || !authToken || !fromNumber) {
     return res.status(503).json({ error: 'Twilio no configurado' });
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   if (!toNumber.startsWith('+')) toNumber = '+54' + toNumber;
   toNumber = 'whatsapp:' + toNumber;
 
-  const linkResena = `${appUrl}/altus_resena.html?clase=${claseId}`;
+  const linkResena = `${appUrl}/vertex_resena.html?clase=${claseId}`;
 
   // Mensaje bilingüe
   const mensaje = `¡Hola! 🎿

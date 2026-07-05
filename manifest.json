@@ -1,8 +1,8 @@
 {
-  "name": "Altus — Cerro Bayo",
-  "short_name": "Altus",
+  "name": "Vertex — Cerro Bayo",
+  "short_name": "Vertex",
   "description": "Panel de gestión de instructores — Cerro Bayo",
-  "start_url": "/altus_instructor.html",
+  "start_url": "/vertex_instructor.html",
   "display": "standalone",
   "background_color": "#1A1F2E",
   "theme_color": "#1A1F2E",

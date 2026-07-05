@@ -6,16 +6,16 @@
 <link rel="apple-touch-icon" href="icon-192.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Altus — Ingresar</title>
+  <title>Vertex — Ingresar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="altus_login.css">
+  <link rel="stylesheet" href="vertex_login.css">
 </head>
 <body>
 
 <div class="card">
   <div class="brand">
-    <div class="brand-name">ALTUS</div>
+    <div class="brand-name">VERTEX</div>
     <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
   </div>
   <hr class="divider">
@@ -94,18 +94,18 @@
     }
 
     // Guardar sesión en localStorage
-    localStorage.setItem('altus_rol', usuario.rol);
-    localStorage.setItem('altus_user_id', data.user.id);
-    localStorage.setItem('altus_email', email);
+    localStorage.setItem('vertex_rol', usuario.rol);
+    localStorage.setItem('vertex_user_id', data.user.id);
+    localStorage.setItem('vertex_email', email);
     if (usuario.instructor_id) {
-      localStorage.setItem('altus_instructor_id', usuario.instructor_id);
+      localStorage.setItem('vertex_instructor_id', usuario.instructor_id);
     }
 
     // Redirigir según rol
     if (usuario.rol === 'instructor') {
-      window.location.href = 'altus_instructor.html';
+      window.location.href = 'vertex_instructor.html';
     } else {
-      window.location.href = 'altus_panel.html';
+      window.location.href = 'vertex_panel.html';
     }
   }
 
@@ -118,11 +118,11 @@
   // Si ya hay sesión activa, redirigir directamente
   sb.auth.getSession().then(({ data }) => {
     if (data?.session) {
-      const rol = localStorage.getItem('altus_rol');
+      const rol = localStorage.getItem('vertex_rol');
       if (rol === 'instructor') {
-        window.location.href = 'altus_instructor.html';
+        window.location.href = 'vertex_instructor.html';
       } else if (rol) {
-        window.location.href = 'altus_panel.html';
+        window.location.href = 'vertex_panel.html';
       }
     }
   });

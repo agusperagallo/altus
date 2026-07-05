@@ -6,21 +6,21 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Altus — Panel</title>
+<title>Vertex — Panel</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="altus_panel.css">
+<link rel="stylesheet" href="vertex_panel.css">
 <meta name="theme-color" content="#1A1F2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Altus">
+<meta name="apple-mobile-web-app-title" content="Vertex">
 </head>
 <body>
 <button class="menu-toggle" id="menuBtn"><span></span><span></span><span></span></button>
 <div class="overlay" id="overlay"></div>
 
 <aside class="sidebar" id="sidebar">
-  <div class="brand"><div class="brand-name">ALTUS</div><div class="brand-sub">Cerro Bayo — Villa La Angostura</div></div>
+  <div class="brand"><div class="brand-name">VERTEX</div><div class="brand-sub">Cerro Bayo — Villa La Angostura</div></div>
   <!-- Switch dentro del sidebar — solo visible en mobile -->
   <div id="modo-switch-sidebar" style="display:none;margin:12px 14px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;gap:2px">
     <button id="modo-cerro-sb" onclick="setModo('cerro')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">⛷ Cerro</button>
@@ -1074,7 +1074,7 @@
 // Modo oscuro — función global disponible inmediatamente
 function toggleDark() {
   const isDark = document.body.classList.toggle('dark');
-  localStorage.setItem('altus_dark', isDark ? '1' : '0');
+  localStorage.setItem('vertex_dark', isDark ? '1' : '0');
   const toggle = document.getElementById('dark-toggle');
   const knob   = document.getElementById('dark-knob');
   if (toggle) toggle.style.background = isDark ? '#1D9E75' : '';
@@ -1082,7 +1082,7 @@ function toggleDark() {
 }
 // Aplicar al cargar si estaba activado
 (function() {
-  if (localStorage.getItem('altus_dark') === '1') {
+  if (localStorage.getItem('vertex_dark') === '1') {
     document.documentElement.classList.add('dark-loading');
     document.addEventListener('DOMContentLoaded', function() {
       document.body.classList.add('dark');
@@ -1332,8 +1332,8 @@ function toggleDark() {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="js/altus_audit.js"></script>
-<script src="js/altus_reporte.js"></script>
+<script src="js/vertex_audit.js"></script>
+<script src="js/vertex_reporte.js"></script>
 <script>
 const { createClient } = supabase;
 const hoy = new Date();
@@ -1346,15 +1346,15 @@ const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishab
 const sbAuthAux = createClient(
   'https://pngtxnpywchizyyynuyb.supabase.co',
   'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-',
-  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'altus-aux-signup' } }
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'vertex-aux-signup' } }
 );
 
 // Auth check
 sb.auth.getSession().then(({data}) => {
-  if (!data?.session) { window.location.href='altus_login.html'; return; }
-  const rol = localStorage.getItem('altus_rol');
-  if (rol==='instructor') { window.location.href='altus_instructor.html'; return; }
-  const email = localStorage.getItem('altus_email')||'';
+  if (!data?.session) { window.location.href='vertex_login.html'; return; }
+  const rol = localStorage.getItem('vertex_rol');
+  if (rol==='instructor') { window.location.href='vertex_instructor.html'; return; }
+  const email = localStorage.getItem('vertex_email')||'';
   const ini = email.split('@')[0].slice(0,2).toUpperCase();
   if (ini) document.getElementById('user-avatar').textContent = ini;
   document.getElementById('pm-email').textContent = email;
@@ -2197,7 +2197,7 @@ function initSkeletons(){
 
 function setModo(modo) {
   modoActual = modo;
-  localStorage.setItem('altus_modo', modo);
+  localStorage.setItem('vertex_modo', modo);
   const esCerro = modo === 'cerro';
 
   // Switch topbar
@@ -2848,11 +2848,11 @@ function closeProfileMenu() {
 document.addEventListener('click', closeProfileMenu);
 document.getElementById('profile-menu').addEventListener('click', e => e.stopPropagation());
 document.getElementById('pm-logout').addEventListener('click', async() => {
-  await sb.auth.signOut(); localStorage.clear(); window.location.href='altus_login.html';
+  await sb.auth.signOut(); localStorage.clear(); window.location.href='vertex_login.html';
 });
 document.getElementById('pm-perfil').addEventListener('click', () => {
   document.getElementById('profile-menu').classList.remove('open');
-  const email = localStorage.getItem('altus_email')||'';
+  const email = localStorage.getItem('vertex_email')||'';
   document.getElementById('mp2-email').value = email;
   document.getElementById('mp2-pass1').value = '';
   document.getElementById('mp2-pass2').value = '';
@@ -2891,7 +2891,7 @@ const pill = v => { const n=parseFloat(v); const c=isNaN(n)?'pill-mid':n>=7?'pil
 const badge = (t,c,b) => `<span style="font-size:11px;font-weight:500;color:${c};background:${b};padding:2px 9px;border-radius:20px">${t}</span>`;
 const t2m = t => { const [h,m]=t.split(':').map(Number); return h*60+m; };
 const m2t = m => `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-/* audit() → js/altus_audit.js */
+/* audit() → js/vertex_audit.js */
 
 function calcEdad(fechaNac) {
   if (!fechaNac) return null;
@@ -2927,7 +2927,7 @@ const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranki
 const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,reporte:loadReporte,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
 
 function setPage(page, fromSidebarNav) {
-  localStorage.setItem('altus_page', page);
+  localStorage.setItem('vertex_page', page);
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
@@ -3385,7 +3385,7 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
   const maxInst = config?.max_instructores ?? 12;
 
   if ((totalInstructores ?? 0) >= maxInst) {
-    toast(`Límite de tu plan alcanzado (${maxInst} instructores). Contactá a Altus para ampliar tu plan.`, 'err');
+    toast(`Límite de tu plan alcanzado (${maxInst} instructores). Contactá a Vertex para ampliar tu plan.`, 'err');
     btn.disabled=false; btn.innerHTML=originalText;
     return;
   }
@@ -4308,7 +4308,7 @@ async function finalizarClase(claseId) {
   try { await sb.rpc('calcular_ranking'); } catch(e) {}
 
   // Generar link de reseña
-  const link = `${window.location.origin}/altus_resena.html?clase=${claseId}`;
+  const link = `${window.location.origin}/vertex_resena.html?clase=${claseId}`;
 
   // Intentar enviar WhatsApp si el cliente tiene teléfono
   const {data:clase} = await sb.from('clases').select('clientes(nombre,telefono), instructores(nombre), disciplina, nivel, hora_inicio').eq('id',claseId).single();
@@ -4449,7 +4449,7 @@ async function loadEscInicio() {
 }
 window.loadEscInicio = loadEscInicio;
 
-/* loadReporte(), descargarReportePDF() → js/altus_reporte.js */
+/* loadReporte(), descargarReportePDF() → js/vertex_reporte.js */
 
 
   // Registrar Service Worker
@@ -4460,8 +4460,8 @@ window.loadEscInicio = loadEscInicio;
 loadDashboardExtras();
 
 // Restaurar modo y página
-const savedModo = localStorage.getItem('altus_modo') || 'cerro';
-const savedPage = localStorage.getItem('altus_page') || 'asignacion';
+const savedModo = localStorage.getItem('vertex_modo') || 'cerro';
+const savedPage = localStorage.getItem('vertex_page') || 'asignacion';
 if (savedModo === 'escuelita') {
   setModo('escuelita');
   setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-inicio');
@@ -4493,7 +4493,7 @@ document.getElementById('f-estado-ses').addEventListener('change', loadEscSesion
 })();
 
 // Realtime: actualización en vivo sin polling (WebSocket, no gasta I/O)
-sb.channel('altus-live')
+sb.channel('vertex-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'clases' }, () => {
     if (document.getElementById('pg-asignacion')?.style.display !== 'none') initClasesHoy();
     if (document.getElementById('pg-clases')?.style.display !== 'none') loadClases();

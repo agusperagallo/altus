@@ -1,11 +1,11 @@
-// ── Altus Service Worker ─────────────────────────────────────
-const CACHE_NAME    = 'altus-v2';
+// ── Vertex Service Worker ─────────────────────────────────────
+const CACHE_NAME    = 'vertex-v2';
 const CACHE_STATIC  = [
-  '/altus_instructor.html',
-  '/altus_instructor.css',
-  '/altus_login.html',
-  '/js/altus_offline.js',
-  '/js/altus_audit.js',
+  '/vertex_instructor.html',
+  '/vertex_instructor.css',
+  '/vertex_login.html',
+  '/js/vertex_offline.js',
+  '/js/vertex_audit.js',
   'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css',
   'https://cdn.jsdelivr.net/npm/flatpickr',
   'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'
@@ -49,7 +49,7 @@ self.addEventListener('fetch', e => {
 
 // ── PUSH NOTIFICATIONS ───────────────────────────────────────
 self.addEventListener('push', e => {
-  let data = { title: 'Altus', body: 'Tenés una notificación nueva' };
+  let data = { title: 'Vertex', body: 'Tenés una notificación nueva' };
   try { data = e.data?.json() || data; } catch {}
 
   e.waitUntil(
@@ -68,9 +68,9 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type:'window', includeUncontrolled:true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url.includes('altus_instructor') && 'focus' in client) return client.focus();
+        if (client.url.includes('vertex_instructor') && 'focus' in client) return client.focus();
       }
-      return clients.openWindow('/altus_instructor.html');
+      return clients.openWindow('/vertex_instructor.html');
     })
   );
 });

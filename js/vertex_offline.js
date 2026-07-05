@@ -1,14 +1,14 @@
-// ── Altus Offline Manager ────────────────────────────────────
+// ── Vertex Offline Manager ────────────────────────────────────
 // Maneja caché local de datos del día y sincronización offline
 
-const ALTUS_DB_NAME    = 'altus_offline';
-const ALTUS_DB_VERSION = 1;
-const SYNC_KEY         = 'altus_sync_queue';
+const VERTEX_DB_NAME    = 'vertex_offline';
+const VERTEX_DB_VERSION = 1;
+const SYNC_KEY         = 'vertex_sync_queue';
 
 // ── IndexedDB setup ─────────────────────────────────────────
 function abrirDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(ALTUS_DB_NAME, ALTUS_DB_VERSION);
+    const req = indexedDB.open(VERTEX_DB_NAME, VERTEX_DB_VERSION);
     req.onupgradeneeded = e => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('clases_dia'))
@@ -106,9 +106,9 @@ async function cachearDatosDelDia(instructorId, gruposIds) {
 
     // Guardar timestamp
     await dbPut('meta', { clave: 'ultimo_cache', valor: new Date().toISOString(), fecha: hoy });
-    console.log('[Altus Offline] Datos del día guardados ✓');
+    console.log('[Vertex Offline] Datos del día guardados ✓');
   } catch(e) {
-    console.warn('[Altus Offline] Error al cachear:', e);
+    console.warn('[Vertex Offline] Error al cachear:', e);
   }
 }
 
@@ -152,7 +152,7 @@ async function sincronizarPendientes() {
   const pendientes = queue.filter(q => !q.sincronizado);
   if (!pendientes.length) return;
 
-  console.log(`[Altus Offline] Sincronizando ${pendientes.length} registros...`);
+  console.log(`[Vertex Offline] Sincronizando ${pendientes.length} registros...`);
   let sincronizados = 0;
 
   for (const item of pendientes) {
@@ -169,7 +169,7 @@ async function sincronizarPendientes() {
       item.sincronizado = true;
       sincronizados++;
     } catch(e) {
-      console.warn('[Altus Offline] Error al sincronizar item:', item.id, e);
+      console.warn('[Vertex Offline] Error al sincronizar item:', item.id, e);
     }
   }
 
@@ -200,7 +200,7 @@ async function cacheFrescoDeHoy() {
 }
 
 // Exportar para uso desde el panel
-window.altusOffline = {
+window.vertexOffline = {
   cachearDatosDelDia,
   obtenerClasesOffline,
   obtenerNinosOffline,

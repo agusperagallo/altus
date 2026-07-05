@@ -1,4 +1,4 @@
-/* Altus Panel — Supervisor */
+/* Vertex Panel — Supervisor */
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -65,7 +65,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);mi
 .stat-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy);line-height:1}
 .stat-sub{font-size:11px;color:var(--silver);margin-top:4px}
 .grid-2{display:grid;grid-template-columns:1fr 340px;gap:18px}
-/* Flatpickr — tema Altus */
+/* Flatpickr — tema Vertex */
 .flatpickr-calendar{
   font-family:'DM Sans',sans-serif!important;
   border-radius:10px!important;

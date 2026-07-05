@@ -1,4 +1,4 @@
-// ── Altus Audit Log ─────────────────────────────────────────
+// ── Vertex Audit Log ─────────────────────────────────────────
 // Registra acciones críticas del sistema en la tabla audit_log
 
 async function audit(accion, tabla, registroId, detalle) {

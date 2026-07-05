@@ -12,7 +12,7 @@ function setRepTab(tab) {
 }
 window.setRepTab = setRepTab;
 
-// ── Altus Reporte Mensual ────────────────────────────────────
+// ── Vertex Reporte Mensual ────────────────────────────────────
 // Genera el reporte mensual de gestión del cerro
 
 async function loadReporte() {
@@ -208,7 +208,7 @@ async function loadReporte() {
       </div>
 
       <div style="text-align:center;font-size:11px;color:var(--silver);margin-top:16px;padding:12px">
-        Generado por Altus · ${new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}
+        Generado por Vertex · ${new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}
       </div>
     </div>`;
 }
@@ -226,7 +226,7 @@ async function descargarReportePDF() {
   try {
     await html2pdf().set({
       margin: [10,10,10,10],
-      filename: `Altus_Reporte_${nombreMes}_${anio}.pdf`,
+      filename: `Vertex_Reporte_${nombreMes}_${anio}.pdf`,
       image: { type:'jpeg', quality:0.98 },
       html2canvas: { scale:2, useCORS:true },
       jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
@@ -394,7 +394,7 @@ async function loadReporteTemporada() {
       </div>
     </div>
     <div style="text-align:center;font-size:11px;color:var(--silver);margin-top:16px;padding:12px">
-      Generado por Altus · ${hoy}
+      Generado por Vertex · ${hoy}
     </div>
   </div>`;
 }
@@ -414,7 +414,7 @@ async function descargarReporteTemporada() {
   try {
     await html2pdf().set({
       margin: [10,10,10,10],
-      filename: `Altus_Temporada_${new Date().toISOString().split('T')[0]}.pdf`,
+      filename: `Vertex_Temporada_${new Date().toISOString().split('T')[0]}.pdf`,
       image: {type:'jpeg', quality:0.98},
       html2canvas: {scale:2, useCORS:true},
       jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}

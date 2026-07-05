@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/altus_login.html" }
+    {
+      "source": "/",
+      "destination": "/vertex_login.html"
+    }
   ]
 }

@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Altus — Panel del Instructor</title>
+  <title>Vertex — Panel del Instructor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="altus_instructor.css">
+  <link rel="stylesheet" href="vertex_instructor.css">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1A1F2E">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Altus">
+<meta name="apple-mobile-web-app-title" content="Vertex">
 </head>
 <body>
 
 <div class="topbar">
   <div>
-    <div class="brand-name">ALTUS</div>
+    <div class="brand-name">VERTEX</div>
     <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
   </div>
   <div class="topbar-right">
@@ -364,14 +364,14 @@
 <script>
 function toggleDark() {
   const isDark = document.body.classList.toggle('dark');
-  localStorage.setItem('altus_dark', isDark ? '1' : '0');
+  localStorage.setItem('vertex_dark', isDark ? '1' : '0');
   const toggle = document.getElementById('dark-toggle');
   const knob   = document.getElementById('dark-knob');
   if (toggle) toggle.style.background = isDark ? '#1D9E75' : '';
   if (knob)   knob.style.transform    = isDark ? 'translateX(18px)' : 'translateX(0)';
 }
 (function() {
-  if (localStorage.getItem('altus_dark') === '1') {
+  if (localStorage.getItem('vertex_dark') === '1') {
     document.addEventListener('DOMContentLoaded', function() {
       document.body.classList.add('dark');
       const toggle = document.getElementById('dark-toggle');
@@ -383,8 +383,8 @@ function toggleDark() {
 })();
 </script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/altus_audit.js"></script>
-<script src="js/altus_offline.js"></script>
+<script src="js/vertex_audit.js"></script>
+<script src="js/vertex_offline.js"></script>
 <script>
   const { createClient } = supabase;
   const sb = createClient(
@@ -393,7 +393,7 @@ function toggleDark() {
   );
 
   // ID del instructor logueado
-  const INSTRUCTOR_ID = localStorage.getItem('altus_instructor_id') || null;
+  const INSTRUCTOR_ID = localStorage.getItem('vertex_instructor_id') || null;
 
   // Registrar Service Worker para modo offline
   if ('serviceWorker' in navigator) {
@@ -425,7 +425,7 @@ function toggleDark() {
     banner = document.createElement('div');
     banner.id = 'update-banner';
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#1D9E75;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;font-family:"DM Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:12px';
-    banner.innerHTML = '✨ Hay una nueva versión de Altus <button onclick="window.location.reload()" style="background:#fff;color:#0F6E56;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Actualizar</button>';
+    banner.innerHTML = '✨ Hay una nueva versión de Vertex <button onclick="window.location.reload()" style="background:#fff;color:#0F6E56;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Actualizar</button>';
     document.body.prepend(banner);
   }
 
@@ -453,9 +453,9 @@ function toggleDark() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
       });
       await guardarSuscripcion(sub);
-      console.log('[Altus Push] Suscripción registrada ✓');
+      console.log('[Vertex Push] Suscripción registrada ✓');
     } catch(e) {
-      console.warn('[Altus Push] Error al suscribir:', e);
+      console.warn('[Vertex Push] Error al suscribir:', e);
     }
   }
 
@@ -478,10 +478,10 @@ function toggleDark() {
 
   // Auth check y datos del usuario
   sb.auth.getSession().then(({ data }) => {
-    if (!data?.session) { window.location.href = 'altus_login.html'; return; }
-    const rol = localStorage.getItem('altus_rol');
-    if (rol && rol !== 'instructor') { window.location.href = 'altus_panel.html'; return; }
-    const email = localStorage.getItem('altus_email') || data.session.user.email || '';
+    if (!data?.session) { window.location.href = 'vertex_login.html'; return; }
+    const rol = localStorage.getItem('vertex_rol');
+    if (rol && rol !== 'instructor') { window.location.href = 'vertex_panel.html'; return; }
+    const email = localStorage.getItem('vertex_email') || data.session.user.email || '';
     const ini = email.split('@')[0].slice(0,2).toUpperCase();
     document.getElementById('inst-avatar').textContent = ini;
     document.getElementById('ipm-email').textContent = email;
@@ -670,9 +670,9 @@ function toggleDark() {
     const body = document.getElementById('lista-ninos-body');
     body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
 
-    const {data:ninos} = altusOffline.estaOnline()
+    const {data:ninos} = vertexOffline.estaOnline()
       ? await sb.from('grupo_ninos').select('*').eq('grupo_id', grupoId).eq('activo', true).order('nombre')
-      : { data: await altusOffline.obtenerNinosOffline(grupoId) };
+      : { data: await vertexOffline.obtenerNinosOffline(grupoId) };
     if (!ninos?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Sin niños en este grupo</div>'; return; }
 
     const ids = ninos.map(n=>n.id);
@@ -707,14 +707,14 @@ function toggleDark() {
 
   window.marcarAsistNinoInst = async function(ninoId, presente, btn) {
     const grupoId = btn.closest('[data-grupo-id]')?.dataset.grupoId || null;
-    if (altusOffline.estaOnline()) {
+    if (vertexOffline.estaOnline()) {
       await sb.from('asistencia_ninos').upsert({
         nino_id: ninoId, fecha: fechaISO, presente,
         registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
       }, {onConflict:'nino_id,fecha'});
       toast(presente ? 'Presente registrado' : 'Ausente registrado');
     } else {
-      await altusOffline.marcarAsistenciaOffline(ninoId, grupoId, presente, fechaISO);
+      await vertexOffline.marcarAsistenciaOffline(ninoId, grupoId, presente, fechaISO);
       toast(presente ? '✓ Presente (se enviará al reconectar)' : '✗ Ausente (se enviará al reconectar)');
     }
     // Refrescar botones visualmente
@@ -968,14 +968,14 @@ window.cerrarListaNinos = function() {
 
     let clases, error;
 
-    if (altusOffline.estaOnline()) {
+    if (vertexOffline.estaOnline()) {
       // Con conexión: traer de Supabase y cachear
       const res = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).neq('estado','cancelada').order('hora_inicio');
       clases = res.data; error = res.error;
-      if (clases?.length) altusOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
+      if (clases?.length) vertexOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
     } else {
       // Sin conexión: usar caché local
-      clases = await altusOffline.obtenerClasesOffline();
+      clases = await vertexOffline.obtenerClasesOffline();
     }
 
     if (error) return;
@@ -1386,7 +1386,7 @@ window.cerrarListaNinos = function() {
   async function cerrarSesion() {
     await sb.auth.signOut();
     localStorage.clear();
-    window.location.href = 'altus_login.html';
+    window.location.href = 'vertex_login.html';
   }
 
   verificarPresencia();
