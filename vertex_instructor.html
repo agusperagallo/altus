@@ -1384,6 +1384,17 @@ window.cerrarListaNinos = function() {
 
   // --- INIT ---
   async function cerrarSesion() {
+    // Borrar suscripción push antes de cerrar sesión
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = await reg?.pushManager?.getSubscription();
+        if (sub) {
+          await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+          await sub.unsubscribe();
+        }
+      }
+    } catch(e) { console.warn('Error borrando suscripción:', e); }
     await sb.auth.signOut();
     localStorage.clear();
     window.location.href = 'vertex_login.html';

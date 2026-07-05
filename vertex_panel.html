@@ -2852,6 +2852,16 @@ function closeProfileMenu() {
 document.addEventListener('click', closeProfileMenu);
 document.getElementById('profile-menu').addEventListener('click', e => e.stopPropagation());
 document.getElementById('pm-logout').addEventListener('click', async() => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = await reg?.pushManager?.getSubscription();
+      if (sub) {
+        await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+        await sub.unsubscribe();
+      }
+    }
+  } catch(e) {}
   await sb.auth.signOut(); localStorage.clear(); window.location.href='vertex_login.html';
 });
 document.getElementById('pm-perfil').addEventListener('click', () => {
