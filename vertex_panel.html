@@ -3376,52 +3376,82 @@ window.importarInstructores = async function() {
 
 window.generarPDFInvitaciones = async function(importados) {
   const APP_URL = window.location.origin;
-  
-  const el = document.createElement('div');
-  el.style.cssText = 'font-family:Arial,sans-serif;padding:10px';
-  el.innerHTML = `
-    <div style="text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #1A1F2E">
-      <div style="font-size:28px;font-weight:700;color:#1A1F2E;letter-spacing:2px">VERTEX</div>
-      <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px">Cerro Bayo — Villa La Angostura</div>
-      <div style="font-size:11px;color:#6B7280;margin-top:2px">Códigos de activación — Temporada 2026</div>
+  const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>VERTEX — Invitaciones</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:Arial,sans-serif; padding:20px; background:#fff; }
+  .header { text-align:center; margin-bottom:24px; padding-bottom:14px; border-bottom:2px solid #1A1F2E; }
+  .header h1 { font-size:28px; font-weight:700; color:#1A1F2E; letter-spacing:2px; }
+  .header p { font-size:11px; color:#6B7280; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .card { border:1.5px solid #E5E7EB; border-radius:10px; padding:16px; page-break-inside:avoid; }
+  .card-name { font-size:16px; font-weight:700; color:#1A1F2E; }
+  .card-role { font-size:10px; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; margin-top:2px; margin-bottom:12px; }
+  .code-box { background:#F0F4F8; border-radius:6px; padding:10px 12px; margin-bottom:10px; }
+  .code-label { font-size:9px; color:#6B7280; margin-bottom:4px; }
+  .code { font-size:20px; font-weight:700; color:#1D9E75; letter-spacing:3px; }
+  .url-label { font-size:9px; color:#6B7280; }
+  .url { font-size:10px; font-weight:600; color:#1A1F2E; }
+  .note { font-size:8px; color:#9CA3AF; margin-top:8px; }
+  @media print { @page { margin:10mm; } }
+</style>
+</head><body>
+<div class="header">
+  <h1>VERTEX</h1>
+  <p>Cerro Bayo — Villa La Angostura · Códigos de activación · Temporada 2026</p>
+</div>
+<div class="grid">
+${importados.map(inst=>`
+  <div class="card">
+    <div class="card-name">${inst.nombre}</div>
+    <div class="card-role">Instructor · Temporada 2026</div>
+    <div class="code-box">
+      <div class="code-label">CÓDIGO DE ACTIVACIÓN</div>
+      <div class="code">${inst.codigo}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      ${importados.map(inst=>`
-        <div style="border:1.5px solid #E5E7EB;border-radius:10px;padding:14px;page-break-inside:avoid">
-          <div style="font-size:15px;font-weight:700;color:#1A1F2E;margin-bottom:2px">${inst.nombre}</div>
-          <div style="font-size:10px;color:#6B7280;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Instructor — Temporada 2026</div>
-          <div style="background:#F0F4F8;border-radius:6px;padding:8px 10px;margin-bottom:10px">
-            <div style="font-size:9px;color:#6B7280;margin-bottom:3px">CÓDIGO DE ACTIVACIÓN</div>
-            <div style="font-size:18px;font-weight:700;color:#1D9E75;letter-spacing:2px">${inst.codigo}</div>
-          </div>
-          <div style="font-size:9px;color:#6B7280">Ingresá a:</div>
-          <div style="font-size:9px;color:#1A1F2E;font-weight:600">${APP_URL}/vertex_activar.html</div>
-          <div style="font-size:8px;color:#9CA3AF;margin-top:6px">Guardá este código — lo necesitás para crear tu cuenta</div>
-        </div>`).join('')}
-    </div>`;
+    <div class="url-label">Ingresá a:</div>
+    <div class="url">${APP_URL}/vertex_activar.html</div>
+    <div class="note">Guardá este código — lo necesitás para crear tu cuenta</div>
+  </div>`).join('')}
+</div>
+<scr` + `ipt>window.onload=()=>window.print();<` + `/script>
+</body></html>`;
 
-  // Insertar en página, capturar, remover
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,31,46,.7);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff;font-size:14px';
-  overlay.textContent = 'Generando PDF de invitaciones...';
-  document.body.appendChild(overlay);
-  el.style.cssText += ';position:absolute;top:0;left:0;background:#fff;z-index:9997';
-  document.body.appendChild(el);
-
-  await html2pdf().set({
-    margin:[10,10,10,10],
-    filename:`VERTEX_Invitaciones_${new Date().toISOString().split('T')[0]}.pdf`,
-    image:{type:'jpeg',quality:.98},
-    html2canvas:{scale:2,useCORS:true},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(el).save();
-
-  document.body.removeChild(el);
-  document.body.removeChild(overlay);
-  toast('PDF generado ✓');
+  const win = window.open('', '_blank');
+  win.document.write(htmlContent);
+  win.document.close();
+  toast('PDF listo para imprimir ✓');
 };
 
 window.generarPDFInvitaciones = generarPDFInvitaciones;
+
+window.reenviarInvitacion = function(instId, nombre, codigo) {
+  const APP_URL = window.location.origin;
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Invitación — ${nombre}</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#F0F4F8}
+.card{background:#fff;border-radius:16px;padding:32px;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.1);text-align:center}
+h1{font-size:28px;font-weight:700;color:#1A1F2E;letter-spacing:2px;margin-bottom:4px}
+p{font-size:12px;color:#6B7280;margin-bottom:24px}
+.name{font-size:18px;font-weight:600;color:#1A1F2E;margin-bottom:16px}
+.code-box{background:#F0F4F8;border-radius:10px;padding:16px;margin-bottom:16px}
+.code-label{font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.code{font-size:28px;font-weight:700;color:#1D9E75;letter-spacing:4px}
+.url{font-size:11px;color:#1A1F2E;font-weight:600;margin-bottom:4px}
+.note{font-size:10px;color:#9CA3AF}
+@media print{@page{margin:10mm}}</style></head>
+<body><div class="card">
+<h1>VERTEX</h1><p>Cerro Bayo · Temporada 2026</p>
+<div class="name">${nombre}</div>
+<div class="code-box"><div class="code-label">Código de activación</div><div class="code">${codigo}</div></div>
+<div class="url">${APP_URL}/vertex_activar.html</div>
+<div class="note">Ingresá al link y usá este código para crear tu cuenta</div>
+</div><script>window.onload=()=>window.print();<\/script></body></html>`);
+  win.document.close();
+};
 
 async function toggleActivoInstructor(id, activo) {
   const nuevoEstado = !activo;
@@ -4218,7 +4248,7 @@ async function loadInstructores() {
   const activo=document.getElementById('f-activo-inst').value;
   const tabla=document.getElementById('inst-tabla');
   tabla.innerHTML='<div class="empty">Cargando...</div>';
-  let q=sb.from('instructores').select('*, instructor_preferencias(*)').order('nombre');
+  let q=sb.from('instructores').select('*, instructor_preferencias(*), invitaciones(codigo,usado)').order('nombre');
   if (activo!=='') q=q.eq('activo',activo==='true');
   const {data}=await q;
   const filtrados=buscar?data?.filter(i=>i.nombre.toLowerCase().includes(buscar)):data;
@@ -4230,14 +4260,16 @@ async function loadInstructores() {
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
     const initials = inst.nombre.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
     const badgesCE = `${inst.activo_cerro!==false?'<span style="font-size:10px;background:#EEF2FF;color:#3730A3;padding:1px 6px;border-radius:10px;font-weight:500">⛷ Escuela</span>':''}${inst.escuelita?'<span style="font-size:10px;background:#F0FDF4;color:#166534;padding:1px 6px;border-radius:10px;font-weight:500">🎿 Escuelita</span>':''}`;
-    if (isMobile) {
+    // Invitación pendiente — tiene código sin usar y sin email (nunca activó la cuenta)
+    const invPendiente = (inst.invitaciones||[]).find(i => !i.usado);
+    const btnInvitacion = invPendiente && !inst.email ? `<button onclick="reenviarInvitacion('${inst.id}','${inst.nombre}','${invPendiente.codigo}')" title="Cuenta pendiente de activación" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500">⏳ Pendiente</button>` : '';    if (isMobile) {
       return `<div style="margin:0 12px 10px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--line);overflow:hidden">
         <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;font-family:'Cormorant Garamond',serif">${initials}</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inst.nombre}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">Niv. ${inst.nivel_certificado} · ${discs}</div>
-            <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">${badgesCE}</div>
+            <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">${badgesCE}${btnInvitacion}</div>
           </div>
           ${badge(inst.activo?'Activo':'Inact.',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}
         </div>
@@ -4252,7 +4284,7 @@ async function loadInstructores() {
     return `<div class="t-row" style="overflow:hidden">
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
-        <div style="display:flex;gap:4px;margin-top:3px">${badgesCE}</div>
+        <div style="display:flex;gap:4px;margin-top:3px">${badgesCE}${btnInvitacion}</div>
       </div>
       <div style="width:50px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
       <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${discs}</div>
