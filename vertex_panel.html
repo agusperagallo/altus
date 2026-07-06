@@ -3245,8 +3245,8 @@ window.onArchivoSeleccionado = function(input) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
 
-    // Saltar: título(0), subtítulo(1), vacía(2), encabezados(3), hints(4), ejemplo(5)
-    const filas = data.slice(6).filter(row => row[0] && String(row[0]).trim() && !String(row[0]).startsWith('→'));
+    // Saltar: título(0), subtítulo(1), vacía(2), encabezados(3), hints(4) — datos desde fila 6 (índice 5)
+    const filas = data.slice(5).filter(row => row[0] && String(row[0]).trim() && !String(row[0]).startsWith('→'));
     
     if (!filas.length) {
       toast('No se encontraron datos en el archivo','err');
