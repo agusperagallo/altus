@@ -768,15 +768,30 @@ window.cerrarListaNinos = function() {
   // Verificar si el instructor tiene escuelita y mostrar switch
   async function checkEscuelita() {
     if (!INSTRUCTOR_ID) return;
-    const {data} = await sb.from('instructores').select('escuelita').eq('id', INSTRUCTOR_ID).single();
-    if (data?.escuelita) {
-      tieneEscuelita = true;
-      document.getElementById('tab-grupos').style.display = 'flex';
-      const {data:ses} = await sb.from('sesiones_escuelita').select('id').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).limit(1);
-      if (ses?.length || data?.escuelita) {
-        document.getElementById('inst-modo-switch').style.display = 'block';
+    const {data} = await sb.from('instructores')
+      .select('escuelita, activo_cerro')
+      .eq('id', INSTRUCTOR_ID).single();
+
+    const tieneCerro    = data?.activo_cerro !== false;
+    const tieneEscuelitaFlag = !!data?.escuelita;
+    tieneEscuelita = tieneEscuelitaFlag;
+
+    // Switch Escuela/Escuelita — solo mostrar si tiene los dos
+    const modoSwitch = document.getElementById('inst-modo-switch');
+    if (tieneCerro && tieneEscuelitaFlag) {
+      modoSwitch.style.display = 'block';
+    } else {
+      modoSwitch.style.display = 'none';
+      // Ir directo al modo que corresponde
+      if (!tieneCerro && tieneEscuelitaFlag) {
+        setInstModo('escuelita');
+      } else {
+        setInstModo('cerro');
       }
     }
+
+    // Pestaña Mis grupos — solo si tiene escuelita
+    document.getElementById('tab-grupos').style.display = tieneEscuelitaFlag ? 'flex' : 'none';
   }
   // ── MIS GRUPOS (siempre visibles, no dependen de sesión activa) ──
   let misGruposCargados = false;
