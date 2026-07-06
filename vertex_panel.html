@@ -88,7 +88,7 @@
             <div class="profile-menu-name" id="pm-nombre">Administrador</div>
             <div class="profile-menu-email" id="pm-email">—</div>
           </div>
-          <button class="profile-menu-item" id="pm-temporada">
+          <button class="profile-menu-item" id="pm-temporada" style="display:none">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
             Gestión de temporada
           </button>
@@ -1449,6 +1449,7 @@ sb.auth.getSession().then(({data}) => {
 
 // Gestión de temporadas
 document.getElementById('pm-temporada').addEventListener('click', async() => {
+  if (!esSuperadmin()) { toast('Solo el superadmin puede configurar la temporada','err'); return; }
   document.getElementById('profile-menu').classList.remove('open');
   openModal('modal-temporada');
   await cargarTemporadas();
@@ -2031,6 +2032,7 @@ window.abrirDetalleSesionAsist = abrirDetalleSesionAsist;
 let rolActual = null;
 
 async function loadUsuarios() {
+  if (!esSuperadmin()) { setPage('asignacion'); return; }
   const tabla = document.getElementById('usuarios-tabla');
   tabla.innerHTML = '<div class="empty">Cargando...</div>';
   const {data} = await sb.from('usuarios').select('*, instructores(nombre)').order('rol');
@@ -2087,15 +2089,35 @@ function abrirCambiarRol(id, email, rolActualVal) {
 }
 window.abrirCambiarRol = abrirCambiarRol;
 
-// Mostrar sección usuarios solo al superadmin
+// Control de acceso por rol
+let ROL_ACTUAL = 'supervisor';
+
 async function checkSuperadmin() {
   const {data:{session}} = await sb.auth.getSession();
   if (!session) return;
   const {data:u} = await sb.from('usuarios').select('rol').eq('id',session.user.id).maybeSingle();
-  if (u?.rol === 'superadmin') {
+  ROL_ACTUAL = u?.rol || 'supervisor';
+
+  if (ROL_ACTUAL === 'superadmin') {
+    // Secciones exclusivas de superadmin
     document.getElementById('nav-usuarios').style.display = 'flex';
+    document.getElementById('pm-temporada').style.display = 'flex';
+    // Mostrar nav de Sistema si está oculto
+    document.querySelectorAll('.nav-sec').forEach(el => {
+      if (el.textContent.trim() === 'Sistema') el.style.display = '';
+    });
+  } else {
+    // Supervisor — ocultar sección Sistema del sidebar si no tiene nada visible
+    const navSistema = document.querySelectorAll('.nav-sec');
+    navSistema.forEach(el => {
+      if (el.textContent.trim() === 'Sistema') el.style.display = 'none';
+    });
   }
 }
+
+function esSuperadmin() { return ROL_ACTUAL === 'superadmin'; }
+window.esSuperadmin = esSuperadmin;
+
 
 let modoActual = 'escuela';
 
