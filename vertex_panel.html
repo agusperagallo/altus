@@ -3180,17 +3180,8 @@ window.abrirCargaMasiva = function() {
   openModal('modal-carga-masiva');
 };
 
-window.descargarModeloExcel = async function() {
-  // Generar Excel modelo usando SheetJS
-  const XLSX = window.XLSX;
-  const wb = XLSX.utils.book_new();
-  const headers = ['Nombre *','DNI *','Teléfono','Nivel Certificado *','Temporadas en cerro','Disciplinas *','Idiomas','Escuelita','Fecha Nacimiento'];
-  const hints   = ['Nombre completo','Sin puntos ni espacios. Ej: 35123456','Ej: +54 9 294...','Número 1 al 5','Cantidad de temporadas en Cerro Bayo','Esqui / Snowboard / Esqui Adaptado (separados por coma)','Inglés, Portugués, Francés, Alemán, Italiano','SI o NO','DD/MM/AAAA'];
-  const example = ['Valentina Ríos','35123456','+54 9 294 401-1111','3','4','Esqui, Snowboard','Inglés','NO','15/03/1995'];
-  const ws = XLSX.utils.aoa_to_sheet([headers, hints, example, [], [], [], [], [], [], []]);
-  ws['!cols'] = [25,14,18,20,20,30,25,12,18].map(w=>({wch:w}));
-  XLSX.utils.book_append_sheet(wb, ws, 'Instructores');
-  XLSX.writeFile(wb, 'VERTEX_Instructores_Modelo.xlsx');
+window.descargarModeloExcel = function() {
+  window.location.href = '/VERTEX_Instructores_Modelo.xlsx';
 };
 
 window.onArchivoSeleccionado = function(input) {
