@@ -294,6 +294,12 @@
       <div class="filter-group"><label>Estado</label><select id="f-activo-inst" style="display:none"><option value="true" selected>Activos</option><option value="false">Inactivos</option><option value="">Todos</option></select>
         <button id="btn-mostrar-inactivos" onclick="toggleInactivos()" style="height:42px;padding:0 16px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap">Ver inactivos</button>
       </div>
+      <div class="filter-group" style="align-items:flex-end">
+        <button onclick="abrirCargaMasiva()" style="height:42px;padding:0 16px;border:1px solid var(--accent);border-radius:6px;background:#fff;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 5l3-3 3 3"/><path d="M2 12v2h12v-2"/></svg>
+          Carga masiva
+        </button>
+      </div>
     </div>
     <div class="page-table">
       <div class="table-head"><span class="panel-title">Instructores</span><span class="panel-meta" id="inst-ct">—</span></div>
@@ -757,7 +763,9 @@
       <div id="inst-p1">
         <div class="form-grid">
           <div class="fg"><label>Nombre</label><input type="text" id="ni-nom" placeholder="Nombre completo"></div>
+          <div class="fg"><label>DNI <span style="color:var(--silver);font-weight:400">(evita duplicados)</span></label><input type="text" id="ni-dni" placeholder="35123456" inputmode="numeric"></div>
           <div class="fg"><label>Teléfono</label><input type="text" id="ni-tel" placeholder="+54 9 ..."></div>
+          <div class="fg"><label>Temporadas en Cerro Bayo</label><input type="number" id="ni-temporadas" placeholder="0" min="0" max="50" value="0"></div>
           <div class="fg full"><label>Email (para el login)</label><input type="email" id="ni-email" placeholder="correo@ejemplo.com"></div>
           <div class="fg full">
             <label>Contraseña de acceso</label>
@@ -853,6 +861,42 @@
 </div>
 
 <!-- MODAL EDITAR INSTRUCTOR -->
+<!-- MODAL CARGA MASIVA -->
+<div class="modal-overlay" id="modal-carga-masiva">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><span class="modal-title">Carga masiva de instructores</span><button class="modal-close" onclick="closeModal('modal-carga-masiva')">&times;</button></div>
+    <div class="modal-body">
+      <div style="background:var(--ice);border-radius:8px;padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">① Descargá el modelo Excel</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Completá los datos de los instructores en el archivo modelo y guardalo.</div>
+        <button onclick="descargarModeloExcel()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3"/><path d="M2 12v2h12v-2"/></svg>
+          Descargar modelo (.xlsx)
+        </button>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px">② Subí el archivo completado</div>
+        <label for="cm-archivo" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:8px;padding:24px;cursor:pointer;background:#fff" id="cm-dropzone">
+          <svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="var(--silver)" stroke-width="1.2"><path d="M8 10V2M5 5l3-3 3 3"/><path d="M2 12v2h12v-2"/></svg>
+          <span style="font-size:13px;color:var(--muted)" id="cm-filename">Hacé click o arrastrá el archivo aquí</span>
+          <span style="font-size:11px;color:var(--silver)">Solo archivos .xlsx</span>
+          <input type="file" id="cm-archivo" accept=".xlsx" style="display:none" onchange="onArchivoSeleccionado(this)">
+        </label>
+      </div>
+      <div id="cm-preview" style="display:none;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px">③ Revisá los datos antes de importar</div>
+        <div id="cm-preview-tabla" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;font-size:12px"></div>
+        <div id="cm-preview-msg" style="font-size:12px;color:var(--muted);margin-top:8px"></div>
+      </div>
+      <div id="cm-resultado" style="display:none;padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="closeModal('modal-carga-masiva')">Cancelar</button>
+        <button class="btn btn-primary" id="cm-btn-importar" onclick="importarInstructores()" style="display:none">Importar y generar invitaciones</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-baja-temporal">
   <div class="modal">
     <div class="modal-head"><span class="modal-title">Baja temporal</span><button class="modal-close" onclick="closeModal('modal-baja-temporal')">&times;</button></div>
@@ -1354,6 +1398,7 @@ function toggleDark() {
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="js/vertex_audit.js"></script>
 <script src="js/vertex_reporte.js"></script>
 <script>
@@ -3122,6 +3167,222 @@ async function enviarPushInstructor(instructorId, title, body) {
   }
 }
 
+// ── CARGA MASIVA ────────────────────────────────────────────
+let cmDatos = [];
+
+window.abrirCargaMasiva = function() {
+  cmDatos = [];
+  document.getElementById('cm-filename').textContent = 'Hacé click o arrastrá el archivo aquí';
+  document.getElementById('cm-preview').style.display = 'none';
+  document.getElementById('cm-resultado').style.display = 'none';
+  document.getElementById('cm-btn-importar').style.display = 'none';
+  document.getElementById('cm-archivo').value = '';
+  openModal('modal-carga-masiva');
+};
+
+window.descargarModeloExcel = async function() {
+  // Generar Excel modelo usando SheetJS
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+  const headers = ['Nombre *','DNI *','Teléfono','Nivel Certificado *','Temporadas en cerro','Disciplinas *','Idiomas','Escuelita','Fecha Nacimiento'];
+  const hints   = ['Nombre completo','Sin puntos ni espacios. Ej: 35123456','Ej: +54 9 294...','Número 1 al 5','Cantidad de temporadas en Cerro Bayo','Esqui / Snowboard / Esqui Adaptado (separados por coma)','Inglés, Portugués, Francés, Alemán, Italiano','SI o NO','DD/MM/AAAA'];
+  const example = ['Valentina Ríos','35123456','+54 9 294 401-1111','3','4','Esqui, Snowboard','Inglés','NO','15/03/1995'];
+  const ws = XLSX.utils.aoa_to_sheet([headers, hints, example, [], [], [], [], [], [], []]);
+  ws['!cols'] = [25,14,18,20,20,30,25,12,18].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws, 'Instructores');
+  XLSX.writeFile(wb, 'VERTEX_Instructores_Modelo.xlsx');
+};
+
+window.onArchivoSeleccionado = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('cm-filename').textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const XLSX = window.XLSX;
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+    // Encontrar fila de datos (después de encabezados — fila 3 en adelante, saltando hints y ejemplo)
+    const filas = data.slice(3).filter(row => row[0] && String(row[0]).trim() && !String(row[0]).startsWith('→'));
+    
+    if (!filas.length) {
+      toast('No se encontraron datos en el archivo','err');
+      return;
+    }
+
+    cmDatos = filas.map(row => ({
+      nombre:              String(row[0]||'').trim(),
+      dni:                 String(row[1]||'').replace(/\D/g,'').trim()||null,
+      telefono:            String(row[2]||'').trim(),
+      nivel:               parseInt(row[3])||1,
+      temporadas_en_cerro: parseInt(row[4])||0,
+      disciplinas:         String(row[5]||'').split(',').map(d=>d.trim()).filter(Boolean),
+      idiomas:             String(row[6]||'').split(',').map(d=>d.trim()).filter(Boolean),
+      escuelita:           String(row[7]||'').toUpperCase() === 'SI',
+      fecha_nacimiento:    String(row[8]||'').trim()||null,
+    })).filter(r => r.nombre && r.disciplinas.length);
+
+    // Preview
+    const tabla = document.getElementById('cm-preview-tabla');
+    tabla.innerHTML = `
+      <table style="width:100%;border-collapse:collapse">
+        <tr style="background:var(--navy);color:#fff">
+          <th style="padding:8px 10px;text-align:left">Nombre</th>
+          <th style="padding:8px 10px;text-align:center">DNI</th>
+          <th style="padding:8px 10px;text-align:center">Niv.</th>
+          <th style="padding:8px 10px;text-align:left">Disciplinas</th>
+          <th style="padding:8px 10px;text-align:center">Escuelita</th>
+        </tr>
+        ${cmDatos.map((r,i)=>`
+          <tr style="background:${i%2===0?'#fff':'var(--ice)'}">
+            <td style="padding:7px 10px;font-weight:500">${r.nombre}</td>
+            <td style="padding:7px 10px;text-align:center;font-size:11px;color:var(--muted)">${r.dni||'—'}</td>
+            <td style="padding:7px 10px;text-align:center">${r.nivel}</td>
+            <td style="padding:7px 10px;font-size:11px;color:var(--muted)">${r.disciplinas.join(', ')}</td>
+            <td style="padding:7px 10px;text-align:center">${r.escuelita?'✓':''}</td>
+          </tr>`).join('')}
+      </table>`;
+    
+    document.getElementById('cm-preview-msg').textContent = `${cmDatos.length} instructor${cmDatos.length>1?'es':''} encontrado${cmDatos.length>1?'s':''}.`;
+    document.getElementById('cm-preview').style.display = '';
+    document.getElementById('cm-btn-importar').style.display = '';
+    document.getElementById('cm-resultado').style.display = 'none';
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+window.importarInstructores = async function() {
+  const btn = document.getElementById('cm-btn-importar');
+  btn.textContent = 'Importando...'; btn.disabled = true;
+
+  const resultado = document.getElementById('cm-resultado');
+  const importados = [];
+  const errores = [];
+
+  for (const inst of cmDatos) {
+    try {
+      // Parsear fecha si viene en DD/MM/AAAA
+      const parseDate = (s) => {
+        if (!s) return null;
+        const parts = s.split('/');
+        if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        return null;
+      };
+
+      // Crear instructor
+      // Verificar duplicado por DNI
+      if (inst.dni) {
+        const {data:existe} = await sb.from('instructores').select('id,nombre').eq('dni',inst.dni).maybeSingle();
+        if (existe) { errores.push(`${inst.nombre}: DNI ${inst.dni} ya existe (${existe.nombre})`); continue; }
+      }
+
+      const {data:instData, error} = await sb.from('instructores').insert({
+        nombre: inst.nombre,
+        dni: inst.dni||null,
+        telefono: inst.telefono||null,
+        nivel_certificado: inst.nivel,
+        temporadas_en_cerro: inst.temporadas_en_cerro||0,
+        activo: true,
+        escuelita: inst.escuelita,
+        idiomas: inst.idiomas,
+        fecha_ingreso: new Date().toISOString().split('T')[0],
+        fecha_nacimiento: parseDate(inst.fecha_nacimiento),
+      }).select('id').single();
+
+      if (error) { errores.push(`${inst.nombre}: ${error.message}`); continue; }
+
+      // Crear preferencias
+      const prefs = [];
+      inst.disciplinas.forEach(d => {
+        ['adultos','ninos','adolescentes'].forEach(r => {
+          prefs.push({instructor_id:instData.id, disciplina:d, nivel_min:1, nivel_max:inst.nivel, rango_etario:r});
+        });
+      });
+      if (prefs.length) await sb.from('instructor_preferencias').insert(prefs);
+
+      // Generar código de invitación
+      const codigo = 'VTX-' + Math.random().toString(36).substring(2,6).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase();
+      await sb.from('invitaciones').insert({instructor_id: instData.id, codigo});
+
+      importados.push({nombre: inst.nombre, codigo, id: instData.id});
+      audit('instructor_creado','instructores',instData.id,{nombre:inst.nombre,via:'carga_masiva'});
+
+    } catch(e) { errores.push(`${inst.nombre}: error inesperado`); }
+  }
+
+  // Mostrar resultado
+  resultado.style.display = '';
+  if (importados.length) {
+    resultado.style.background = '#ECFDF5';
+    resultado.style.border = '1px solid #6EE7B7';
+    resultado.innerHTML = `<div style="font-weight:600;color:#065F46;margin-bottom:4px">✓ ${importados.length} instructor${importados.length>1?'es':''} importado${importados.length>1?'s':''} correctamente</div>
+      ${errores.length?`<div style="color:var(--danger);font-size:12px;margin-top:4px">⚠ ${errores.length} con error: ${errores.join(', ')}</div>`:''}
+      <button onclick="generarPDFInvitaciones(window._importados)" style="margin-top:10px;padding:8px 16px;background:#0F6E56;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+        📄 Descargar PDF de invitaciones
+      </button>`;
+    window._importados = importados;
+    loadInstructores();
+  } else {
+    resultado.style.background = '#FEF2F2';
+    resultado.style.border = '1px solid #FECACA';
+    resultado.innerHTML = `<div style="color:var(--danger)">No se pudo importar ningún instructor. ${errores.join(', ')}</div>`;
+  }
+
+  btn.textContent = 'Importar y generar invitaciones'; btn.disabled = false;
+};
+
+window.generarPDFInvitaciones = async function(importados) {
+  const APP_URL = window.location.origin;
+  
+  const el = document.createElement('div');
+  el.style.cssText = 'font-family:Arial,sans-serif;padding:10px';
+  el.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #1A1F2E">
+      <div style="font-size:28px;font-weight:700;color:#1A1F2E;letter-spacing:2px">VERTEX</div>
+      <div style="font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px">Cerro Bayo — Villa La Angostura</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:2px">Códigos de activación — Temporada 2026</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${importados.map(inst=>`
+        <div style="border:1.5px solid #E5E7EB;border-radius:10px;padding:14px;page-break-inside:avoid">
+          <div style="font-size:15px;font-weight:700;color:#1A1F2E;margin-bottom:2px">${inst.nombre}</div>
+          <div style="font-size:10px;color:#6B7280;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">Instructor — Temporada 2026</div>
+          <div style="background:#F0F4F8;border-radius:6px;padding:8px 10px;margin-bottom:10px">
+            <div style="font-size:9px;color:#6B7280;margin-bottom:3px">CÓDIGO DE ACTIVACIÓN</div>
+            <div style="font-size:18px;font-weight:700;color:#1D9E75;letter-spacing:2px">${inst.codigo}</div>
+          </div>
+          <div style="font-size:9px;color:#6B7280">Ingresá a:</div>
+          <div style="font-size:9px;color:#1A1F2E;font-weight:600">${APP_URL}/vertex_activar.html</div>
+          <div style="font-size:8px;color:#9CA3AF;margin-top:6px">Guardá este código — lo necesitás para crear tu cuenta</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Insertar en página, capturar, remover
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,31,46,.7);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff;font-size:14px';
+  overlay.textContent = 'Generando PDF de invitaciones...';
+  document.body.appendChild(overlay);
+  el.style.cssText += ';position:absolute;top:0;left:0;background:#fff;z-index:9997';
+  document.body.appendChild(el);
+
+  await html2pdf().set({
+    margin:[10,10,10,10],
+    filename:`VERTEX_Invitaciones_${new Date().toISOString().split('T')[0]}.pdf`,
+    image:{type:'jpeg',quality:.98},
+    html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(el).save();
+
+  document.body.removeChild(el);
+  document.body.removeChild(overlay);
+  toast('PDF generado ✓');
+};
+
+window.generarPDFInvitaciones = generarPDFInvitaciones;
+
 async function toggleActivoInstructor(id, activo) {
   const nuevoEstado = !activo;
   const msg = nuevoEstado ? '¿Reactivar este instructor?' : '¿Dar de baja este instructor? No se perderá su historial.';
@@ -3373,13 +3634,18 @@ function irPaso(n) {
     document.querySelector(`.paso-tab[data-paso="${i}"]`)?.classList.toggle('active',i===n);
   });
 }
-document.getElementById('p1-next').addEventListener('click',()=>{
+document.getElementById('p1-next').addEventListener('click', async ()=>{
   const nom=document.getElementById('ni-nom').value.trim();
   const email=document.getElementById('ni-email').value.trim();
   const pass=document.getElementById('ni-pass').value;
+  const dni=document.getElementById('ni-dni').value.replace(/\D/g,'');
   if (!nom) { toast('Ingresá el nombre','err'); return; }
   if (!email) { toast('Ingresá el email','err'); return; }
   if (!pass || pass.length<6) { toast('La contraseña debe tener al menos 6 caracteres','err'); return; }
+  if (dni) {
+    const {data:existe} = await sb.from('instructores').select('nombre').eq('dni',dni).maybeSingle();
+    if (existe) { toast(`El DNI ya está registrado (${existe.nombre})`,'err'); return; }
+  }
   irPaso(2);
 });
 document.getElementById('p2-back').addEventListener('click',()=>irPaso(1));
@@ -3479,6 +3745,8 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
   //    que mantiene la sesión del supervisor (necesaria para pasar la policy RLS).
   const {data:inst, error:instError} = await sb.from('instructores').insert({
     nombre:nom, email, telefono:document.getElementById('ni-tel').value,
+    dni: document.getElementById('ni-dni').value.replace(/\D/g,'')||null,
+    temporadas_en_cerro: parseInt(document.getElementById('ni-temporadas').value)||0,
     nivel_certificado:parseInt(nivelCert),
     fecha_ingreso:document.getElementById('ni-fecha').value,
     fecha_nacimiento:document.getElementById('ni-nacimiento').value||null,
