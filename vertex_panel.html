@@ -23,12 +23,12 @@
   <div class="brand"><div class="brand-name">VERTEX</div><div class="brand-sub">Cerro Bayo — Villa La Angostura</div></div>
   <!-- Switch dentro del sidebar — solo visible en mobile -->
   <div id="modo-switch-sidebar" style="display:none;margin:12px 14px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;gap:2px">
-    <button id="modo-cerro-sb" onclick="setModo('cerro')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">⛷ Cerro</button>
+    <button id="modo-escuela-sb" onclick="setModo('escuela')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">⛷ Escuela</button>
     <button id="modo-escuelita-sb" onclick="setModo('escuelita')" style="flex:1;padding:7px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:rgba(255,255,255,.5)">🎿 Escuelita</button>
   </div>
   <nav class="nav">
     <!-- NAV CERRO -->
-    <div id="nav-cerro">
+    <div id="nav-escuela">
       <div class="nav-sec">Principal</div>
       <button class="nav-item active" data-page="asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>Inicio</button>
       <button class="nav-item" data-page="nueva-asignacion"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg>Nueva asignación</button>
@@ -72,7 +72,7 @@
     <span class="topbar-title" id="page-title">Panel de asignación</span>
     <!-- SWITCH CERRO / ESCUELITA -->
     <div id="modo-switch" style="display:flex;background:var(--ice);border:1px solid var(--line);border-radius:20px;padding:3px;gap:2px">
-      <button id="modo-cerro" onclick="setModo('cerro')" style="padding:5px 14px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">
+      <button id="modo-escuela" onclick="setModo('escuela')" style="padding:5px 14px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">
         ⛷ Cerro
       </button>
       <button id="modo-escuelita" onclick="setModo('escuelita')" style="padding:5px 14px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">
@@ -630,7 +630,7 @@
 <div class="fab-container">
   <div class="fab-menu" id="fab-menu">
     <!-- CERRO -->
-    <div id="fab-menu-cerro" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+    <div id="fab-menu-escuela" style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
       <div class="fab-row"><span class="fab-label">Nueva clase</span><button class="fab-icon" id="fab-clase"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Registrar asistencia</span><button class="fab-icon" id="fab-asist"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="7"/><path d="M8 5v3l2 2"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Ver ranking</span><button class="fab-icon" id="fab-rk"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1l2 4 5 .7-3.5 3.4.8 4.9L8 12l-4.3 2 .8-4.9L1 5.7 6 5z"/></svg></button></div>
@@ -638,6 +638,7 @@
     </div>
     <!-- ESCUELITA -->
     <div id="fab-menu-escuelita" style="display:none;flex-direction:column;gap:8px;align-items:flex-end">
+      <div class="fab-row"><span class="fab-label">Nuevo instructor</span><button class="fab-icon" onclick="closeFab();abrirNuevoInstructorDesdeEscuelita()"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/><path d="M11 7l2 2 3-3"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Nueva sesión</span><button class="fab-icon" id="fab-esc-sesion" onclick="closeFab();setPage('esc-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14M8 9v4M6 11h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Nuevo grupo</span><button class="fab-icon" id="fab-esc-grupo" onclick="closeFab();abrirModalNuevoGrupo()"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/><path d="M13 3v4M11 5h4"/></svg></button></div>
       <div class="fab-row"><span class="fab-label">Ver grupos</span><button class="fab-icon" id="fab-esc-grupos" onclick="closeFab();setPage('esc-grupos')"><svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 14c0-2.2 1.8-4 4-4s4 1.8 4 4"/><path d="M9 14c0-2.2 1.8-4 4-4"/></svg></button></div>
@@ -784,9 +785,18 @@
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Esqui Adaptado">Esquí Adaptado</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Idiomas (además de español)</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-idiomas"><button class="tag-btn" data-val="Inglés">Inglés</button><button class="tag-btn" data-val="Portugués">Portugués</button><button class="tag-btn" data-val="Francés">Francés</button><button class="tag-btn" data-val="Alemán">Alemán</button><button class="tag-btn" data-val="Italiano">Italiano</button></div></div>
         <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
+        <div style="margin-bottom:12px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">⛷ Habilitado para Escuela</div>
+            <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a clases de la Escuela</div>
+          </div>
+          <div id="ni-cerro-toggle" onclick="toggleCerro()" style="width:40px;height:22px;border-radius:11px;background:var(--accent);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+            <div id="ni-cerro-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:20px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+          </div>
+        </div>
         <div style="margin-bottom:18px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="font-size:13px;font-weight:500;color:var(--text)">Habilitado para Escuelita</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">🎿 Habilitado para Escuelita</div>
             <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
           </div>
           <div id="ni-escuelita-toggle" onclick="toggleEscuelita()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
@@ -940,9 +950,18 @@
           </select>
         </div>
       </div>
-      <div style="margin-top:14px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="margin-top:12px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
         <div>
-          <div style="font-size:13px;font-weight:500;color:var(--text)">Habilitado para Escuelita</div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">⛷ Habilitado para Escuela</div>
+          <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a clases de la Escuela</div>
+        </div>
+        <div id="mei-cerro-toggle" onclick="toggleCerroEdit()" style="width:40px;height:22px;border-radius:11px;background:var(--accent);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
+          <div id="mei-cerro-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:20px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text)">🎿 Habilitado para Escuelita</div>
           <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
         </div>
         <div id="mei-escuelita-toggle" onclick="toggleEscuelitaEdit()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
@@ -2078,7 +2097,7 @@ async function checkSuperadmin() {
   }
 }
 
-let modoActual = 'cerro';
+let modoActual = 'escuela';
 
 // Guardar modo y página al cambiar
 // ── FECHA EN ESPAÑOL — Flatpickr ──────────────────────
@@ -2265,34 +2284,34 @@ function initSkeletons(){
 function setModo(modo) {
   modoActual = modo;
   localStorage.setItem('vertex_modo', modo);
-  const esCerro = modo === 'cerro';
+  const esCerro = modo === 'escuela';
 
   // Switch topbar
-  document.getElementById('modo-cerro').style.background = esCerro ? 'var(--navy)' : 'transparent';
-  document.getElementById('modo-cerro').style.color = esCerro ? '#fff' : 'var(--muted)';
+  document.getElementById('modo-escuela').style.background = esCerro ? 'var(--navy)' : 'transparent';
+  document.getElementById('modo-escuela').style.color = esCerro ? '#fff' : 'var(--muted)';
   document.getElementById('modo-escuelita').style.background = !esCerro ? 'var(--accent)' : 'transparent';
   document.getElementById('modo-escuelita').style.color = !esCerro ? '#fff' : 'var(--muted)';
 
   // Switch sidebar (mobile)
-  const csbEl = document.getElementById('modo-cerro-sb');
+  const csbEl = document.getElementById('modo-escuela-sb');
   const esbEl = document.getElementById('modo-escuelita-sb');
   if (csbEl) { csbEl.style.background = esCerro ? 'var(--navy)' : 'transparent'; csbEl.style.color = esCerro ? '#fff' : 'rgba(255,255,255,.5)'; }
   if (esbEl) { esbEl.style.background = !esCerro ? 'var(--accent)' : 'transparent'; esbEl.style.color = !esCerro ? '#fff' : 'rgba(255,255,255,.5)'; }
 
   // Sidebar
-  document.getElementById('nav-cerro').style.display = esCerro ? 'block' : 'none';
+  document.getElementById('nav-escuela').style.display = esCerro ? 'block' : 'none';
   document.getElementById('nav-escuelita').style.display = !esCerro ? 'block' : 'none';
 
   // Pantalla principal del modo
   if (esCerro) {
     setPage('asignacion');
     document.getElementById('fab-btn').style.display = 'flex';
-    document.getElementById('fab-menu-cerro').style.display = 'flex';
+    document.getElementById('fab-menu-escuela').style.display = 'flex';
     document.getElementById('fab-menu-escuelita').style.display = 'none';
   } else {
     setPage('esc-inicio');
     document.getElementById('fab-btn').style.display = 'flex';
-    document.getElementById('fab-menu-cerro').style.display = 'none';
+    document.getElementById('fab-menu-escuela').style.display = 'none';
     document.getElementById('fab-menu-escuelita').style.display = 'flex';
   }
 }
@@ -3050,7 +3069,8 @@ document.getElementById('mei-save').addEventListener('click', async()=>{
     email: document.getElementById('mei-email').value,
     nivel_certificado: parseInt(document.getElementById('mei-nivel').value),
     idiomas: [...document.querySelectorAll('#mei-idiomas .tag-btn.active')].map(b=>b.dataset.val),
-    escuelita: meiEscuelita
+    escuelita: meiEscuelita,
+    activo_cerro: meiCerro
   }).eq('id',id);
   if (error) { toast('Error al guardar','err'); return; }
   closeModal('modal-edit-inst');
@@ -3065,10 +3085,13 @@ async function editarInstructor(id, nombre, nivel, telefono, email) {
   document.getElementById('mei-email').value = email;
   document.getElementById('mei-nivel').value = nivel;
   // Cargar escuelita e idiomas desde DB
-  const {data} = await sb.from('instructores').select('escuelita, idiomas').eq('id',id).single();
+  const {data} = await sb.from('instructores').select('escuelita, idiomas, activo_cerro').eq('id',id).single();
   meiEscuelita = !!data?.escuelita;
+  meiCerro = data?.activo_cerro !== false;
   document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
   document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
+  document.getElementById('mei-cerro-toggle').style.background = meiCerro ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('mei-cerro-knob').style.left = meiCerro ? '20px' : '2px';
   const idiomasActuales = data?.idiomas || [];
   document.querySelectorAll('#mei-idiomas .tag-btn').forEach(b => {
     b.classList.toggle('active', idiomasActuales.includes(b.dataset.val));
@@ -3618,6 +3641,20 @@ async function applyCorr(st) {
 }
 
 // Nuevo instructor
+function abrirNuevoInstructorDesdeEscuelita() {
+  setPage('instructores');
+  setTimeout(() => {
+    document.getElementById('fab-nuevo').click();
+    // Activar Escuelita y desactivar Cerro por defecto
+    setTimeout(() => {
+      if (!niEscuelita) toggleEscuelita();
+      if (niCerro) toggleCerro();
+      // Preguntar si también habilita para cerro — toast informativo
+      toast('Escuelita activada. Habilitá Escuela si también da clases individuales.');
+    }, 300);
+  }, 100);
+}
+window.abrirNuevoInstructorDesdeEscuelita = abrirNuevoInstructorDesdeEscuelita;
 document.getElementById('mi-close').addEventListener('click',()=>closeModal('modal-inst'));
 function irPaso(n) {
   [1,2,3,4].forEach(i=>{
@@ -3646,6 +3683,15 @@ document.getElementById('p3-next').addEventListener('click',()=>{ mostrarConfirm
 document.getElementById('p4-back').addEventListener('click',()=>irPaso(3));
 // Toggle escuelita — nuevo instructor
 let niEscuelita = false;
+let niCerro = true;
+
+function toggleCerro() {
+  niCerro = !niCerro;
+  document.getElementById('ni-cerro-toggle').style.background = niCerro ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('ni-cerro-knob').style.left = niCerro ? '20px' : '2px';
+}
+window.toggleCerro = toggleCerro;
+
 function toggleEscuelita() {
   niEscuelita = !niEscuelita;
   document.getElementById('ni-escuelita-toggle').style.background = niEscuelita ? 'var(--accent)' : 'var(--line)';
@@ -3655,6 +3701,15 @@ window.toggleEscuelita = toggleEscuelita;
 
 // Toggle escuelita — editar instructor
 let meiEscuelita = false;
+let meiCerro = true;
+
+function toggleCerroEdit() {
+  meiCerro = !meiCerro;
+  document.getElementById('mei-cerro-toggle').style.background = meiCerro ? 'var(--accent)' : 'var(--line)';
+  document.getElementById('mei-cerro-knob').style.left = meiCerro ? '20px' : '2px';
+}
+window.toggleCerroEdit = toggleCerroEdit;
+
 function toggleEscuelitaEdit() {
   meiEscuelita = !meiEscuelita;
   document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
@@ -3743,6 +3798,7 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
     fecha_nacimiento:document.getElementById('ni-nacimiento').value||null,
     activo:true,
     escuelita:niEscuelita,
+    activo_cerro:niCerro,
     idiomas:[...document.querySelectorAll('#ni-idiomas .tag-btn.active')].map(b=>b.dataset.val)
   }).select('id').single();
 
@@ -3775,7 +3831,9 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
   // Reset tags
   document.querySelectorAll('#ni-disc .tag-btn, #ni-niv .tag-btn, #ni-rang .tag-btn, #ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
   nivelCert=null;
-  niEscuelita=false;
+  niEscuelita=false; niCerro=true;
+  document.getElementById('ni-cerro-toggle').style.background='var(--accent)';
+  document.getElementById('ni-cerro-knob').style.left='20px';
   document.getElementById('ni-escuelita-toggle').style.background='var(--line)';
   document.getElementById('ni-escuelita-knob').style.transform='translateX(0)';
   btn.disabled=false; btn.innerHTML=originalText;
@@ -4145,6 +4203,7 @@ async function loadInstructores() {
   tabla.innerHTML=filtrados.map(inst=>{
     const discs=[...new Set((inst.instructor_preferencias||[]).map(p=>p.disciplina))].join(', ')||'—';
     const initials = inst.nombre.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+    const badgesCE = `${inst.activo_cerro!==false?'<span style="font-size:10px;background:#EEF2FF;color:#3730A3;padding:1px 6px;border-radius:10px;font-weight:500">⛷ Escuela</span>':''}${inst.escuelita?'<span style="font-size:10px;background:#F0FDF4;color:#166534;padding:1px 6px;border-radius:10px;font-weight:500">🎿 Escuelita</span>':''}`;
     if (isMobile) {
       return `<div style="margin:0 12px 10px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--line);overflow:hidden">
         <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:12px">
@@ -4152,6 +4211,7 @@ async function loadInstructores() {
           <div style="flex:1;min-width:0">
             <div style="font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inst.nombre}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">Niv. ${inst.nivel_certificado} · ${discs}</div>
+            <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">${badgesCE}</div>
           </div>
           ${badge(inst.activo?'Activo':'Inact.',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}
         </div>
@@ -4164,7 +4224,10 @@ async function loadInstructores() {
       </div>`;
     }
     return `<div class="t-row" style="overflow:hidden">
-      <div style="flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
+        <div style="display:flex;gap:4px;margin-top:3px">${badgesCE}</div>
+      </div>
       <div style="width:50px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
       <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${discs}</div>
       <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${inst.telefono||'—'}</div>
@@ -4841,13 +4904,13 @@ if (miniHeaderPanel && topbarEl) {
 loadDashboardExtras();
 
 // Restaurar modo y página
-const savedModo = localStorage.getItem('vertex_modo') || 'cerro';
+const savedModo = localStorage.getItem('vertex_modo') || 'escuela';
 const savedPage = localStorage.getItem('vertex_page') || 'asignacion';
 if (savedModo === 'escuelita') {
   setModo('escuelita');
   setPage(savedPage.startsWith('esc-') ? savedPage : 'esc-inicio');
 } else {
-  setModo('cerro');
+  setModo('escuela');
   setPage(['asignacion','nueva-asignacion','ranking','clases','instructores','clientes','asistencia','resenas','reporte','usuarios'].includes(savedPage) ? savedPage : 'asignacion');
 }
 // Mostrar contenido una vez restaurado
