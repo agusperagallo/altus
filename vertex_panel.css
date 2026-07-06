@@ -275,6 +275,8 @@ input:focus,select:focus{border-color:var(--accent)}
 @media(max-width:1100px){.grid-2{grid-template-columns:1fr}}
 @media(max-width:768px){
   html,body{overscroll-behavior-y:none}
+  #pg-instructores .page-table, #pg-asistencia .page-table { background:transparent; border:none; box-shadow:none; padding:12px 0; }
+  #inst-cols, #asist-cols { display:none; }
   #cl-cols{display:none}
   #rk-cols{display:none}
   #ses-cols{display:none}
