@@ -34,6 +34,9 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.hostname.includes('supabase.co')) return;
+  if (url.hostname.includes('sheetjs.com')) return;
+  if (url.hostname.includes('cdnjs.cloudflare.com')) return;
+  if (url.hostname.includes('unpkg.com')) return;
   e.respondWith(
     fetch(e.request)
       .then(res => {
