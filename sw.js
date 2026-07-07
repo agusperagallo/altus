@@ -1,5 +1,6 @@
 // ── Vertex Service Worker ─────────────────────────────────────
-const CACHE_NAME    = 'vertex-v2';
+const CACHE_NAME    = 'vertex-v3';
+const CACHE_EXCLUDE = ['/vertex_activar.html'];
 const CACHE_STATIC  = [
   '/vertex_instructor.html',
   '/vertex_instructor.css',
@@ -34,6 +35,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.hostname.includes('supabase.co')) return;
+  if (CACHE_EXCLUDE.some(p => url.pathname === p)) return;
   if (url.hostname.includes('sheetjs.com')) return;
   if (url.hostname.includes('cdnjs.cloudflare.com')) return;
   if (url.hostname.includes('unpkg.com')) return;
