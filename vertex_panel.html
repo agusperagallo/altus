@@ -3376,80 +3376,111 @@ window.importarInstructores = async function() {
 
 window.generarPDFInvitaciones = async function(importados) {
   const APP_URL = window.location.origin;
+  const urls = importados.map(i => `${APP_URL}/vertex_activar.html?codigo=${i.codigo}`);
   const htmlContent = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <title>VERTEX — Invitaciones</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:Arial,sans-serif; padding:20px; background:#fff; }
-  .header { text-align:center; margin-bottom:24px; padding-bottom:14px; border-bottom:2px solid #1A1F2E; }
-  .header h1 { font-size:28px; font-weight:700; color:#1A1F2E; letter-spacing:2px; }
-  .header p { font-size:11px; color:#6B7280; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .card { border:1.5px solid #E5E7EB; border-radius:10px; padding:16px; page-break-inside:avoid; }
-  .card-name { font-size:16px; font-weight:700; color:#1A1F2E; }
-  .card-role { font-size:10px; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; margin-top:2px; margin-bottom:12px; }
-  .code-box { background:#F0F4F8; border-radius:6px; padding:10px 12px; margin-bottom:10px; }
-  .code-label { font-size:9px; color:#6B7280; margin-bottom:4px; }
-  .code { font-size:20px; font-weight:700; color:#1D9E75; letter-spacing:3px; }
-  .url-label { font-size:9px; color:#6B7280; }
-  .url { font-size:10px; font-weight:600; color:#1A1F2E; }
-  .note { font-size:8px; color:#9CA3AF; margin-top:8px; }
-  @media print { @page { margin:10mm; } }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Arial,sans-serif;padding:20px;background:#fff}
+  .header{text-align:center;margin-bottom:24px;padding-bottom:14px;border-bottom:2px solid #1A1F2E}
+  .header h1{font-size:28px;font-weight:700;color:#1A1F2E;letter-spacing:2px}
+  .header p{font-size:11px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{border:1.5px solid #E5E7EB;border-radius:10px;padding:14px;page-break-inside:avoid;display:flex;gap:12px;align-items:center}
+  .card-left{flex:1}
+  .card-name{font-size:15px;font-weight:700;color:#1A1F2E}
+  .card-role{font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;margin-bottom:10px}
+  .code-box{background:#F0F4F8;border-radius:6px;padding:8px 10px;margin-bottom:8px}
+  .code-label{font-size:9px;color:#6B7280;margin-bottom:3px}
+  .code{font-size:17px;font-weight:700;color:#1D9E75;letter-spacing:2px}
+  .url{font-size:8px;color:#1D9E75;word-break:break-all}
+  .note{font-size:8px;color:#9CA3AF;margin-top:6px}
+  .qr-wrap{flex-shrink:0}
+  @media print{@page{margin:10mm}}
 </style>
 </head><body>
-<div class="header">
-  <h1>VERTEX</h1>
+<div class="header"><h1>VERTEX</h1>
   <p>Cerro Bayo — Villa La Angostura · Códigos de activación · Temporada 2026</p>
 </div>
 <div class="grid">
-${importados.map(inst=>`
+${importados.map((inst,idx)=>`
   <div class="card">
-    <div class="card-name">${inst.nombre}</div>
-    <div class="card-role">Instructor · Temporada 2026</div>
-    <div class="code-box">
-      <div class="code-label">CÓDIGO DE ACTIVACIÓN</div>
-      <div class="code">${inst.codigo}</div>
+    <div class="card-left">
+      <div class="card-name">${inst.nombre}</div>
+      <div class="card-role">Instructor · Temporada 2026</div>
+      <div class="code-box">
+        <div class="code-label">CÓDIGO DE ACTIVACIÓN</div>
+        <div class="code">${inst.codigo}</div>
+      </div>
+      <div class="url">${APP_URL}/vertex_activar.html?codigo=${inst.codigo}</div>
+      <div class="note">Escaneá el QR o tocá el link para activar tu cuenta</div>
     </div>
-    <div class="url-label">Ingresá a:</div>
-    <div class="url">${APP_URL}/vertex_activar.html</div>
-    <div class="note">Guardá este código — lo necesitás para crear tu cuenta</div>
+    <div class="qr-wrap" id="qr-${idx}"></div>
   </div>`).join('')}
 </div>
-<scr` + `ipt>window.onload=()=>window.print();<` + `/script>
+<scr` + `ipt>
+const _urls = ${JSON.stringify(urls)};
+window.onload = function() {
+  _urls.forEach(function(url, i) {
+    new QRCode(document.getElementById('qr-' + i), {
+      text: url, width:90, height:90,
+      colorDark:'#1A1F2E', colorLight:'#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+  setTimeout(function(){ window.print(); }, 1000);
+};
+<\/script>
 </body></html>`;
-
   const win = window.open('', '_blank');
   win.document.write(htmlContent);
   win.document.close();
-  toast('PDF listo para imprimir ✓');
-};
-
+  toast('Invitaciones listas para imprimir ✓');
+}
 window.generarPDFInvitaciones = generarPDFInvitaciones;
 
 window.reenviarInvitacion = function(instId, nombre, codigo) {
   const APP_URL = window.location.origin;
+  const activarURL = `${APP_URL}/vertex_activar.html?codigo=${codigo}`;
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Invitación — ${nombre}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#F0F4F8}
 .card{background:#fff;border-radius:16px;padding:32px;max-width:380px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.1);text-align:center}
 h1{font-size:28px;font-weight:700;color:#1A1F2E;letter-spacing:2px;margin-bottom:4px}
-p{font-size:12px;color:#6B7280;margin-bottom:24px}
+p{font-size:12px;color:#6B7280;margin-bottom:20px}
 .name{font-size:18px;font-weight:600;color:#1A1F2E;margin-bottom:16px}
-.code-box{background:#F0F4F8;border-radius:10px;padding:16px;margin-bottom:16px}
+.code-box{background:#F0F4F8;border-radius:10px;padding:14px;margin-bottom:14px}
 .code-label{font-size:10px;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
-.code{font-size:28px;font-weight:700;color:#1D9E75;letter-spacing:4px}
-.url{font-size:11px;color:#1A1F2E;font-weight:600;margin-bottom:4px}
+.code{font-size:26px;font-weight:700;color:#1D9E75;letter-spacing:4px}
+#qr{display:flex;justify-content:center;margin:12px 0}
+#qr img{border-radius:8px}
+.link{font-size:11px;color:#1A1F2E;font-weight:600;word-break:break-all;margin-bottom:4px}
 .note{font-size:10px;color:#9CA3AF}
 @media print{@page{margin:10mm}}</style></head>
 <body><div class="card">
 <h1>VERTEX</h1><p>Cerro Bayo · Temporada 2026</p>
 <div class="name">${nombre}</div>
-<div class="code-box"><div class="code-label">Código de activación</div><div class="code">${codigo}</div></div>
-<div class="url">${APP_URL}/vertex_activar.html</div>
-<div class="note">Ingresá al link y usá este código para crear tu cuenta</div>
-</div><script>window.onload=()=>window.print();<\/script></body></html>`);
+<div class="code-box">
+  <div class="code-label">Código de activación</div>
+  <div class="code">${codigo}</div>
+</div>
+<div id="qr"></div>
+<div class="link"><a href="${activarURL}" style="color:#1D9E75">${activarURL}</a></div>
+<div class="note">Escaneá el QR o hacé click en el link para activar tu cuenta</div>
+</div>
+<scr` + `ipt>
+new QRCode(document.getElementById('qr'), {
+  text: '${activarURL}',
+  width: 140, height: 140,
+  colorDark:'#1A1F2E', colorLight:'#ffffff',
+  correctLevel: QRCode.CorrectLevel.M
+});
+window.onload = () => setTimeout(() => window.print(), 800);
+<\/script></body></html>`);
   win.document.close();
 };
 
