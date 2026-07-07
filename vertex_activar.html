@@ -76,6 +76,10 @@
 
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script>
+    // Desregistrar SW para que no interfiera con las requests a Supabase
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
     const SUPABASE_URL = 'https://pngtxnpywchizyyynuyb.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBuZ3R4bnB5d2NoaXp5eXludXliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1MjY3MDQsImV4cCI6MjA2NTEwMjcwNH0.B9PEV2IFYIKNMEJ6dJJxTVwgjMMFuHi_MiRLm7abOcg';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);

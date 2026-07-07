@@ -37,6 +37,8 @@ self.addEventListener('fetch', e => {
   if (url.hostname.includes('sheetjs.com')) return;
   if (url.hostname.includes('cdnjs.cloudflare.com')) return;
   if (url.hostname.includes('unpkg.com')) return;
+  // No interceptar requests de la página de activación
+  if (e.request.referrer && e.request.referrer.includes('vertex_activar')) return;
   e.respondWith(
     fetch(e.request)
       .then(res => {
