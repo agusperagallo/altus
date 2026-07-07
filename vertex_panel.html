@@ -670,6 +670,10 @@
         <div class="fg"><label>Fecha</label><input type="date" id="ma-fecha"></div>
         <div class="fg"><label>Horario</label><div style="height:38px;border:1px solid var(--line);border-radius:5px;padding:0 11px;display:flex;align-items:center;font-size:13px;background:var(--ice);color:var(--muted)" id="ma-horario">—</div></div>
       </div>
+      <div class="fg" style="margin-bottom:18px">
+        <label>Punto de encuentro <span style="color:var(--silver);font-weight:400">(opcional)</span></label>
+        <input type="text" id="ma-punto" placeholder="Ej: Base del telesilla 2, Sector principiantes..." autocomplete="off">
+      </div>
       <!-- Tipo de clase -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ice);border:1px solid var(--line);border-radius:7px;margin-bottom:18px">
         <div style="flex:1;cursor:pointer" onclick="toggleRequerida()">
@@ -3625,8 +3629,8 @@ function toggleRequerida(force) {
 }
 window.toggleRequerida = toggleRequerida;
 
-document.getElementById('ma-close').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); });
-document.getElementById('ma-cancel').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); });
+document.getElementById('ma-close').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); document.getElementById('ma-punto').value=''; });
+document.getElementById('ma-cancel').addEventListener('click',()=>{ closeModal('modal-asignar'); toggleRequerida(false); document.getElementById('ma-punto').value=''; });
 document.getElementById('ma-confirm').addEventListener('click', async()=>{
   if (!instrSel) return;
   const nom=document.getElementById('cli-nombre').value.trim();
@@ -3660,14 +3664,16 @@ document.getElementById('ma-confirm').addEventListener('click', async()=>{
     cliId=nc?.id;
   }
 
-  const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada',tipo_clase:document.getElementById('ma-requerida')?.checked?'requerida':'asignada'}).select('id').single();
+  const {data:claseNueva, error:eCl}=await sb.from('clases').insert({instructor_id:instrSel.id,cliente_id:cliId,fecha,disciplina:disc,nivel:nivelCliente,hora_inicio:hora,duracion_horas:dur,estado:'asignada',tipo_clase:document.getElementById('ma-requerida')?.checked?'requerida':'asignada',punto_encuentro:document.getElementById('ma-punto').value.trim()||null}).select('id').single();
   if (eCl) { toast('Error al guardar la clase: '+eCl.message,'err'); btn.textContent='Confirmar asignación'; btn.disabled=false; return; }
   audit('clase_asignada','clases',claseNueva?.id,{instructor:instrSel.nombre,cliente:nom,fecha,hora,disciplina:disc,nivel:nivelCliente});
   // Enviar push al instructor
   const hoyISO = new Date().toLocaleDateString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires'});
   const mananaISO = new Date(new Date().setDate(new Date().getDate()+1)).toLocaleDateString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires'});
   const cuandoStr = fecha === hoyISO ? 'hoy' : fecha === mananaISO ? 'mañana' : new Date(fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  enviarPushInstructor(instrSel.id, '📅 Nueva clase asignada', `${disc} · ${nivelCliente} · ${hora} hs (${cuandoStr})`);
+  const punto = document.getElementById('ma-punto').value.trim();
+  const bodyMsg = `${disc} · ${nivelCliente} · ${hora} hs (${cuandoStr})${punto?' · 📍 '+punto:''}`;
+  enviarPushInstructor(instrSel.id, '📅 Nueva clase asignada', bodyMsg);
 
   closeModal('modal-asignar');
   btn.textContent='Confirmar asignación'; btn.disabled=false;

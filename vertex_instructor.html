@@ -991,7 +991,7 @@ window.cerrarListaNinos = function() {
 
     if (vertexOffline.estaOnline()) {
       // Con conexión: traer de Supabase y cachear
-      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario)').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).neq('estado','cancelada').order('hora_inicio');
+      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario), punto_encuentro').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).neq('estado','cancelada').order('hora_inicio');
       clases = res.data; error = res.error;
       if (clases?.length) vertexOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
     } else {
@@ -1035,6 +1035,7 @@ window.cerrarListaNinos = function() {
           <div class="clase-info">
             <div class="clase-cliente">${c.clientes?.nombre || '—'}</div>
             <div class="clase-meta">${c.disciplina} · Nivel ${c.nivel} · ${c.clientes?.rango_etario || ''}</div>
+            ${c.punto_encuentro ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;font-weight:500">📍 ${c.punto_encuentro}</div>` : ''}
           </div>
           <div class="clase-actions">
             ${completada
