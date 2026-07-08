@@ -312,8 +312,8 @@ input:focus,select:focus{border-color:var(--accent)}
 /* MODO OSCURO — estética GitHub Dark */
 body.dark {
   --ice:#161B22;--line:#30363D;--white:#161B22;--text:#E6EDF3;
-  --muted:#8B949E;--silver:#6E7681;--navy:#1F6FEB;
-  --accent:#238636;--accent2:#2EA043;--link:#58A6FF;
+  --muted:#8B949E;--silver:#6E7681;--navy:#0F6E56;
+  --accent:#1D9E75;--accent2:#0F6E56;--link:#3ADCA4;
   background:#0D1117;color:#E6EDF3;
 }
 body.dark .topbar{background:#010409;border-color:#30363D}
@@ -330,7 +330,7 @@ body.dark .t-row:hover{background:#161B22 !important}
 body.dark .t-cols{border-color:#30363D;color:#6E7681}
 body.dark .table-head{border-color:#30363D}
 body.dark .nav-item:hover{background:rgba(177,186,196,.08)}
-body.dark .nav-item.active{background:rgba(56,139,253,.15);color:#58A6FF}
+body.dark .nav-item.active{background:rgba(29,158,117,.15);color:#3ADCA4}
 body.dark .profile-menu,.dark .profile-menu-header{background:#161B22;border-color:#30363D}
 body.dark .modal-head{background:#161B22;border-color:#30363D}
 body.dark .modal-body{background:#161B22}
@@ -351,9 +351,9 @@ body.dark .profile-menu{background:#161B22!important;box-shadow:0 8px 24px rgba(
 body.dark .inst-action-btn{background:#21262D!important;border-color:#30363D!important;color:#8B949E!important}
 body.dark .inst-action-btn:hover{background:#30363D!important}
 body.dark .nivel-btn{background:#21262D!important;border-color:#30363D!important;color:#8B949E!important}
-body.dark .nivel-btn.active{background:#1F6FEB!important;color:#fff!important;border-color:#1F6FEB!important}
+body.dark .nivel-btn.active{background:#1D9E75!important;color:#fff!important;border-color:#1D9E75!important}
 body.dark .tag-btn{background:#21262D!important;border-color:#30363D!important;color:#8B949E!important}
-body.dark .tag-btn.active{background:#1F6FEB!important;color:#fff!important}
+body.dark .tag-btn.active{background:#1D9E75!important;color:#fff!important}
 /* Inputs inline con background:#fff */
 body.dark input[style*="background:#fff"],body.dark input[style*="background: #fff"],
 body.dark select[style*="background:#fff"],body.dark select[style*="background: #fff"]{background:#0D1117!important;color:#E6EDF3!important;border-color:#30363D!important}
@@ -364,17 +364,17 @@ body.dark .flatpickr-calendar{background:#161B22!important;border-color:#30363D!
 body.dark .flatpickr-day{color:#E6EDF3!important}
 body.dark .flatpickr-day:hover{background:#21262D!important;color:#E6EDF3!important}
 body.dark .flatpickr-day.prevMonthDay,body.dark .flatpickr-day.nextMonthDay{color:#484F58!important}
-body.dark .flatpickr-day.today{color:#3FB950!important}
+body.dark .flatpickr-day.today{color:#1FB88A!important}
 /* Paso tabs dark mode */
 body.dark .paso-tab{background:#161B22;color:#6E7681;border-color:#30363D}
-body.dark .paso-tab.active{background:#1F6FEB;color:#fff}
+body.dark .paso-tab.active{background:#1D9E75;color:#fff}
 /* Badges de puntaje (fondo amarillo/verde/rojo) */
 body.dark span[style*="background:#FFF8E0"],body.dark span[style*="background:#fff8e0"]{background:#2B2111!important;color:#E3B341!important;border-color:#4B3A0F!important}
-body.dark span[style*="background:#E1F5EE"],body.dark span[style*="background:#e1f5ee"]{background:#122117!important;color:#3FB950!important;border-color:#23572F!important}
+body.dark span[style*="background:#E1F5EE"],body.dark span[style*="background:#e1f5ee"]{background:#122117!important;color:#1FB88A!important;border-color:#23572F!important}
 body.dark span[style*="background:#FFE8E8"],body.dark span[style*="background:#ffe8e8"]{background:#2D1214!important;color:#F85149!important;border-color:#6E2C2C!important}
-body.dark span[style*="background:#E8ECFF"],body.dark span[style*="background:#e8ecff"]{background:#10243E!important;color:#58A6FF!important;border-color:#1C3A5E!important}
+body.dark span[style*="background:#E8ECFF"],body.dark span[style*="background:#e8ecff"]{background:#1B2436!important;color:#8FA6C9!important;border-color:#2C3B56!important}
 /* Badges de presencia */
-body.dark .pres-ok{background:#122117!important;color:#3FB950!important;border-color:#23572F!important}
+body.dark .pres-ok{background:#122117!important;color:#1FB88A!important;border-color:#23572F!important}
 body.dark .pres-aus{background:#2D1214!important;color:#F85149!important;border-color:#6E2C2C!important}
 body.dark .pres-pend{background:#161B22!important;color:#6E7681!important;border-color:#30363D!important}
 /* Native select dropdown options */
