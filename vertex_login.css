@@ -144,23 +144,23 @@
       margin-top: 24px;
     }
   
-/* MODO OSCURO */
+/* MODO OSCURO — estética GitHub Dark */
 body.dark {
-  --ice:#0F1117;--line:#2A2F3E;--white:#1A1F2E;--text:#E8ECF0;
-  --muted:#9AABBD;--silver:#5A6A7E;--ice2:#141820;
-  background:#0F1117;color:#E8ECF0;
+  --ice:#0D1117;--line:#30363D;--white:#161B22;--text:#E6EDF3;
+  --muted:#8B949E;--silver:#6E7681;--ice2:#010409;
+  background:#0D1117;color:#E6EDF3;
 }
-body.dark .topbar{background:#141820;border-color:#2A2F3E}
-body.dark .panel,.dark .page-table,.dark .page-filters,.dark .stat,.dark .modal{background:#1A1F2E;border-color:#2A2F3E}
-body.dark input,body.dark select,body.dark textarea{background:#141820;border-color:#2A2F3E;color:#E8ECF0}
-body.dark .t-row:nth-child(even){background:#141820}
-body.dark .t-row{border-color:#2A2F3E}
-body.dark .t-cols{border-color:#2A2F3E}
-body.dark .nav-item:hover{background:rgba(255,255,255,.06)}
-body.dark .profile-menu,.dark .profile-menu-header{background:#1A1F2E;border-color:#2A2F3E}
-body.dark .modal-head{background:#1A1F2E;border-color:#2A2F3E}
-body.dark .modal-body{background:#1A1F2E}
-body.dark .btn-outline{background:#1A1F2E;border-color:#2A2F3E;color:#9AABBD}
-body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
+body.dark .topbar{background:#010409;border-color:#30363D}
+body.dark .panel,.dark .page-table,.dark .page-filters,.dark .stat,.dark .modal{background:#161B22;border-color:#30363D}
+body.dark input,body.dark select,body.dark textarea{background:#0D1117;border-color:#30363D;color:#E6EDF3}
+body.dark .t-row:nth-child(even){background:#161B22}
+body.dark .t-row{border-color:#30363D}
+body.dark .t-cols{border-color:#30363D}
+body.dark .nav-item:hover{background:rgba(177,186,196,.08)}
+body.dark .profile-menu,.dark .profile-menu-header{background:#161B22;border-color:#30363D}
+body.dark .modal-head{background:#161B22;border-color:#30363D}
+body.dark .modal-body{background:#161B22}
+body.dark .btn-outline{background:#21262D;border-color:#30363D;color:#8B949E}
+body.dark .fab-icon{background:#21262D;border-color:#30363D;color:#E6EDF3}
 
 html,body { overscroll-behavior: none; }
