@@ -129,7 +129,7 @@
     .nav-tab.active svg { stroke:var(--accent); }
 
     @keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-    @keyframes fadeUp  { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
     @media(min-width:600px) {
       .modal-overlay { align-items:center; }
@@ -160,6 +160,17 @@ body.dark .modal-overlay{background:rgba(1,4,9,.75)}
 body.dark .btn-outline{background:#21262D;border-color:#30363D;color:#C9D1D9}
 body.dark .btn-outline:hover{background:#30363D;border-color:#8B949E}
 body.dark .fab-icon{background:#21262D;border-color:#30363D;color:#E6EDF3}
+
+/* Textos que en claro usan var(--navy) — en oscuro necesitan contraste, no negro sobre negro */
+body.dark .greeting-title,
+body.dark .stat-value,
+body.dark .clase-hora,
+body.dark .rank-num,
+body.dark .bar-val,
+body.dark .resena-score strong,
+body.dark .dato-val { color: #E6EDF3 !important; }
+body.dark .tag.active,
+body.dark .modal-tag.active { background: #1D9E75 !important; border-color: #1D9E75 !important; color: #fff !important; }
 body.dark ::-webkit-scrollbar{width:8px;height:8px}
 body.dark ::-webkit-scrollbar-track{background:#010409}
 body.dark ::-webkit-scrollbar-thumb{background:#30363D;border-radius:4px}
@@ -259,6 +270,12 @@ body.dark #presencia-vencida,
 body.dark [style*="background:var(--danger-bg)"] { background: #2D1214 !important; }
 body.dark #presencia-vencida div[style*="color:var(--danger)"],
 body.dark #presencia-vencida div[style*="color:#E24B4A"] { color: #F85149 !important; }
+body.dark [style*="background:#ECFDF5"] { background: #122117 !important; }
+body.dark [style*="background:#ECFDF5"] [style*="color:#0F6E56"] { color: #1FB88A !important; }
+body.dark [style*="background:#ECFDF5"] [style*="color:#047857"] { color: #6E7681 !important; }
+body.dark [style*="background:#FEF3C7"] { background: #2B2111 !important; }
+body.dark [style*="background:#FEF3C7"] [style*="color:#92400E"] { color: #E3B341 !important; }
+body.dark [style*="background:#FEF3C7"] [style*="color:#B45309"] { color: #6E7681 !important; }
 body.dark .inst-card-clases,
 body.dark .clase-card { background: #161B22 !important; border-color: #30363D !important; }
 body.dark .panel-header,

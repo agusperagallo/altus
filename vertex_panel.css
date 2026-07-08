@@ -317,7 +317,7 @@ input:focus,select:focus{border-color:var(--accent)}
 /* MODO OSCURO — estética GitHub Dark */
 body.dark {
   --ice:#161B22;--line:#30363D;--white:#161B22;--text:#E6EDF3;
-  --muted:#8B949E;--silver:#6E7681;--navy:#0F6E56;
+  --muted:#8B949E;--silver:#6E7681;--navy:#0F6E56;--navy2:#1D9E75;
   --accent:#1D9E75;--accent2:#0F6E56;--link:#3ADCA4;
   background:#0D1117;color:#E6EDF3;
 }
@@ -353,6 +353,7 @@ body.dark .empty{color:#484F58}
 body.dark .sidebar-footer{color:#30363D;border-color:#21262D}
 /* Elementos con background:#fff hardcodeado */
 body.dark .profile-menu{background:#161B22!important;box-shadow:0 8px 24px rgba(1,4,9,.6)!important}
+body.dark .profile-menu-item.danger:hover{background:#2D1214!important;color:#F85149!important}
 body.dark .inst-action-btn{background:#21262D!important;border-color:#30363D!important;color:#8B949E!important}
 body.dark .inst-action-btn:hover{background:#30363D!important}
 body.dark .nivel-btn{background:#21262D!important;border-color:#30363D!important;color:#8B949E!important}
@@ -375,6 +376,7 @@ body.dark .paso-tab{background:#161B22;color:#6E7681;border-color:#30363D}
 body.dark .paso-tab.active{background:#1D9E75;color:#fff}
 /* Badges de puntaje (fondo amarillo/verde/rojo) */
 body.dark span[style*="background:#FFF8E0"],body.dark span[style*="background:#fff8e0"]{background:#2B2111!important;color:#E3B341!important;border-color:#4B3A0F!important}
+body.dark button[style*="background:#FEF3C7"],body.dark div[style*="background:#FEF3C7"]{background:#2B2111!important;color:#E3B341!important;border-color:#4B3A0F!important}
 body.dark span[style*="background:#E1F5EE"],body.dark span[style*="background:#e1f5ee"]{background:#122117!important;color:#1FB88A!important;border-color:#23572F!important}
 body.dark span[style*="background:#FFE8E8"],body.dark span[style*="background:#ffe8e8"]{background:#2D1214!important;color:#F85149!important;border-color:#6E2C2C!important}
 body.dark span[style*="background:#E8ECFF"],body.dark span[style*="background:#e8ecff"]{background:#1B2436!important;color:#8FA6C9!important;border-color:#2C3B56!important}
@@ -382,8 +384,15 @@ body.dark span[style*="background:#E8ECFF"],body.dark span[style*="background:#e
 body.dark .pres-ok{background:#122117!important;color:#1FB88A!important;border-color:#23572F!important}
 body.dark .pres-aus{background:#2D1214!important;color:#F85149!important;border-color:#6E2C2C!important}
 body.dark .pres-pend{background:#161B22!important;color:#6E7681!important;border-color:#30363D!important}
+body.dark .pill-ok{background:#122117!important;color:#1FB88A!important}
+body.dark .pill-mid{background:#2B2111!important;color:#E3B341!important}
+body.dark .pill-low{background:#2D1214!important;color:#F85149!important}
 /* Native select dropdown options */
 body.dark select option{background:#161B22;color:#E6EDF3}
+/* Textos que en claro usan var(--navy) — en oscuro necesitan contraste, no verde apagado sobre negro */
+body.dark .stat-val,
+body.dark .rk-num.top,
+body.dark .clase-hora { color: #E6EDF3 !important; }
 
 
 /* ── SKELETON LOADING ───────────────────────── */
