@@ -213,3 +213,13 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   border-radius: 6px;
   width: 100%;
 }
+
+body.dark .sk-block {
+  background: linear-gradient(90deg, #2A2F3E 25%, #1A1F2E 50%, #2A2F3E 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s infinite;
+}
+body.dark .sk {
+  background: linear-gradient(90deg, #2A2F3E 25%, #1A1F2E 50%, #2A2F3E 75%);
+  background-size: 200% 100%;
+}

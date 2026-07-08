@@ -68,6 +68,34 @@
   <div id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AD</div>
 </div>
 
+  <!-- LOADING OVERLAY INICIAL -->
+  <div id="loading-overlay" style="position:fixed;inset:0;z-index:9990;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s">
+    <div id="lo-brand" style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;letter-spacing:3px">VERTEX</div>
+    <div id="lo-sub" style="font-size:12px">Cerro Bayo — Villa La Angostura</div>
+    <div style="width:40px;height:3px;border-radius:3px;overflow:hidden" id="lo-bar-track">
+      <div style="height:100%;background:#1D9E75;border-radius:3px;animation:load-bar 1s ease-in-out infinite"></div>
+    </div>
+    <style>@keyframes load-bar{0%{width:0;margin-left:0}50%{width:100%;margin-left:0}100%{width:0;margin-left:100%}}</style>
+  </div>
+  <script>
+    // Aplicar colores del overlay según dark mode ANTES de que cargue el CSS
+    (function() {
+      const isDark = localStorage.getItem('vertex_dark') === '1';
+      const el = document.getElementById('loading-overlay');
+      if (isDark) {
+        el.style.background = '#0F1117';
+        document.getElementById('lo-brand').style.color = '#E8ECF0';
+        document.getElementById('lo-sub').style.color = '#5A6A7E';
+        document.getElementById('lo-bar-track').style.background = '#2A2F3E';
+      } else {
+        el.style.background = '#F0F4F8';
+        document.getElementById('lo-brand').style.color = '#1A1F2E';
+        document.getElementById('lo-sub').style.color = '#6B7280';
+        document.getElementById('lo-bar-track').style.background = '#E5E7EB';
+      }
+    })();
+  </script>
+
   <div class="topbar">
     <span class="topbar-title" id="page-title">Panel de asignación</span>
     <!-- SWITCH CERRO / ESCUELITA -->
@@ -335,6 +363,12 @@
           <option value="clases_total">Más clases</option>
           <option value="instructor">Instructor</option>
         </select>
+      </div>
+      <div class="filter-group" style="align-items:flex-end">
+        <button onclick="abrirNuevoCliente()" style="height:42px;padding:0 16px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5"/><path d="M11 3v4M9 5h4"/></svg>
+          Nuevo cliente
+        </button>
       </div>
     </div>
     <div class="page-table">
@@ -880,6 +914,59 @@
 
 <!-- MODAL EDITAR INSTRUCTOR -->
 <!-- MODAL CARGA MASIVA -->
+<!-- MODAL NUEVO / EDITAR CLIENTE -->
+<div class="modal-overlay" id="modal-nuevo-cliente">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><span class="modal-title" id="mnc-title">Nuevo cliente</span><button class="modal-close" onclick="closeModal('modal-nuevo-cliente')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="mnc-id">
+      <div class="form-grid">
+        <div class="fg full"><label>Nombre *</label><input type="text" id="mnc-nombre" placeholder="Nombre completo"></div>
+        <div class="fg"><label>Teléfono</label><input type="text" id="mnc-tel" placeholder="+54 9 294..."></div>
+        <div class="fg"><label>Idioma</label>
+          <select id="mnc-idioma">
+            <option value="">Español</option>
+            <option>Inglés</option>
+            <option>Portugués</option>
+            <option>Francés</option>
+            <option>Alemán</option>
+            <option>Italiano</option>
+          </select>
+        </div>
+        <div class="fg"><label>Disciplina</label>
+          <select id="mnc-disc">
+            <option value="">Sin especificar</option>
+            <option value="Esqui">Esqui</option>
+            <option value="Snowboard">Snowboard</option>
+            <option value="Esqui Adaptado">Esquí Adaptado</option>
+          </select>
+        </div>
+        <div class="fg"><label>Nivel</label>
+          <select id="mnc-nivel">
+            <option value="">Sin especificar</option>
+            <option value="principiante">Principiante</option>
+            <option value="intermedio">Intermedio</option>
+            <option value="avanzado">Avanzado</option>
+          </select>
+        </div>
+        <div class="fg"><label>Rango etario</label>
+          <select id="mnc-rango">
+            <option value="">Sin especificar</option>
+            <option value="ninos">Niños (4-12)</option>
+            <option value="adolescentes">Adolescentes (13-17)</option>
+            <option value="adultos">Adultos (18-60)</option>
+            <option value="mayores">Adultos mayores (60+)</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+        <button class="btn btn-outline" onclick="closeModal('modal-nuevo-cliente')">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarCliente()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-carga-masiva">
   <div class="modal" style="max-width:560px">
     <div class="modal-head"><span class="modal-title">Carga masiva de instructores</span><button class="modal-close" onclick="closeModal('modal-carga-masiva')">&times;</button></div>
@@ -3052,17 +3139,38 @@ const PAGES = ['asignacion','nueva-asignacion','ranking','clases','instructores'
 const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranking:'Ranking',clases:'Clases del día',instructores:'Instructores',clientes:'Clientes',asistencia:'Asistencia',resenas:'Reseñas',reporte:'Reporte mensual','esc-grupos':'Grupos de hoy','esc-sesiones':'Sesiones','esc-admin-grupos':'Grupos',usuarios:'Usuarios'};
 const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,reporte:loadReporte,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
 
+// Ocultar overlay inicial cuando el dashboard carga
+function ocultarLoadingOverlay() {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) { overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),300); }
+}
+
 function setPage(page, fromSidebarNav) {
   localStorage.setItem('vertex_page', page);
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
   document.querySelectorAll('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.page===page));
   document.getElementById('page-title').textContent = TITLES[page]||TITLES_ESC[page]||page;
+
+  // Mostrar skeleton en el contenido de la sección
+  const pgEl = document.getElementById('pg-'+page);
+  if (pgEl && LOADERS[page]) {
+    const tabla = pgEl.querySelector('#'+page.replace('-','_')+'-tabla, .page-table > div:last-child, #rep-contenido, #cli-tabla, #inst-tabla, #asist-tabla, #res-tabla, #ranking-tabla');
+    if (tabla && !tabla.innerHTML.includes('Cargando')) {
+      tabla.innerHTML = `<div style="padding:20px">
+        ${[1,2,3,4].map(()=>`<div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">
+          <div class="sk-block" style="height:14px;width:40%;border-radius:4px"></div>
+          <div class="sk-block" style="height:14px;width:25%;border-radius:4px"></div>
+          <div class="sk-block" style="height:14px;width:20%;border-radius:4px"></div>
+        </div>`).join('')}
+      </div>`;
+    }
+  }
+
   if (LOADERS[page]) LOADERS[page]();
   if (page==='esc-grupos')       loadEscGruposHoy();
   if (page==='esc-sesiones')     loadEscSesiones();
   if (page==='esc-admin-grupos') loadEscAdminGrupos();
-  // Solo cerrar el sidebar si la navegación vino de un click en el menú lateral
   if (fromSidebarNav && window.innerWidth<768) toggleSidebar();
 }
 document.querySelectorAll('.nav-item[data-page]').forEach(btn=>btn.addEventListener('click',()=>setPage(btn.dataset.page, true)));
@@ -3937,6 +4045,7 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 // ── CARGA INICIAL ──────────────────────────────────────
 // ── DASHBOARD: TOP RANKING, CUMPLEAÑOS, ALERGIAS ──────
 async function loadDashboardExtras() {
+  ocultarLoadingOverlay();
   cargarTopRanking();
   cargarCumpleanos();
 }
@@ -4352,6 +4461,65 @@ function toggleInactivos() {
 }
 window.toggleInactivos = toggleInactivos;
 
+// ── NUEVO / EDITAR CLIENTE ───────────────────────────────────
+function abrirNuevoCliente() {
+  document.getElementById('mnc-id').value = '';
+  document.getElementById('mnc-title').textContent = 'Nuevo cliente';
+  document.getElementById('mnc-nombre').value = '';
+  document.getElementById('mnc-tel').value = '';
+  document.getElementById('mnc-idioma').value = '';
+  document.getElementById('mnc-disc').value = '';
+  document.getElementById('mnc-nivel').value = '';
+  document.getElementById('mnc-rango').value = '';
+  openModal('modal-nuevo-cliente');
+}
+window.abrirNuevoCliente = abrirNuevoCliente;
+
+async function abrirEditarCliente(id) {
+  const {data:c} = await sb.from('clientes').select('*').eq('id',id).single();
+  if (!c) return;
+  document.getElementById('mnc-id').value = c.id;
+  document.getElementById('mnc-title').textContent = 'Editar cliente';
+  document.getElementById('mnc-nombre').value = c.nombre||'';
+  document.getElementById('mnc-tel').value = c.telefono||'';
+  document.getElementById('mnc-idioma').value = c.idioma||'';
+  document.getElementById('mnc-disc').value = c.disciplina||'';
+  document.getElementById('mnc-nivel').value = c.nivel||'';
+  document.getElementById('mnc-rango').value = c.rango_etario||'';
+  openModal('modal-nuevo-cliente');
+}
+window.abrirEditarCliente = abrirEditarCliente;
+
+async function guardarCliente() {
+  const id     = document.getElementById('mnc-id').value;
+  const nombre = document.getElementById('mnc-nombre').value.trim();
+  if (!nombre) { toast('Ingresá el nombre del cliente','err'); return; }
+
+  const payload = {
+    nombre,
+    telefono:    document.getElementById('mnc-tel').value.trim()||null,
+    idioma:      document.getElementById('mnc-idioma').value||null,
+    disciplina:  document.getElementById('mnc-disc').value||null,
+    nivel:       document.getElementById('mnc-nivel').value||null,
+    rango_etario:document.getElementById('mnc-rango').value||null,
+  };
+
+  let error;
+  if (id) {
+    ({ error } = await sb.from('clientes').update(payload).eq('id',id));
+    if (!error) { audit('cliente_editado','clientes',id,{nombre}); toast('Cliente actualizado ✓'); }
+  } else {
+    const {data:nuevo, error:e} = await sb.from('clientes').insert(payload).select('id').single();
+    error = e;
+    if (!error) { audit('cliente_creado','clientes',nuevo?.id,{nombre}); toast('Cliente creado ✓'); }
+  }
+
+  if (error) { toast('Error al guardar','err'); return; }
+  closeModal('modal-nuevo-cliente');
+  loadClientes();
+}
+window.guardarCliente = guardarCliente;
+
 async function loadClientes() {
   const buscar = document.getElementById('f-buscar-cli').value.toLowerCase();
   const disc   = document.getElementById('f-disc-cli').value;
@@ -4400,8 +4568,8 @@ async function loadClientes() {
     const waTel = tel ? tel.replace(/\D/g,'') : null;
     const waLink = waTel ? `<a href="https://wa.me/${waTel}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent2);text-decoration:none;font-size:11px">WhatsApp →</a>` : '';
 
-    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+    if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px" onclick="abrirClienteDetalle('${c.id}')" style="cursor:pointer">
         <div>
           <div style="font-size:14px;font-weight:500;color:var(--navy)">${c.nombre}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.disciplina||'—'} · ${c.nivel_validado||'—'} · ${c.totalClases} clase${c.totalClases!==1?'s':''}</div>
@@ -4412,16 +4580,21 @@ async function loadClientes() {
           ${waLink}
         </div>
       </div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button onclick="abrirClienteDetalle('${c.id}')" class="inst-action-btn" style="flex:1">Ver historial</button>
+        <button onclick="abrirEditarCliente('${c.id}')" class="inst-action-btn" style="flex:1">Editar</button>
+      </div>
     </div>`;
 
-    return `<div class="t-row" style="cursor:pointer" onclick="abrirClienteDetalle('${c.id}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
-      <div style="flex:1;font-weight:500;color:var(--navy)">${c.nombre}</div>
+    return `<div class="t-row" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+      <div style="flex:1;font-weight:500;color:var(--navy);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">${c.nombre}</div>
       <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina||'—'}</div>
       <div style="width:90px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.nivel_validado||c.nivel_declarado||'—'}</div>
       <div style="width:150px;flex-shrink:0;font-size:12px">${telLink} ${waLink}</div>
       <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${ultimaStr}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-size:13px;font-weight:500;color:var(--navy)">${c.totalClases}</div>
       <div style="width:140px;flex-shrink:0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.instructorHabitual}</div>
+      <div style="width:70px;flex-shrink:0;text-align:center"><button onclick="abrirEditarCliente('${c.id}')" class="inst-action-btn">Editar</button></div>
     </div>`;
   }).join('');
 }

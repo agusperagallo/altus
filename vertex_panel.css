@@ -380,3 +380,21 @@ body.dark .pres-pend{background:#1E2235!important;color:#505D78!important;border
 /* Native select dropdown options */
 body.dark select option{background:#1E2235;color:#DDE3EE}
 
+
+/* ── SKELETON LOADING ───────────────────────── */
+.sk-block {
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+@keyframes sk-shimmer {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+body.dark .sk-block {
+  background: linear-gradient(90deg, #2A2F3E 25%, #1A1F2E 50%, #2A2F3E 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s infinite;
+}

@@ -67,13 +67,31 @@
 <div class="content">
 
   <!-- LOADING OVERLAY -->
-  <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg,#F0F4F8);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:#1A1F2E;letter-spacing:3px">VERTEX</div>
-    <div style="width:40px;height:3px;background:#E5E7EB;border-radius:3px;overflow:hidden">
+  <div id="loading-overlay" style="position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s">
+    <div id="lo-brand" style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;letter-spacing:3px">VERTEX</div>
+    <div id="lo-sub" style="font-size:12px">Cerro Bayo — Villa La Angostura</div>
+    <div style="width:40px;height:3px;border-radius:3px;overflow:hidden" id="lo-bar-track">
       <div style="height:100%;background:#1D9E75;border-radius:3px;animation:load-bar 1s ease-in-out infinite"></div>
     </div>
     <style>@keyframes load-bar{0%{width:0;margin-left:0}50%{width:100%;margin-left:0}100%{width:0;margin-left:100%}}</style>
   </div>
+  <script>
+    (function() {
+      const isDark = localStorage.getItem('vertex_dark') === '1';
+      const el = document.getElementById('loading-overlay');
+      if (isDark) {
+        el.style.background = '#0F1117';
+        document.getElementById('lo-brand').style.color = '#E8ECF0';
+        document.getElementById('lo-sub').style.color = '#5A6A7E';
+        document.getElementById('lo-bar-track').style.background = '#2A2F3E';
+      } else {
+        el.style.background = '#F0F4F8';
+        document.getElementById('lo-brand').style.color = '#1A1F2E';
+        document.getElementById('lo-sub').style.color = '#6B7280';
+        document.getElementById('lo-bar-track').style.background = '#E5E7EB';
+      }
+    })();
+  </script>
 
   <div class="greeting-title">Buenos días, Valentina</div>
   <div class="greeting-sub" id="fecha-sub"></div>
