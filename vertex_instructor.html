@@ -51,6 +51,10 @@
               <div id="dark-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
             </div>
           </div>
+        <button onclick="activarNotificaciones()" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--muted);background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1a5 5 0 0 1 5 5v3l1 2H2l1-2V6a5 5 0 0 1 5-5z"/><path d="M6.5 13a1.5 1.5 0 0 0 3 0"/></svg>
+          Activar notificaciones
+        </button>
         <button onclick="cerrarSesion()" style="display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--danger);background:none;border:none;width:100%;text-align:left;cursor:pointer;font-family:'DM Sans',sans-serif">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H2v12h4M11 5l3 3-3 3M6 8h8"/></svg>
           Cerrar sesión
@@ -1456,7 +1460,33 @@ window.cerrarListaNinos = function() {
   };
 
   // --- INIT ---
-  async function cerrarSesion() {
+  async function activarNotificaciones() {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+    if (!('Notification' in window)) { toast('Tu browser no soporta notificaciones','err'); return; }
+    if (!('serviceWorker' in navigator)) { toast('Instalá Vertex como app para recibir notificaciones','err'); return; }
+
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') { toast('Permiso denegado — habilitá las notificaciones en ajustes','err'); return; }
+
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) { toast('Recargá la página e intentá de nuevo','err'); return; }
+
+    try {
+      const VAPID_PUBLIC = 'BNvZ7Uu2fD5M39jlDtxq7r9N1x1SQKrD-7sBexYjDkiDG-6rQk_asIdYTF905hvuD_KskIvQi7Xmgy_fCU3VPHE';
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+        });
+      }
+      await guardarSuscripcion(sub);
+      toast('Notificaciones activadas ✓');
+    } catch(e) {
+      toast('Error al activar: ' + e.message, 'err');
+    }
+  }
+  window.activarNotificaciones = activarNotificaciones;
     // Borrar suscripción push antes de cerrar sesión
     try {
       if ('serviceWorker' in navigator) {
