@@ -61,14 +61,7 @@
   <div class="sidebar-footer">Temporada 2026 — v1.0</div>
 </aside>
 
-<main class="main" id="main-content" style="opacity:0;transition:opacity .2s">
-<!-- Mini header flotante (solo mobile) -->
-<div id="mini-header-panel" style="position:fixed;top:0;left:0;right:0;z-index:250;background:var(--navy);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 56px;transform:translateY(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 12px rgba(0,0,0,.25)">
-  <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:1px">V</div>
-  <div id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AD</div>
-</div>
-
-  <!-- LOADING OVERLAY INICIAL -->
+<!-- LOADING OVERLAY — fuera del main para cubrir también el sidebar -->
   <div id="loading-overlay" style="position:fixed;inset:0;z-index:9990;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s">
     <div id="lo-brand" style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;letter-spacing:3px">VERTEX</div>
     <div id="lo-sub" style="font-size:12px">Cerro Bayo — Villa La Angostura</div>
@@ -78,7 +71,6 @@
     <style>@keyframes load-bar{0%{width:0;margin-left:0}50%{width:100%;margin-left:0}100%{width:0;margin-left:100%}}</style>
   </div>
   <script>
-    // Aplicar colores del overlay según dark mode ANTES de que cargue el CSS
     (function() {
       const isDark = localStorage.getItem('vertex_dark') === '1';
       const el = document.getElementById('loading-overlay');
@@ -95,6 +87,13 @@
       }
     })();
   </script>
+
+<main class="main" id="main-content" style="opacity:0;transition:opacity .2s">
+<!-- Mini header flotante (solo mobile) -->
+<div id="mini-header-panel" style="position:fixed;top:0;left:0;right:0;z-index:250;background:var(--navy);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 56px;transform:translateY(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 12px rgba(0,0,0,.25)">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:1px">V</div>
+  <div id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AD</div>
+</div>
 
   <div class="topbar">
     <span class="topbar-title" id="page-title">Panel de asignación</span>
@@ -3140,9 +3139,17 @@ const TITLES = {asignacion:'Inicio','nueva-asignacion':'Nueva asignación',ranki
 const LOADERS = {asignacion:loadDashboardExtras,ranking:loadRanking,clases:loadClases,instructores:loadInstructores,clientes:loadClientes,asistencia:loadAsistencia,resenas:loadResenas,reporte:loadReporte,usuarios:loadUsuarios,'esc-familias':loadFamilias,'esc-asistencia':loadAsistEscNinos,'esc-inicio':loadEscInicio};
 
 // Ocultar overlay inicial cuando el dashboard carga
+// Tiempo mínimo de display para el overlay
+const _overlayStart = Date.now();
 function ocultarLoadingOverlay() {
   const overlay = document.getElementById('loading-overlay');
-  if (overlay) { overlay.style.opacity='0'; setTimeout(()=>overlay.remove(),300); }
+  if (!overlay) return;
+  const elapsed = Date.now() - _overlayStart;
+  const delay = Math.max(0, 800 - elapsed); // mínimo 800ms
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 300);
+  }, delay);
 }
 
 function setPage(page, fromSidebarNav) {

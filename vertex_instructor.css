@@ -223,3 +223,42 @@ body.dark .sk {
   background: linear-gradient(90deg, #2A2F3E 25%, #1A1F2E 50%, #2A2F3E 75%);
   background-size: 200% 100%;
 }
+
+/* Dark mode — paneles que no heredan correctamente */
+body.dark #card-presencia,
+body.dark #panel-disponibilidad,
+body.dark .panel,
+body.dark [style*="background:#fff"],
+body.dark [style*="background: #fff"],
+body.dark [style*="background:white"] {
+  background: #1A1F2E !important;
+  border-color: #2A2F3E !important;
+  color: #E8ECF0 !important;
+}
+body.dark #presencia-pendiente { background: #1A1F2E !important; }
+body.dark #presencia-ok { background: #0F3028 !important; }
+body.dark .inst-card-clases,
+body.dark .clase-card { background: #1A1F2E !important; border-color: #2A2F3E !important; }
+body.dark .panel-header,
+body.dark .panel-head { background: #141820 !important; border-color: #2A2F3E !important; }
+body.dark .nav-tab { color: #9AABBD !important; border-color: #2A2F3E !important; }
+body.dark .nav-tab.active { background: var(--navy) !important; color: #fff !important; }
+body.dark #banner-proxima-clase { background: #0F1117 !important; }
+body.dark button.btn { background: #2A2F3E !important; color: #E8ECF0 !important; border-color: #3A4050 !important; }
+body.dark button.btn-primary { background: var(--accent) !important; color: #fff !important; }
+
+/* Profile menu — igual al supervisor */
+.profile-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:200px;z-index:300;overflow:hidden;animation:fadeUp .15s ease}
+.profile-menu-header{padding:14px 16px;border-bottom:1px solid var(--line);background:var(--ice2)}
+.profile-menu-name{font-size:13px;font-weight:500;color:var(--text)}
+.profile-menu-email{font-size:11px;color:var(--silver);margin-top:2px}
+.profile-menu-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;color:var(--muted);cursor:pointer;transition:background .1s;background:none;border:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.profile-menu-item:hover{background:var(--ice2);color:var(--text)}
+.profile-menu-item.danger{color:var(--danger)}
+.profile-menu-item.danger:hover{background:#FEE2E2}
+body.dark .profile-menu{background:#1E2235!important;border-color:#2C3048!important}
+body.dark .profile-menu-header{background:#141820!important;border-color:#2C3048!important}
+body.dark .profile-menu-name{color:#E8ECF0!important}
+body.dark .profile-menu-email{color:#5A6A7E!important}
+body.dark .profile-menu-item{color:#9AABBD!important}
+body.dark .profile-menu-item:hover{background:#2A2F3E!important;color:#E8ECF0!important}
