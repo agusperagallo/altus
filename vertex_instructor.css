@@ -193,3 +193,23 @@ body.dark .fab-icon{background:#1A1F2E;border-color:#2A2F3E;color:#E8ECF0}
   justify-content: center;
   cursor: pointer;
 }
+
+/* ── SKELETON LOADING ───────────────────────── */
+.sk {
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s infinite;
+  border-radius: 6px;
+  display: inline-block;
+}
+@keyframes sk-shimmer {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+.sk-block {
+  background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s infinite;
+  border-radius: 6px;
+  width: 100%;
+}
