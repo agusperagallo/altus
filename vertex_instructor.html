@@ -1349,6 +1349,63 @@ window.cerrarListaNinos = function() {
   });
   observer.observe(document.getElementById('inst-avatar'), { childList: true, characterData: true, subtree: true });
 
+  // ── AVISO 30 MINUTOS ANTES ──────────────────────────────────
+  async function checkProximaClase() {
+    if (!INSTRUCTOR_ID) return;
+    const hoyISO = new Date().toLocaleString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+    const ahora  = new Date().toLocaleTimeString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit'});
+
+    // Calcular ventana: ahora+25min a ahora+35min
+    const [h,m] = ahora.split(':').map(Number);
+    const min25 = ((h*60+m+25) % 1440);
+    const min35 = ((h*60+m+35) % 1440);
+    const t25 = `${String(Math.floor(min25/60)).padStart(2,'0')}:${String(min25%60).padStart(2,'0')}`;
+    const t35 = `${String(Math.floor(min35/60)).padStart(2,'0')}:${String(min35%60).padStart(2,'0')}`;
+
+    const {data:proximas} = await sb.from('clases')
+      .select('id, hora_inicio, disciplina, nivel, punto_encuentro, clientes(nombre)')
+      .eq('instructor_id', INSTRUCTOR_ID)
+      .eq('fecha', hoyISO)
+      .eq('estado', 'asignada')
+      .gte('hora_inicio', t25)
+      .lte('hora_inicio', t35);
+
+    const banner = document.getElementById('banner-proxima-clase');
+    if (!proximas?.length) {
+      if (banner) banner.style.display = 'none';
+      return;
+    }
+
+    const clase = proximas[0];
+    const minutos = Math.round(((clase.hora_inicio.split(':')[0]*60 + parseInt(clase.hora_inicio.split(':')[1])) - (h*60+m)));
+
+    if (!banner) {
+      const el = document.createElement('div');
+      el.id = 'banner-proxima-clase';
+      el.style.cssText = 'background:#1A1F2E;color:#fff;padding:12px 16px;border-radius:10px;margin-bottom:12px;display:flex;align-items:center;gap:12px;animation:slideDown .3s ease';
+      el.innerHTML = `
+        <div style="font-size:22px">⏰</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">Clase en ~${minutos} minutos</div>
+          <div style="font-size:12px;color:#9CA3AF;margin-top:2px">${clase.disciplina} · ${clase.nivel} · ${clase.clientes?.nombre||'—'}</div>
+          ${clase.punto_encuentro ? `<div style="font-size:12px;color:#1D9E75;margin-top:3px;font-weight:500">📍 ${clase.punto_encuentro}</div>` : ''}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#1D9E75">${clase.hora_inicio?.slice(0,5)}</div>`;
+      // Insertar antes de las clases de hoy
+      const cont = document.querySelector('.content') || document.body;
+      const firstPanel = cont.querySelector('.panel');
+      if (firstPanel) firstPanel.parentNode.insertBefore(el, firstPanel);
+      else cont.prepend(el);
+    } else {
+      banner.style.display = 'flex';
+      banner.querySelector('div:nth-child(2) div:first-child').textContent = `Clase en ~${minutos} minutos`;
+    }
+  }
+
+  // Correr al cargar y cada minuto
+  checkProximaClase();
+  setInterval(checkProximaClase, 60000);
+
   loadRankingInst();
 
   const allPanels = ['clases','grupos','ranking','perfil'];
