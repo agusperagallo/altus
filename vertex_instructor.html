@@ -1487,6 +1487,8 @@ window.cerrarListaNinos = function() {
     }
   }
   window.activarNotificaciones = activarNotificaciones;
+
+  async function cerrarSesion() {
     // Borrar suscripción push antes de cerrar sesión
     try {
       if ('serviceWorker' in navigator) {
