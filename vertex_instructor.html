@@ -193,7 +193,7 @@
       <span class="panel-title">Mi puntaje</span>
       <span class="panel-meta" id="rank-periodo">—</span>
     </div>
-    <div id="rank-body-content"><div class="empty">Cargando...</div></div>
+    <div id="rank-body-content"></div>
   </div>
 
   <!-- RESEÑAS -->
@@ -1255,10 +1255,24 @@ window.cerrarListaNinos = function() {
   };
 
   // ── RANKING ──────────────────────────────────────────────────
+  function rankSkeletonHTML() {
+    const barSk = () => `<div class="bar-row">
+      <span class="sk" style="width:110px;height:10px"></span>
+      <div class="bar-track"><span class="sk" style="width:100%;height:100%;border-radius:3px"></span></div>
+      <span class="sk" style="width:24px;height:10px"></span>
+    </div>`;
+    return `<div class="rank-body">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="sk" style="width:92px;height:44px;border-radius:8px"></span>
+      </div>
+      <span class="sk" style="width:150px;height:12px;border-radius:4px;margin-top:8px;margin-bottom:18px"></span>
+      ${[1,2,3,4,5].map(barSk).join('')}
+    </div>`;
+  }
   window.loadRankingInst = async function() {
     if (!INSTRUCTOR_ID) return;
     const cont = document.getElementById('rank-body-content');
-    if (cont) cont.innerHTML = '<div class="empty">Cargando...</div>';
+    if (cont) cont.innerHTML = rankSkeletonHTML();
 
     const {data:insts} = await sb.from('instructores')
       .select('id, nombre, ranking_snapshot(*)')
@@ -1556,6 +1570,7 @@ window.cerrarListaNinos = function() {
   try {
     document.getElementById('stat-puntaje').innerHTML='<span class="sk" style="display:inline-block;width:50px;height:32px"></span>';
     document.getElementById('stat-clases-hoy').innerHTML='<span class="sk" style="display:inline-block;width:30px;height:32px"></span>';
+    document.getElementById('rank-body-content').innerHTML = rankSkeletonHTML();
     // stat-resenas removed
     document.getElementById('lista-clases').innerHTML=`
       ${[1,2,3].map(()=>`<div style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;gap:14px;align-items:center">
