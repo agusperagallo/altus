@@ -167,31 +167,37 @@ body.dark ::-webkit-scrollbar-thumb:hover{background:#484F58}
 body.dark{scrollbar-color:#30363D #010409;scrollbar-width:thin}
 
 
-/* Mini header flotante al hacer scroll */
+/* Mini header flotante al hacer scroll — burbujas, no barra completa */
 #mini-header {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 150;
-  background: var(--navy);
-  height: 48px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 14px;
+  pointer-events: none;
   transform: translateY(-100%);
   transition: transform .25s cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 2px 12px rgba(0,0,0,.25);
 }
 #mini-header.visible { transform: translateY(0); }
 #mini-header .mini-logo {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--accent);
-  letter-spacing: 1px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.3);
+  pointer-events: auto;
 }
 #mini-header .mini-avatar {
-  width: 32px; height: 32px;
+  width: 38px; height: 38px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
@@ -202,6 +208,8 @@ body.dark{scrollbar-color:#30363D #010409;scrollbar-width:thin}
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,.3);
+  pointer-events: auto;
 }
 
 /* ── SKELETON LOADING ───────────────────────── */

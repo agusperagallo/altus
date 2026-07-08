@@ -89,10 +89,10 @@
   </script>
 
 <main class="main" id="main-content" style="opacity:0;transition:opacity .2s">
-<!-- Mini header flotante (solo mobile) -->
-<div id="mini-header-panel" style="position:fixed;top:0;left:0;right:0;z-index:250;background:var(--navy);height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 56px;transform:translateY(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 2px 12px rgba(0,0,0,.25)">
-  <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:1px">V</div>
-  <div id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()" style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer">AD</div>
+<!-- Mini header flotante (solo mobile) — burbujas: hamburguesa (ya fija arriba a la izq) + V + perfil -->
+<div id="mini-header-panel">
+  <div class="mini-logo">V</div>
+  <div class="mini-avatar" id="mini-avatar-panel" onclick="document.getElementById('user-avatar').click()">AD</div>
 </div>
 
   <div class="topbar">
