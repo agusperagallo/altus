@@ -14,10 +14,32 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vertex">
+<style>
+  #vertex-splash{position:fixed;inset:0;z-index:99999;background:#1A1F2E;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease}
+  #vertex-splash.vs-hide{opacity:0;pointer-events:none}
+  #vertex-splash .vs-logo{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600;color:#fff;letter-spacing:3px}
+  #vertex-splash .vs-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.4px}
+</style>
 </head>
 <body>
 
-<!-- Mini header flotante -->
+<!-- Splash de apertura — solo en modo standalone (PWA instalada), no se repite si vuelve de background -->
+<div id="vertex-splash"><div class="vs-logo">VERTEX</div><div class="vs-sub">Cerro Bayo — Villa La Angostura</div></div>
+<script>
+(function(){
+  var splash = document.getElementById('vertex-splash');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone || sessionStorage.getItem('vertex_splash_shown')) {
+    splash.style.display = 'none';
+    return;
+  }
+  sessionStorage.setItem('vertex_splash_shown', '1');
+  setTimeout(function(){
+    splash.classList.add('vs-hide');
+    setTimeout(function(){ splash.style.display = 'none'; }, 400);
+  }, 900);
+})();
+</script>
 <div id="mini-header">
   <div class="mini-logo">V</div>
   <div class="mini-avatar" id="mini-avatar" onclick="document.getElementById('inst-avatar').click()">VR</div>
@@ -513,8 +535,33 @@ function toggleDark() {
   }
 
   // Auth check y datos del usuario
-  sb.auth.getSession().then(({ data }) => {
+  sb.auth.getSession().then(async ({ data }) => {
     if (!data?.session) { window.location.href = 'vertex_login.html'; return; }
+
+    // Validar que el instructor_id/rol cacheados en localStorage coincidan con la
+    // sesión real. En iOS a veces queda "pegado" un instructor viejo en localStorage
+    // (por el caché agresivo de Safari/PWA) mientras la sesión activa es de otro
+    // usuario — sin esto, se mostraba primero el instructor cacheado y recién
+    // después corregía. Se valida contra la tabla usuarios antes de pintar nada.
+    const { data: usuario } = await sb.from('usuarios').select('rol, instructor_id').eq('id', data.session.user.id).single();
+    if (usuario) {
+      const idCacheado = localStorage.getItem('vertex_instructor_id');
+      const idReal = usuario.instructor_id ? String(usuario.instructor_id) : null;
+      const rolDesactualizado = usuario.rol && usuario.rol !== localStorage.getItem('vertex_rol');
+      const idDesactualizado = idReal && idReal !== idCacheado;
+      if (rolDesactualizado || idDesactualizado) {
+        localStorage.setItem('vertex_rol', usuario.rol);
+        if (idReal) localStorage.setItem('vertex_instructor_id', idReal);
+        if (!sessionStorage.getItem('vertex_id_corregido')) {
+          sessionStorage.setItem('vertex_id_corregido', '1');
+          window.location.reload();
+          return;
+        }
+      }
+      sessionStorage.removeItem('vertex_id_corregido');
+      if (usuario.rol && usuario.rol !== 'instructor') { window.location.href = 'vertex_panel.html'; return; }
+    }
+
     const rol = localStorage.getItem('vertex_rol');
     if (rol && rol !== 'instructor') { window.location.href = 'vertex_panel.html'; return; }
     const email = localStorage.getItem('vertex_email') || data.session.user.email || '';
