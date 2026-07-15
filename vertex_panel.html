@@ -14,8 +14,32 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Vertex">
+<style>
+  #vertex-splash{position:fixed;inset:0;z-index:99999;background:#1A1F2E;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s ease}
+  #vertex-splash.vs-hide{opacity:0;pointer-events:none}
+  #vertex-splash .vs-logo{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600;color:#fff;letter-spacing:3px}
+  #vertex-splash .vs-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:6px;letter-spacing:.4px}
+</style>
 </head>
 <body>
+
+<!-- Splash de apertura — solo en modo standalone (PWA instalada), no se repite si vuelve de background -->
+<div id="vertex-splash"><div class="vs-logo">VERTEX</div><div class="vs-sub">Cerro Bayo — Villa La Angostura</div></div>
+<script>
+(function(){
+  var splash = document.getElementById('vertex-splash');
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if (!isStandalone || sessionStorage.getItem('vertex_splash_shown')) {
+    splash.style.display = 'none';
+    return;
+  }
+  sessionStorage.setItem('vertex_splash_shown', '1');
+  setTimeout(function(){
+    splash.classList.add('vs-hide');
+    setTimeout(function(){ splash.style.display = 'none'; }, 400);
+  }, 900);
+})();
+</script>
 <button class="menu-toggle" id="menuBtn"><span></span><span></span><span></span></button>
 <div class="overlay" id="overlay"></div>
 
@@ -1530,8 +1554,23 @@ const sbAuthAux = createClient(
 );
 
 // Auth check
-sb.auth.getSession().then(({data}) => {
+sb.auth.getSession().then(async ({data}) => {
   if (!data?.session) { window.location.href='vertex_login.html'; return; }
+
+  // Validar rol/email cacheados contra la sesión real (mismo fix que en vertex_instructor.html)
+  const { data: usuario } = await sb.from('usuarios').select('rol').eq('id', data.session.user.id).single();
+  const emailReal = data.session.user.email || '';
+  if (localStorage.getItem('vertex_email') !== emailReal) localStorage.setItem('vertex_email', emailReal);
+  if (usuario?.rol && usuario.rol !== localStorage.getItem('vertex_rol')) {
+    localStorage.setItem('vertex_rol', usuario.rol);
+    if (!sessionStorage.getItem('vertex_id_corregido')) {
+      sessionStorage.setItem('vertex_id_corregido', '1');
+      window.location.reload();
+      return;
+    }
+  }
+  sessionStorage.removeItem('vertex_id_corregido');
+
   const rol = localStorage.getItem('vertex_rol');
   if (rol==='instructor') { window.location.href='vertex_instructor.html'; return; }
   const email = localStorage.getItem('vertex_email')||'';
@@ -5200,16 +5239,13 @@ document.getElementById('f-fecha-esc').addEventListener('change', loadEscGruposH
 document.getElementById('f-fecha-ses').addEventListener('change', loadEscSesiones);
 document.getElementById('f-estado-ses').addEventListener('change', loadEscSesiones);
 
-// Bloquear overscroll bounce en iOS cuando está en el tope
-(function() {
-  let lastY = 0;
-  document.addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    const scrollable = e.target.closest('.modal-body, .sidebar, #pres-lista, #dci-lista, #mci-lista, [style*="overflow-y:auto"]');
-    if (scrollable) return;
-    if (e.touches[0].clientY > lastY && window.scrollY <= 0) e.preventDefault();
-  }, { passive: false });
-})();
+// Nota: el rebote elástico de iOS ya se bloquea correctamente por CSS
+// (html,body{overscroll-behavior:none} arriba). Había acá además un bloqueador
+// manual por JS (touchmove + preventDefault) que era redundante y tenía un bug:
+// como la página siempre arranca en scrollY=0, el primer touchmove con cualquier
+// componente hacia abajo disparaba preventDefault() y el navegador cancelaba el
+// scroll para todo el gesto — dejando la lista de Clientes "trabada", solo
+// arrastrable manualmente. Se saca; overscroll-behavior alcanza y no rompe nada.
 
 // Realtime: actualización en vivo sin polling (WebSocket, no gasta I/O)
 sb.channel('vertex-live')
