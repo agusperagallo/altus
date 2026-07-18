@@ -1,0 +1,1224 @@
+// ═══════════════════════════════════════════════════════════════
+// VERTEX INSTRUCTOR — ÍNDICE
+// Buscá el nombre de la sección (Ctrl+F) o saltá directo a la línea.
+// ═══════════════════════════════════════════════════════════════
+// L50    PUSH NOTIFICATIONS
+// L293   PASAR LISTA (asistencia de niños)
+// L434   MIS GRUPOS (siempre visibles, no dependen de sesión activa)
+// L864   RANKING
+// L879   CONFIGURACIÓN DE RANKING — qué componentes cuentan (definida por el supervisor)
+// L938   Actualizar panel del dashboard
+// L972   Actualizar panel de pestaña Puntaje
+// L995   REALTIME — refrescar cuando se asigna/cancela una clase
+// L1007  MINI HEADER AL HACER SCROLL
+// L1030  AVISO 30 MINUTOS ANTES
+// ═══════════════════════════════════════════════════════════════
+
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://pngtxnpywchizyyynuyb.supabase.co',
+    'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
+  );
+
+  // ID del instructor logueado
+  const INSTRUCTOR_ID = localStorage.getItem('vertex_instructor_id') || null;
+
+  // Registrar Service Worker para modo offline
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        setTimeout(() => suscribirPushNotifications(reg), 3000);
+
+        // Detectar nueva versión del SW
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              mostrarBannerActualizacion();
+            }
+          });
+        });
+      })
+      .catch(e => console.warn('SW:', e));
+
+    // Escuchar mensaje del SW cuando se activa
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'SW_UPDATED') mostrarBannerActualizacion();
+    });
+  }
+
+  function mostrarBannerActualizacion() {
+    let banner = document.getElementById('update-banner');
+    if (banner) return;
+    banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#1D9E75;color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-weight:500;font-family:"DM Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:12px';
+    banner.innerHTML = '✨ Hay una nueva versión de Vertex <button onclick="window.location.reload()" style="background:#fff;color:#0F6E56;border:none;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Actualizar</button>';
+    document.body.prepend(banner);
+  }
+
+  // ── PUSH NOTIFICATIONS ────────────────────────────────────
+  async function suscribirPushNotifications(reg) {
+    if (!INSTRUCTOR_ID) return;
+    if (!('PushManager' in window)) return; // no soportado
+
+    // Verificar si ya está suscripto
+    const existente = await reg.pushManager.getSubscription();
+    if (existente) {
+      await guardarSuscripcion(existente);
+      return;
+    }
+
+    // Pedir permiso
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') return;
+
+    // Suscribir
+    try {
+      const VAPID_PUBLIC = 'BNvZ7Uu2fD5M39jlDtxq7r9N1x1SQKrD-7sBexYjDkiDG-6rQk_asIdYTF905hvuD_KskIvQi7Xmgy_fCU3VPHE';
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+      });
+      await guardarSuscripcion(sub);
+      console.log('[Vertex Push] Suscripción registrada ✓');
+    } catch(e) {
+      console.warn('[Vertex Push] Error al suscribir:', e);
+    }
+  }
+
+  async function guardarSuscripcion(sub) {
+    const json = sub.toJSON();
+    await sb.from('push_subscriptions').upsert({
+      instructor_id: INSTRUCTOR_ID,
+      endpoint: json.endpoint,
+      p256dh:   json.keys?.p256dh,
+      auth:     json.keys?.auth,
+    }, { onConflict: 'instructor_id,endpoint' });
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = window.atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  // Auth check y datos del usuario
+  sb.auth.getSession().then(async ({ data }) => {
+    if (!data?.session) { window.location.href = 'vertex_login.html'; return; }
+
+    // Validar que el instructor_id/rol cacheados en localStorage coincidan con la
+    // sesión real. En iOS a veces queda "pegado" un instructor viejo en localStorage
+    // (por el caché agresivo de Safari/PWA) mientras la sesión activa es de otro
+    // usuario — sin esto, se mostraba primero el instructor cacheado y recién
+    // después corregía. Se valida contra la tabla usuarios antes de pintar nada.
+    const { data: usuario } = await sb.from('usuarios').select('rol, instructor_id').eq('id', data.session.user.id).single();
+    if (usuario) {
+      const idCacheado = localStorage.getItem('vertex_instructor_id');
+      const idReal = usuario.instructor_id ? String(usuario.instructor_id) : null;
+      const rolDesactualizado = usuario.rol && usuario.rol !== localStorage.getItem('vertex_rol');
+      const idDesactualizado = idReal && idReal !== idCacheado;
+      if (rolDesactualizado || idDesactualizado) {
+        localStorage.setItem('vertex_rol', usuario.rol);
+        if (idReal) localStorage.setItem('vertex_instructor_id', idReal);
+        if (!sessionStorage.getItem('vertex_id_corregido')) {
+          sessionStorage.setItem('vertex_id_corregido', '1');
+          window.location.reload();
+          return;
+        }
+      }
+      sessionStorage.removeItem('vertex_id_corregido');
+      if (usuario.rol && usuario.rol !== 'instructor') { window.location.href = 'vertex_panel.html'; return; }
+    }
+
+    const rol = localStorage.getItem('vertex_rol');
+    if (rol && rol !== 'instructor') { window.location.href = 'vertex_panel.html'; return; }
+    const email = localStorage.getItem('vertex_email') || data.session.user.email || '';
+    const ini = email.split('@')[0].slice(0,2).toUpperCase();
+    document.getElementById('inst-avatar').textContent = ini;
+    document.getElementById('ipm-email').textContent = email;
+    document.getElementById('ipm-email-modal').textContent = email;
+
+    // Cargar nombre del instructor
+    if (INSTRUCTOR_ID) {
+      sb.from('instructores').select('nombre').eq('id', INSTRUCTOR_ID).single().then(({ data: inst }) => {
+        if (!inst) return;
+        const nombre = inst.nombre;
+        const primerNombre = nombre.split(' ')[0];
+        const hora = new Date().getHours();
+        const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+        document.getElementById('inst-nombre-top').textContent = nombre;
+        document.getElementById('ipm-nombre').textContent = nombre;
+        const ini2 = nombre.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+        document.getElementById('inst-avatar').textContent = ini2;
+        const greetEl = document.querySelector('.greeting-title');
+        if (greetEl) greetEl.textContent = `${saludo}, ${primerNombre}`;
+      });
+    }
+  });
+
+  // Menu de perfil
+  document.getElementById('inst-avatar').addEventListener('click', e => {
+    e.stopPropagation();
+    const menu = document.getElementById('inst-profile-menu');
+    const isOpen = menu.style.display !== 'none';
+    menu.style.display = isOpen ? 'none' : 'block';
+  });
+  document.addEventListener('click', () => {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+  });
+
+  function abrirPerfilInstructor() {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+    document.getElementById('inst-pass1').value = '';
+    document.getElementById('inst-pass2').value = '';
+    abrirModal('modal-perfil-inst');
+  }
+
+  async function guardarPerfilInstructor() {
+    const pass1 = document.getElementById('inst-pass1').value;
+    const pass2 = document.getElementById('inst-pass2').value;
+    if (!pass1 && !pass2) { cerrarModal('modal-perfil-inst'); return; }
+    if (pass1.length < 6) { toast('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (pass1 !== pass2) { toast('Las contraseñas no coinciden'); return; }
+    const { error } = await sb.auth.updateUser({ password: pass1 });
+    if (error) { toast('Error al cambiar la contraseña'); return; }
+    cerrarModal('modal-perfil-inst');
+    toast('Contraseña actualizada correctamente');
+  }
+
+  window.abrirPerfilInstructor = abrirPerfilInstructor;
+  window.guardarPerfilInstructor = guardarPerfilInstructor;
+
+  // --- FECHA ---
+  const hoy = new Date();
+  const fechaStr = hoy.toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Argentina/Buenos_Aires' });
+  document.getElementById('fecha-sub').textContent = fechaStr;
+  const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+
+  // --- PRESENCIA DEL DÍA ---
+  const HORA_LIMITE = 17;
+  const horaActual = hoy.getHours() + hoy.getMinutes() / 60;
+  const minRestantes = Math.max(0, HORA_LIMITE * 60 - (hoy.getHours() * 60 + hoy.getMinutes()));
+
+  function formatMin(min) {
+    if (min >= 60) return `${Math.floor(min/60)} h ${min%60 > 0 ? min%60 + ' min' : ''}`.trim();
+    return `${min} min`;
+  }
+
+  async function verificarPresencia() {
+    if (!INSTRUCTOR_ID) {
+      // Sin login todavía, solo mostramos la UI
+      if (horaActual >= HORA_LIMITE) {
+        document.getElementById('presencia-pendiente').style.display = 'none';
+        document.getElementById('presencia-vencida').style.display = 'flex';
+      } else {
+        document.getElementById('presencia-limite-txt').textContent =
+          `Tenés ${formatMin(minRestantes)} para confirmar (límite: 17:00 hs)`;
+      }
+      return;
+    }
+
+    // Con instructor real — chequear si ya registró presencia hoy
+    const hoyAR = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+    const { data } = await sb
+      .from('asistencia')
+      .select('*')
+      .eq('instructor_id', INSTRUCTOR_ID)
+      .eq('tipo', 'presente')
+      .gte('registrado_en', hoyAR + 'T00:00:00')
+      .lte('registrado_en', hoyAR + 'T23:59:59')
+      .maybeSingle();
+
+    if (data) {
+      const hora = new Date(data.registrado_en).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+      document.getElementById('presencia-pendiente').style.display = 'none';
+      document.getElementById('presencia-ok').style.display = 'flex';
+      document.getElementById('presencia-hora-txt').textContent = `Registrada a las ${hora} hs`;
+    } else if (horaActual >= HORA_LIMITE) {
+      document.getElementById('presencia-pendiente').style.display = 'none';
+      document.getElementById('presencia-vencida').style.display = 'flex';
+    } else {
+      document.getElementById('presencia-limite-txt').textContent =
+        `Tenés ${formatMin(minRestantes)} para confirmar (límite: 17:00 hs)`;
+    }
+  }
+
+  let instModo = 'cerro';
+  let tieneEscuelita = false;
+
+  window.setInstModo = function(modo) {
+    instModo = modo;
+    const esCerro = modo === 'cerro';
+    document.getElementById('inst-sw-cerro').style.background = esCerro ? 'var(--navy)' : 'transparent';
+    document.getElementById('inst-sw-cerro').style.color = esCerro ? '#fff' : 'var(--muted)';
+    document.getElementById('inst-sw-escuelita').style.background = !esCerro ? 'var(--accent)' : 'transparent';
+    document.getElementById('inst-sw-escuelita').style.color = !esCerro ? '#fff' : 'var(--muted)';
+    document.getElementById('lista-clases').style.display = esCerro ? 'block' : 'none';
+    document.getElementById('lista-sesiones-inst').style.display = !esCerro ? 'block' : 'none';
+    document.getElementById('proximas-section').style.display = esCerro ? 'block' : 'none';
+    document.getElementById('proximas-sesiones-section').style.display = !esCerro ? 'block' : 'none';
+    document.getElementById('inst-clases-titulo').textContent = esCerro ? 'Mis clases de hoy' : 'Mis sesiones de hoy';
+    if (!esCerro) cargarSesionesEscuelita();
+  };
+
+  async function cargarSesionesEscuelita() {
+    const lista = document.getElementById('lista-sesiones-inst');
+    lista.innerHTML = '<div style="padding:16px;text-align:center;font-size:13px;color:var(--silver)">Cargando...</div>';
+    const {data:sesiones} = await sb.from('sesiones_escuelita')
+      .select('*, grupos(nombre, nivel, edad_min, edad_max)')
+      .eq('instructor_id', INSTRUCTOR_ID)
+      .eq('fecha', fechaISO)
+      .order('hora_inicio');
+    if (!sesiones?.length) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">No tenés sesiones de escuelita hoy</div>';
+      return;
+    }
+    lista.innerHTML = sesiones.map(s => {
+      const completada = s.estado === 'completada';
+      const cancelada  = s.estado === 'cancelada';
+      return `<div class="clase-item">
+        <div class="clase-hora-col">
+          <div class="clase-hora">${s.hora_inicio?.slice(0,5)||'—'}</div>
+          <div class="clase-dur">${s.duracion_horas}h</div>
+        </div>
+        <div class="clase-info">
+          <div class="clase-cliente">${s.grupos?.nombre||'—'}</div>
+          <div class="clase-meta">${s.grupos?.nivel||''} · ${s.grupos?.edad_min}-${s.grupos?.edad_max} años</div>
+        </div>
+        <div class="clase-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          ${!cancelada ? `<button class="btn-sm" style="color:var(--navy);border-color:var(--line);font-weight:500" onclick="abrirListaNinos('${s.grupo_id}','${(s.grupos?.nombre||'').replace(/'/g,"\\'")}')">📋 Lista</button>` : ''}
+          ${completada
+            ? `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`
+            : cancelada
+            ? `<span style="font-size:11px;color:var(--danger)">Cancelada</span>`
+            : `<button class="btn-sm" style="color:var(--accent2);border-color:var(--accent);font-weight:500" onclick="finalizarSesionInst('${s.id}', this)">Finalizar</button>`
+          }
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── PASAR LISTA (asistencia de niños) ──────────────
+  window.abrirListaNinos = async function(grupoId, nombreGrupo) {
+    let modal = document.getElementById('modal-lista-ninos');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-lista-ninos';
+      modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:15px;font-weight:600" id="lista-ninos-titulo">Lista</span>
+            <button onclick="cerrarListaNinos()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+          </div>
+          <div id="lista-ninos-body" style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0"></div>
+        </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrarListaNinos(); });
+  }
+  _lockScroll();
+  modal.style.display = 'flex';
+    document.getElementById('lista-ninos-titulo').textContent = nombreGrupo;
+    const body = document.getElementById('lista-ninos-body');
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:ninos} = vertexOffline.estaOnline()
+      ? await sb.from('grupo_ninos').select('*').eq('grupo_id', grupoId).eq('activo', true).order('nombre')
+      : { data: await vertexOffline.obtenerNinosOffline(grupoId) };
+    if (!ninos?.length) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Sin niños en este grupo</div>'; return; }
+
+    const ids = ninos.map(n=>n.id);
+    const {data:asist} = await sb.from('asistencia_ninos').select('nino_id, presente').eq('fecha', fechaISO).in('nino_id', ids);
+    const asistMap = {};
+    (asist||[]).forEach(a => { asistMap[a.nino_id] = a.presente; });
+
+    body.innerHTML = ninos.map(n => {
+      const estado = asistMap[n.id];
+      const alertas = [];
+      if (n.alergias && n.alergias.toLowerCase() !== 'ninguna') alertas.push(`⚠️ ${n.alergias}`);
+      if (n.medicacion && n.medicacion.toLowerCase() !== 'ninguna') alertas.push(`💊 ${n.medicacion}`);
+      if (n.condiciones_medicas) alertas.push(`🏥 ${n.condiciones_medicas}`);
+      if (n.observaciones) alertas.push(`📋 ${n.observaciones}`);
+      return `<div style="border-bottom:1px solid var(--ice2)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px ${alertas.length?'6px':'12px'} 20px">
+          <div>
+            <div style="font-size:14px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="marcarAsistNinoInst('${n.id}',true,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===true?'#0F6E56':'var(--line)'};background:${estado===true?'#E1F5EE':'#fff'};color:${estado===true?'#0F6E56':'var(--silver)'};cursor:pointer;font-size:16px">✓</button>
+            <button onclick="marcarAsistNinoInst('${n.id}',false,this)" style="width:38px;height:38px;border-radius:8px;border:1.5px solid ${estado===false?'#E24B4A':'var(--line)'};background:${estado===false?'#FEE2E2':'#fff'};color:${estado===false?'#E24B4A':'var(--silver)'};cursor:pointer;font-size:16px">✕</button>
+          </div>
+        </div>
+        ${alertas.length ? `<div style="margin:0 20px 10px;background:#FFF8E0;border:1px solid #F0D080;border-radius:6px;padding:7px 10px;display:flex;flex-direction:column;gap:3px">
+          ${alertas.map(a=>`<div style="font-size:11px;color:#7A5800">${a}</div>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  };
+
+  window.marcarAsistNinoInst = async function(ninoId, presente, btn) {
+    const grupoId = btn.closest('[data-grupo-id]')?.dataset.grupoId || null;
+    if (vertexOffline.estaOnline()) {
+      await sb.from('asistencia_ninos').upsert({
+        nino_id: ninoId, fecha: fechaISO, presente,
+        registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
+      }, {onConflict:'nino_id,fecha'});
+      toast(presente ? 'Presente registrado' : 'Ausente registrado');
+    } else {
+      await vertexOffline.marcarAsistenciaOffline(ninoId, grupoId, presente, fechaISO);
+      toast(presente ? '✓ Presente (se enviará al reconectar)' : '✗ Ausente (se enviará al reconectar)');
+    }
+    // Refrescar botones visualmente
+    const parent = btn.parentElement;
+    const btns = parent.querySelectorAll('button');
+    btns[0].style.borderColor = presente ? '#0F6E56' : 'var(--line)';
+    btns[0].style.background  = presente ? '#E1F5EE' : '#fff';
+    btns[0].style.color       = presente ? '#0F6E56' : 'var(--silver)';
+    btns[1].style.borderColor = !presente ? '#E24B4A' : 'var(--line)';
+    btns[1].style.background  = !presente ? '#FEE2E2' : '#fff';
+    btns[1].style.color       = !presente ? '#E24B4A' : 'var(--silver)';
+  };
+
+  // Calcular edad desde fecha_nacimiento
+function calcEdad(fechaNac) {
+  if (!fechaNac) return null;
+  const hoy = new Date();
+  const nac = new Date(fechaNac + 'T12:00:00');
+  let edad = hoy.getFullYear() - nac.getFullYear();
+  if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) edad--;
+  return edad;
+}
+
+window.cerrarListaNinos = function() {
+    const modal = document.getElementById('modal-lista-ninos');
+    if (!modal) return;
+    modal.style.display = 'none';
+    _unlockScroll();
+  };
+
+  window.cerrarFichaNinoInst = function() {
+    const modal = document.getElementById('modal-ficha-nino-inst');
+    if (!modal) return;
+    modal.style.display = 'none';
+    _unlockScroll();
+  };
+
+  window.finalizarSesionInst = async function(sesionId, btn) {
+    btn.textContent = 'Guardando...'; btn.disabled = true;
+    await sb.from('sesiones_escuelita').update({estado:'completada'}).eq('id', sesionId);
+    cargarSesionesEscuelita();
+    toast('Sesión finalizada');
+  };
+
+  // Verificar si el instructor tiene escuelita y mostrar switch
+  async function checkEscuelita() {
+    if (!INSTRUCTOR_ID) return;
+    const {data} = await sb.from('instructores')
+      .select('escuelita, activo_cerro')
+      .eq('id', INSTRUCTOR_ID).single();
+
+    const tieneCerro    = data?.activo_cerro !== false;
+    const tieneEscuelitaFlag = !!data?.escuelita;
+    tieneEscuelita = tieneEscuelitaFlag;
+
+    // Switch Escuela/Escuelita — solo mostrar si tiene los dos
+    const modoSwitch = document.getElementById('inst-modo-switch');
+    if (tieneCerro && tieneEscuelitaFlag) {
+      modoSwitch.style.display = 'block';
+    } else {
+      modoSwitch.style.display = 'none';
+      // Ir directo al modo que corresponde
+      if (!tieneCerro && tieneEscuelitaFlag) {
+        setInstModo('escuelita');
+      } else {
+        setInstModo('cerro');
+      }
+    }
+
+    // Pestaña Mis grupos — solo si tiene escuelita
+    document.getElementById('tab-grupos').style.display = tieneEscuelitaFlag ? 'flex' : 'none';
+  }
+  // ── MIS GRUPOS (siempre visibles, no dependen de sesión activa) ──
+  let misGruposCargados = false;
+  async function cargarMisGrupos() {
+    if (!INSTRUCTOR_ID) return;
+    const lista = document.getElementById('lista-mis-grupos');
+    lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:grupos} = await sb.from('grupos').select('*, grupo_ninos(id, nombre, edad, activo)').eq('instructor_id', INSTRUCTOR_ID).eq('activo', true).order('nombre');
+
+    document.getElementById('grupos-meta').textContent = `${grupos?.length||0} grupos`;
+
+    if (!grupos?.length) {
+      lista.innerHTML = '<div style="padding:24px;text-align:center;color:var(--silver);font-size:13px">No tenés grupos asignados</div>';
+      return;
+    }
+
+    lista.innerHTML = grupos.map(g => {
+      const ninos = (g.grupo_ninos||[]).filter(n=>n.activo);
+      return `<div style="border-bottom:1px solid var(--ice2)">
+        <div style="padding:14px 16px 8px">
+          <div style="font-size:14px;font-weight:600;color:var(--navy)">${g.nombre}</div>
+          <div style="font-size:11px;color:var(--silver);margin-top:1px">${g.nivel||''} · ${g.edad_min}-${g.edad_max} años · ${ninos.length} niños</div>
+        </div>
+        <div style="padding:0 16px 12px">
+          ${ninos.map(n => `<div onclick="abrirFichaNinoInst('${n.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--ice2);border-radius:8px;margin-bottom:6px;cursor:pointer">
+            <div style="font-size:13px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:11px;color:var(--silver)">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años ›</div>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--silver);padding:8px 0">Sin niños en este grupo</div>'}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  window.cargarMisGrupos = cargarMisGrupos;
+
+  // Ficha del niño — sin teléfono
+  window.abrirFichaNinoInst = async function(ninoId) {
+    let modal = document.getElementById('modal-ficha-nino-inst');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-ficha-nino-inst';
+      modal.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center';
+      modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--ice2);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:15px;font-weight:600" id="ffi-titulo">Ficha</span>
+            <button onclick="cerrarFichaNinoInst()" style="background:none;border:none;font-size:20px;color:var(--silver);cursor:pointer">&times;</button>
+          </div>
+          <div id="ffi-body" style="overflow-y:auto;padding:16px 20px"></div>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target === modal) cerrarFichaNinoInst(); });
+    } else {
+      modal.style.display = 'flex';
+    }
+    _lockScroll();
+    const body = document.getElementById('ffi-body');
+    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">Cargando...</div>';
+
+    const {data:n} = await sb.from('grupo_ninos').select('*').eq('id', ninoId).single();
+    if (!n) { body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver)">No encontrado</div>'; return; }
+
+    document.getElementById('ffi-titulo').textContent = n.nombre;
+
+    const seccion = (titulo, items) => items.some(i=>i[1]) ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">${titulo}</div>
+      ${items.filter(i=>i[1]).map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--ice2)"><span style="font-size:12px;color:var(--silver)">${label}</span><span style="font-size:13px;font-weight:500;text-align:right;max-width:60%">${val}</span></div>`).join('')}
+    ` : '';
+
+    body.innerHTML = `
+      <div style="display:flex;gap:16px;margin-bottom:8px">
+        <div><div style="font-size:11px;color:var(--silver)">Edad</div><div style="font-size:15px;font-weight:600">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</div></div>
+        ${n.fecha_nacimiento ? `<div><div style="font-size:11px;color:var(--silver)">Nacimiento</div><div style="font-size:15px;font-weight:600">${new Date(n.fecha_nacimiento+'T12:00:00').toLocaleDateString('es-AR')}</div></div>` : ''}
+      </div>
+
+      ${(n.alergias || n.condiciones_medicas || n.medicacion) ? `
+      <div style="background:var(--danger-bg);border-radius:10px;padding:12px 14px;margin-top:14px">
+        <div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⚠️ Información médica</div>
+        ${n.alergias ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Alergias:</strong> ${n.alergias}</div>` : ''}
+        ${n.condiciones_medicas ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Condiciones:</strong> ${n.condiciones_medicas}</div>` : ''}
+        ${n.medicacion ? `<div style="font-size:13px;color:var(--text)"><strong>Medicación:</strong> ${n.medicacion}</div>` : ''}
+      </div>` : ''}
+
+      ${seccion('Tutor / Padre 1', [['Nombre', n.tutor1_nombre], ['Relación', n.tutor1_relacion]])}
+      ${seccion('Tutor / Padre 2', [['Nombre', n.tutor2_nombre], ['Relación', n.tutor2_relacion]])}
+
+      ${n.observaciones ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">Observaciones</div>
+      <div style="font-size:13px;color:var(--text);background:var(--ice2);border-radius:8px;padding:10px 12px">${n.observaciones}</div>
+      ` : ''}
+
+      ${n.dias_semana?.length ? `
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">Días que asiste</div>
+      <div style="font-size:13px;color:var(--text)">${n.indefinido ? 'Indefinido — ' : ''}${n.dias_semana.join(', ')}</div>
+      ` : ''}
+
+      <div style="font-size:10px;color:var(--silver);margin-top:18px;padding-top:12px;border-top:1px solid var(--ice2)">Para contactar a la familia, consultá con el coordinador.</div>
+    `;
+  };
+  window.toggleProximasSesiones = async function() {
+    const lista  = document.getElementById('lista-proximas-sesiones');
+    const arrow  = document.getElementById('prox-ses-arrow');
+    const btn    = document.getElementById('btn-proximas-ses');
+    const open   = lista.style.display === 'none';
+    lista.style.display  = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+    btn.querySelector('span').textContent = open ? 'Ocultar próximas sesiones' : 'Ver próximas sesiones';
+    if (open && !proximasSesionesCargadas) {
+      proximasSesionesCargadas = true;
+      lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver)">Cargando...</div>';
+      const {data} = await sb.from('sesiones_escuelita')
+        .select('*, grupos(nombre, nivel, edad_min, edad_max)')
+        .eq('instructor_id', INSTRUCTOR_ID)
+        .eq('estado', 'programada')
+        .gt('fecha', fechaISO)
+        .order('fecha').order('hora_inicio');
+      if (!data?.length) {
+        lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver);text-align:center">No tenés sesiones futuras programadas</div>';
+        return;
+      }
+      lista.innerHTML = data.map(s => {
+        const fechaStr = new Date(s.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+        return `<div style="padding:12px 16px;border-top:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--accent2)">${fechaStr}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-top:2px">${s.grupos?.nombre||'—'}</div>
+            <div style="font-size:11px;color:var(--silver);margin-top:1px">${s.grupos?.nivel||''} · ${s.grupos?.edad_min}-${s.grupos?.edad_max} años · ${s.hora_inicio?.slice(0,5)} hs</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);flex-shrink:0">${s.duracion_horas}h</div>
+        </div>`;
+      }).join('');
+    }
+  };
+
+  let proximasCargadas = false;
+  window.toggleProximas = async function() {
+    const lista = document.getElementById('lista-proximas');
+    const arrow = document.getElementById('prox-arrow');
+    const btn   = document.getElementById('btn-proximas');
+    const open  = lista.style.display === 'none';
+    lista.style.display = open ? 'block' : 'none';
+    arrow.style.transform = open ? 'rotate(180deg)' : '';
+    btn.querySelector('span').textContent = open ? 'Ocultar próximas clases' : 'Ver próximas clases';
+    if (open && !proximasCargadas) {
+      proximasCargadas = true;
+      lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver)">Cargando...</div>';
+      if (!INSTRUCTOR_ID) { lista.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+      const {data} = await sb.from('clases')
+        .select('*, clientes(nombre, rango_etario)')
+        .eq('instructor_id', INSTRUCTOR_ID)
+        .eq('estado', 'asignada')
+        .gt('fecha', fechaISO)
+        .order('fecha')
+        .order('hora_inicio');
+      if (!data?.length) {
+        lista.innerHTML = '<div style="padding:12px 16px;font-size:13px;color:var(--silver);text-align:center">No tenés clases futuras asignadas</div>';
+        return;
+      }
+      lista.innerHTML = data.map(c => {
+        const fechaStr = new Date(c.fecha+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+        return `<div style="padding:12px 16px;border-top:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--accent2)">${fechaStr}</div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);margin-top:2px">${c.clientes?.nombre||'—'}</div>
+            <div style="font-size:11px;color:var(--silver);margin-top:1px">${c.disciplina} · ${c.nivel} · ${c.hora_inicio?.slice(0,5)} hs</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);flex-shrink:0">${c.duracion_horas}h</div>
+        </div>`;
+      }).join('');
+    }
+  };
+
+  window.confirmarPresencia = async function() {
+    const ahora = new Date();
+    const horaStr = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Argentina/Buenos_Aires' });
+
+    if (INSTRUCTOR_ID) {
+      await sb.from('asistencia').insert({
+        instructor_id: INSTRUCTOR_ID,
+        clase_id: null,
+        tipo: 'presente',
+        registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
+      });
+    }
+
+    document.getElementById('presencia-pendiente').style.display = 'none';
+    document.getElementById('presencia-ok').style.display = 'flex';
+    document.getElementById('presencia-hora-txt').textContent = `Registrada a las ${horaStr} hs`;
+    toast('Presencia registrada');
+  };
+
+  // --- CARGAR CLASES DEL DÍA ---
+  async function cargarClases() {
+    if (!INSTRUCTOR_ID) return;
+
+    let clases, error;
+
+    if (vertexOffline.estaOnline()) {
+      // Con conexión: traer de Supabase y cachear
+      const res = await sb.from('clases').select('*, clientes(nombre, rango_etario), punto_encuentro').eq('instructor_id', INSTRUCTOR_ID).eq('fecha', fechaISO).neq('estado','cancelada').order('hora_inicio');
+      clases = res.data; error = res.error;
+      if (clases?.length) vertexOffline.cachearDatosDelDia(INSTRUCTOR_ID, null);
+    } else {
+      // Sin conexión: usar caché local
+      clases = await vertexOffline.obtenerClasesOffline();
+    }
+
+    if (error) return;
+
+    // Actualizar stat de clases
+    const total = clases?.length || 0;
+    const confirmadas = clases?.filter(c => c.instructor_confirmo).length || 0;
+    document.getElementById('stat-clases-hoy') && (document.getElementById('stat-clases-hoy').textContent = total);
+    document.getElementById('stat-clases-sub') && (document.getElementById('stat-clases-sub').textContent = total === 0 ? 'Sin clases hoy' : `${confirmadas} confirmada${confirmadas !== 1 ? 's' : ''}`);
+
+    const lista = document.getElementById('lista-clases');
+    lista.innerHTML = '';
+
+    if (!clases?.length) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:var(--silver);font-size:13px">No tenés clases asignadas hoy</div>';
+      document.getElementById('panel-clases-meta') && (document.getElementById('panel-clases-meta').textContent = '0 clases');
+      return;
+    }
+
+    document.getElementById('panel-clases-meta') && (document.getElementById('panel-clases-meta').textContent = `${total} clase${total !== 1 ? 's' : ''}`);
+
+    clases.forEach((c, i) => {
+      const confirmado = c.instructor_confirmo;
+      const completada = c.estado === 'completada';
+      const horaInicio = c.hora_inicio?.slice(0,5) || '00:00';
+      const [hh, mm] = horaInicio.split(':').map(Number);
+      const claseInicio = new Date(); claseInicio.setHours(hh, mm, 0, 0);
+      const yaEmpezó = new Date() >= claseInicio;
+
+      lista.innerHTML += `
+        <div class="clase-item">
+          <div class="clase-hora-col">
+            <div class="clase-hora">${horaInicio}</div>
+            <div class="clase-dur">${c.duracion_horas} h</div>
+          </div>
+          <div class="clase-info">
+            <div class="clase-cliente">${c.clientes?.nombre || '—'}</div>
+            <div class="clase-meta">${c.disciplina} · Nivel ${c.nivel} · ${c.clientes?.rango_etario || ''}</div>
+            ${c.punto_encuentro ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;font-weight:500">📍 ${c.punto_encuentro}</div>` : ''}
+          </div>
+          <div class="clase-actions">
+            ${completada
+              ? `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`
+              : confirmado && yaEmpezó
+              ? `<button class="btn-sm" style="color:var(--accent2);border-color:var(--accent);font-weight:500" onclick="abrirModalFinalizar('${c.id}','${c.clientes?.nombre||'—'}','${c.disciplina} · Nivel ${c.nivel}','${horaInicio}','${c.duracion_horas} h', this)">Finalizar</button>`
+              : confirmado
+              ? `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`
+              : `<button class="btn-sm" onclick="confirmarClase('${c.id}', this)">Confirmar</button>
+                 <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('${c.clientes?.nombre}','${horaInicio}','${c.id}')">Ausencia</button>`
+            }
+          </div>
+        </div>`;
+    });
+
+    document.querySelector('#panel-clases .panel-meta').textContent = `${clases.length} clases`;
+  }
+
+  // --- CARGAR RESEÑAS ---
+  async function cargarResenas() {
+    if (!INSTRUCTOR_ID) return;
+
+    // Primero obtener IDs de clases del instructor
+    const { data: clasesInst } = await sb.from('clases').select('id').eq('instructor_id', INSTRUCTOR_ID);
+    if (!clasesInst?.length) return;
+    const claseIds = clasesInst.map(c => c.id);
+
+    const { data } = await sb
+      .from('resenas')
+      .select('*, clases(disciplina, nivel, fecha, clientes(nombre))')
+      .in('clase_id', claseIds)
+      .order('creado_en', { ascending: false })
+      .limit(20);
+
+    if (!data?.length) return;
+
+    const lista = document.getElementById('lista-resenas');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    let total = 0, count = 0;
+    data.forEach(r => {
+      total += (r.puntaje_clase + r.puntaje_trato) / 2;
+      count++;
+      const fecha = new Date(r.creado_en).toLocaleDateString('es-AR', { day:'numeric', month:'long' });
+      lista.innerHTML += `
+        <div class="resena-item">
+          <div class="resena-top">
+            <div>
+              <div class="resena-nombre">${r.clases?.clientes?.nombre || '—'}</div>
+              <div class="resena-fecha">${fecha} · ${r.clases?.disciplina || ''} Niv. ${r.clases?.nivel || ''}</div>
+            </div>
+            <div class="resena-scores">
+              <div class="resena-score">Clase <strong>${r.puntaje_clase}/5</strong></div>
+              <div class="resena-score">Trato <strong>${r.puntaje_trato}/5</strong></div>
+            </div>
+          </div>
+          ${r.comentario ? `<div class="resena-texto">"${r.comentario}"</div>` : ''}
+        </div>`;
+    });
+
+    if (count > 0) {
+      document.querySelector('#panel-resenas .panel-meta')?.textContent ||
+        `${count} reseñas · Prom. ${(total/count).toFixed(1)}`;
+    }
+  }
+
+  // --- CARGAR RANKING ---
+  async function cargarRanking() {
+    // Fuente única: loadRankingInst() actualiza dashboard y pestaña Puntaje
+    await loadRankingInst();
+  }
+
+  // --- CONFIRMAR CLASE ---
+  window.confirmarClase = async function(claseId, btn) {
+    if (claseId && claseId.includes('-')) {
+      await sb.from('clases').update({ instructor_confirmo: true }).eq('id', claseId);
+    }
+    if (btn) {
+      btn.textContent = 'Confirmada';
+      btn.classList.add('confirmado');
+      btn.nextElementSibling && (btn.nextElementSibling.style.display = 'none');
+      const div = btn.parentElement;
+      div.innerHTML = `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`;
+    }
+    toast('Asistencia confirmada');
+  };
+
+  let claseAFinalizar = null;
+
+  window.abrirModalFinalizar = function(claseId, cliente, detalle, hora, duracion, btn) {
+    claseAFinalizar = { id: claseId, btn };
+    document.getElementById('fin-cliente').textContent = cliente;
+    document.getElementById('fin-detalle').textContent = detalle;
+    document.getElementById('fin-hora').textContent = hora;
+    document.getElementById('fin-dur').textContent = duracion;
+    abrirModal('modal-finalizar');
+  };
+
+  document.getElementById('btn-confirmar-fin').addEventListener('click', async() => {
+    if (!claseAFinalizar) return;
+    const btn = document.getElementById('btn-confirmar-fin');
+    btn.textContent = 'Finalizando...';
+    btn.disabled = true;
+    await sb.from('clases').update({ estado: 'completada' }).eq('id', claseAFinalizar.id);
+    try { await sb.rpc('calcular_ranking'); } catch(e) {}
+    if (claseAFinalizar.btn) {
+      const div = claseAFinalizar.btn.parentElement;
+      div.innerHTML = `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`;
+    }
+    cerrarModal('modal-finalizar');
+    toast('Clase finalizada correctamente');
+    claseAFinalizar = null;
+    btn.textContent = 'Confirmar finalización';
+    btn.disabled = false;
+  });
+
+  window.finalizarClase = async function(claseId, btn) {
+    window.abrirModalFinalizar(claseId, '—', '—', '—', '—', btn);
+  };
+
+  // --- AUSENCIA ---
+  let claseAusenteId = null;
+  window.abrirAusencia = function(cliente, hora, claseId) {
+    claseAusenteId = claseId || null;
+    document.getElementById('ausencia-info').textContent = `${cliente} — ${hora} hs`;
+    document.getElementById('ausencia-meta').textContent = 'La clase quedará sin asignación';
+    abrirModal('modal-ausencia');
+  };
+
+  window.reportarAusencia = async function() {
+    if (claseAusenteId) {
+      await sb.from('asistencia').insert({ clase_id: claseAusenteId, tipo: 'ausente_sin_aviso' });
+    }
+    cerrarModal('modal-ausencia');
+    toast('Ausencia reportada al equipo');
+    claseAusenteId = null;
+  };
+
+  // --- GUARDAR PREFERENCIAS ---
+  window.guardarPref = async function() {
+    if (!INSTRUCTOR_ID) { cerrarModal('modal-pref'); return; }
+
+    const disciplinas = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="disc"]')].map(b=>b.dataset.val);
+    const rangos     = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="rango"]')].map(b=>b.dataset.val);
+    const nivelMax   = [...document.querySelectorAll('#modal-pref .modal-tag.active[data-tipo="nivel"]')]
+      .map(b=>parseInt(b.dataset.val)).reduce((a,b)=>Math.max(a,b), 1);
+
+    // Borrar prefs actuales y reinsertar
+    await sb.from('instructor_preferencias').delete().eq('instructor_id', INSTRUCTOR_ID);
+
+    if (disciplinas.length && rangos.length) {
+      const prefs = [];
+      disciplinas.forEach(d => rangos.forEach(r => prefs.push({
+        instructor_id: INSTRUCTOR_ID, disciplina: d,
+        nivel_min: 1, nivel_max: nivelMax, rango_etario: r
+      })));
+      const {error} = await sb.from('instructor_preferencias').insert(prefs);
+      if (error) { toast('Error al guardar','err'); return; }
+    }
+
+    cerrarModal('modal-pref');
+    toast('Preferencias guardadas ✓');
+  };
+
+  // Cargar preferencias actuales al abrir el modal
+  window.abrirPrefModal = async function() {
+    if (INSTRUCTOR_ID) {
+      const {data:prefs} = await sb.from('instructor_preferencias').select('*').eq('instructor_id', INSTRUCTOR_ID);
+      const discs  = [...new Set((prefs||[]).map(p=>p.disciplina))];
+      const rangos = [...new Set((prefs||[]).map(p=>p.rango_etario))];
+      const nivelMax = (prefs||[]).reduce((m,p)=>Math.max(m,p.nivel_max||1), 1);
+
+      const discMap = {'Esqui':'Esquí','Snowboard':'Snowboard','Esqui Adaptado':'Esquí Adaptado'};
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="disc"]').forEach(b => {
+        b.classList.toggle('active', discs.includes(b.dataset.val));
+      });
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="rango"]').forEach(b => {
+        b.classList.toggle('active', rangos.includes(b.dataset.val));
+      });
+      document.querySelectorAll('#modal-pref .modal-tag[data-tipo="nivel"]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.val) <= nivelMax);
+      });
+    }
+    abrirModal('modal-pref');
+  };
+
+  // ── RANKING ──────────────────────────────────────────────────
+  function rankSkeletonHTML() {
+    const barSk = () => `<div class="bar-row">
+      <span class="sk" style="width:110px;height:10px"></span>
+      <div class="bar-track"><span class="sk" style="width:100%;height:100%;border-radius:3px"></span></div>
+      <span class="sk" style="width:24px;height:10px"></span>
+    </div>`;
+    return `<div class="rank-body">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span class="sk" style="width:92px;height:44px;border-radius:8px"></span>
+      </div>
+      <span class="sk" style="width:150px;height:12px;border-radius:4px;margin-top:8px;margin-bottom:18px"></span>
+      ${[1,2,3,4,5].map(barSk).join('')}
+    </div>`;
+  }
+  // ── CONFIGURACIÓN DE RANKING — qué componentes cuentan (definida por el supervisor) ──
+  const RANKING_COMPONENTES = [
+    {key:'puntaje_opinion',      cfgKey:'ranking_incluye_opinion'},
+    {key:'puntaje_asistencia',   cfgKey:'ranking_incluye_asistencia'},
+    {key:'puntaje_fidelizacion', cfgKey:'ranking_incluye_fidelizacion'},
+    {key:'puntaje_historico',    cfgKey:'ranking_incluye_historico'},
+    {key:'puntaje_perfil',       cfgKey:'ranking_incluye_perfil'},
+  ];
+  let RANKING_CFG = {ranking_incluye_opinion:true, ranking_incluye_asistencia:true, ranking_incluye_fidelizacion:true, ranking_incluye_historico:true, ranking_incluye_perfil:true};
+  function calcularPuntajeEfectivo(snapshot) {
+    if (!snapshot) return null;
+    const activos = RANKING_COMPONENTES.filter(c => RANKING_CFG[c.cfgKey] !== false);
+    const valores = activos.map(c => snapshot[c.key]).filter(v => v != null);
+    if (!valores.length) return null;
+    return valores.reduce((a,b)=>a+b, 0) / valores.length;
+  }
+
+  window.loadRankingInst = async function() {
+    if (!INSTRUCTOR_ID) return;
+    const cont = document.getElementById('rank-body-content');
+    if (cont) cont.innerHTML = rankSkeletonHTML();
+
+    const [{data:insts}, {data:cfg}] = await Promise.all([
+      sb.from('instructores').select('id, nombre, ranking_snapshot(*)').eq('activo', true),
+      sb.from('configuracion').select(RANKING_COMPONENTES.map(c=>c.cfgKey).join(',')).single()
+    ]);
+    if (cfg) RANKING_CFG = cfg;
+
+    if (!insts?.length) { if(cont) cont.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+
+    const ranked = insts.map(i => {
+      const snap = i.ranking_snapshot?.[i.ranking_snapshot.length-1];
+      return { id:i.id, nombre:i.nombre, total: calcularPuntajeEfectivo(snap),
+        opinion:snap?.puntaje_opinion, asistencia:snap?.puntaje_asistencia,
+        fidelizacion:snap?.puntaje_fidelizacion, historial:snap?.puntaje_historico,
+        perfil:snap?.puntaje_perfil };
+    }).sort((a,b) => {
+      // Sin puntaje calculado (recién ingresado) siempre al final, nunca compite con un "0" artificial
+      const tieneA = a.total != null, tieneB = b.total != null;
+      if (tieneA !== tieneB) return tieneA ? -1 : 1;
+      if (!tieneA && !tieneB) return a.nombre.localeCompare(b.nombre, 'es');
+      return b.total - a.total;
+    });
+
+    const miPos = ranked.findIndex(i => i.id === INSTRUCTOR_ID);
+    const yo    = ranked[miPos];
+    const arriba = ranked.slice(0, miPos);
+
+    // Ver quiénes arriba tienen clase ahora
+    const hoyISO = new Date().toISOString().split('T')[0];
+    const horaAhora = new Date().toLocaleTimeString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit'});
+    const {data:clasesActivas} = await sb.from('clases')
+      .select('instructor_id').eq('fecha', hoyISO).eq('estado', 'asignada')
+      .lte('hora_inicio', horaAhora).gte('hora_fin', horaAhora);
+
+    const ocupados = new Set((clasesActivas||[]).map(c=>c.instructor_id));
+    const arribaLibres   = arriba.filter(i => !ocupados.has(i.id));
+    const arribaOcupados = arriba.filter(i =>  ocupados.has(i.id));
+
+    // ── Actualizar panel del dashboard ──────────────────────
+    const dispPanel = document.getElementById('panel-disponibilidad');
+    const dispBody  = document.getElementById('disp-body');
+    if (dispPanel && dispBody) {
+      dispPanel.style.display = '';
+      if (arriba.length === 0) {
+        dispBody.innerHTML = `<div style="font-size:13px;font-weight:600;color:var(--accent)">🥇 Sos el primero del ranking</div>`;
+      } else {
+        dispBody.innerHTML = `
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <div style="flex:1;background:#ECFDF5;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:700;color:#0F6E56">${arribaLibres.length}</div>
+              <div style="font-size:10px;color:#047857;margin-top:2px">disponibles</div>
+            </div>
+            <div style="flex:1;background:#FEF3C7;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:700;color:#92400E">${arribaOcupados.length}</div>
+              <div style="font-size:10px;color:#B45309;margin-top:2px">con clase</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">
+            ${arribaLibres.length === 0
+              ? '✓ Todos los de arriba están ocupados — es probable que te llamen pronto'
+              : `Hay ${arribaLibres.length} instructor${arribaLibres.length>1?'es':''} libre${arribaLibres.length>1?'s':''} antes que vos`}
+          </div>`;
+      }
+    }
+
+    if (!yo || !cont) return;
+    const totalTxt = yo.total != null ? yo.total.toFixed(1) : '—';
+
+    // Actualizar stat del dashboard
+    document.getElementById('stat-puntaje') && (document.getElementById('stat-puntaje').textContent = totalTxt);
+    document.getElementById('stat-posicion') && (document.getElementById('stat-posicion').textContent = `Posición ${miPos+1}`);
+
+    // ── Actualizar panel de pestaña Puntaje ─────────────────
+    const bar = (label, v) => `<div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,(v||0)*10)}%"></div></div>
+      <div class="bar-val">${(v||0).toFixed(1)}</div>
+    </div>`;
+
+    cont.innerHTML = `
+      <div class="rank-body">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div class="rank-num">${totalTxt}</div>
+          <div class="rank-max">/ 10</div>
+        </div>
+        <div class="rank-pos">Posición ${miPos+1} del ranking</div>
+        ${bar('Opinión clientes', yo.opinion)}
+        ${bar('Asistencia', yo.asistencia)}
+        ${bar('Fidelización', yo.fidelizacion)}
+        ${bar('Historial', yo.historial)}
+        ${bar('Perfil', yo.perfil)}
+      </div>`;
+  }
+
+  // Llamar al cargar el dashboard y al abrir pestaña ranking
+  // ── REALTIME — refrescar cuando se asigna/cancela una clase ──
+  sb.channel('clases-instructor')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'clases',
+      filter: `instructor_id=eq.${INSTRUCTOR_ID}`
+    }, () => {
+      cargarClases();
+    })
+    .subscribe();
+
+  // ── MINI HEADER AL HACER SCROLL ──────────────────────────
+  const miniHeader = document.getElementById('mini-header');
+  const miniAvatar = document.getElementById('mini-avatar');
+  const topbar = document.querySelector('.topbar');
+  let lastScroll = 0;
+
+  window.addEventListener('scroll', () => {
+    const currentScroll = window.scrollY;
+    const topbarBottom = topbar.getBoundingClientRect().bottom;
+    if (topbarBottom < 0) {
+      miniHeader.classList.add('visible');
+    } else {
+      miniHeader.classList.remove('visible');
+    }
+    lastScroll = currentScroll;
+  }, { passive: true });
+
+  // Sincronizar iniciales del avatar con el mini header
+  const observer = new MutationObserver(() => {
+    miniAvatar.textContent = document.getElementById('inst-avatar').textContent;
+  });
+  observer.observe(document.getElementById('inst-avatar'), { childList: true, characterData: true, subtree: true });
+
+  // ── AVISO 30 MINUTOS ANTES ──────────────────────────────────
+  async function checkProximaClase() {
+    if (!INSTRUCTOR_ID) return;
+    const hoyISO = new Date().toLocaleString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
+    const ahora  = new Date().toLocaleTimeString('sv-SE',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit'});
+
+    // Calcular ventana: ahora+25min a ahora+35min
+    const [h,m] = ahora.split(':').map(Number);
+    const min25 = ((h*60+m+25) % 1440);
+    const min35 = ((h*60+m+35) % 1440);
+    const t25 = `${String(Math.floor(min25/60)).padStart(2,'0')}:${String(min25%60).padStart(2,'0')}`;
+    const t35 = `${String(Math.floor(min35/60)).padStart(2,'0')}:${String(min35%60).padStart(2,'0')}`;
+
+    const {data:proximas} = await sb.from('clases')
+      .select('id, hora_inicio, disciplina, nivel, punto_encuentro, clientes(nombre)')
+      .eq('instructor_id', INSTRUCTOR_ID)
+      .eq('fecha', hoyISO)
+      .eq('estado', 'asignada')
+      .gte('hora_inicio', t25)
+      .lte('hora_inicio', t35);
+
+    const banner = document.getElementById('banner-proxima-clase');
+    if (!proximas?.length) {
+      if (banner) banner.style.display = 'none';
+      return;
+    }
+
+    const clase = proximas[0];
+    const minutos = Math.round(((clase.hora_inicio.split(':')[0]*60 + parseInt(clase.hora_inicio.split(':')[1])) - (h*60+m)));
+
+    if (!banner) {
+      const el = document.createElement('div');
+      el.id = 'banner-proxima-clase';
+      el.style.cssText = 'background:#1A1F2E;color:#fff;padding:12px 16px;border-radius:10px;margin-bottom:12px;display:flex;align-items:center;gap:12px;animation:slideDown .3s ease';
+      el.innerHTML = `
+        <div style="font-size:22px">⏰</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">Clase en ~${minutos} minutos</div>
+          <div style="font-size:12px;color:#9CA3AF;margin-top:2px">${clase.disciplina} · ${clase.nivel} · ${clase.clientes?.nombre||'—'}</div>
+          ${clase.punto_encuentro ? `<div style="font-size:12px;color:#1D9E75;margin-top:3px;font-weight:500">📍 ${clase.punto_encuentro}</div>` : ''}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#1D9E75">${clase.hora_inicio?.slice(0,5)}</div>`;
+      // Insertar antes de las clases de hoy
+      const cont = document.querySelector('.content') || document.body;
+      const firstPanel = cont.querySelector('.panel');
+      if (firstPanel) firstPanel.parentNode.insertBefore(el, firstPanel);
+      else cont.prepend(el);
+    } else {
+      banner.style.display = 'flex';
+      banner.querySelector('div:nth-child(2) div:first-child').textContent = `Clase en ~${minutos} minutos`;
+    }
+  }
+
+  // Correr al cargar y cada minuto
+  checkProximaClase();
+  setInterval(checkProximaClase, 60000);
+
+  loadRankingInst();
+
+  const allPanels = ['clases','grupos','ranking','perfil'];
+  window.setTab = function(tab) {
+    allPanels.forEach(p => {
+      document.getElementById(`panel-${p}`).style.display = p === tab ? 'block' : 'none';
+      document.getElementById(`tab-${p}`).classList.toggle('active', p === tab);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (tab === 'ranking') loadRankingInst();
+  };
+
+  // --- MODALES ---
+  // iOS scroll lock — la técnica más confiable: fijar html Y body
+  let _scrollY = 0;
+  function _lockScroll() {
+    _scrollY = window.scrollY;
+    document.body.style.top = `-${_scrollY}px`;
+    document.documentElement.classList.add('modal-lock');
+  }
+  function _unlockScroll() {
+    document.documentElement.classList.remove('modal-lock');
+    document.body.style.top = '';
+    window.scrollTo(0, _scrollY);
+  }
+
+  window.abrirModal = function(id) {
+    document.getElementById(id).classList.add('open');
+    _lockScroll();
+  };
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('open');
+    _unlockScroll();
+  };
+  window.cerrarModal = function(id) { closeModal(id); };
+
+  document.querySelectorAll('.modal-overlay').forEach(el=>{
+    el.addEventListener('click',function(e){if(e.target===this)cerrarModal(this.id);});
+  });
+
+  // --- TOAST ---
+  window.toast = function(msg) {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A1F2E;color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;white-space:nowrap;animation:fadeUp 0.2s ease';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  };
+
+  // --- INIT ---
+  async function activarNotificaciones() {
+    document.getElementById('inst-profile-menu').style.display = 'none';
+    if (!('Notification' in window)) { toast('Tu browser no soporta notificaciones','err'); return; }
+    if (!('serviceWorker' in navigator)) { toast('Instalá Vertex como app para recibir notificaciones','err'); return; }
+
+    const permiso = await Notification.requestPermission();
+    if (permiso !== 'granted') { toast('Permiso denegado — habilitá las notificaciones en ajustes','err'); return; }
+
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) { toast('Recargá la página e intentá de nuevo','err'); return; }
+
+    try {
+      const VAPID_PUBLIC = 'BNvZ7Uu2fD5M39jlDtxq7r9N1x1SQKrD-7sBexYjDkiDG-6rQk_asIdYTF905hvuD_KskIvQi7Xmgy_fCU3VPHE';
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC)
+        });
+      }
+      await guardarSuscripcion(sub);
+      toast('Notificaciones activadas ✓');
+    } catch(e) {
+      toast('Error al activar: ' + e.message, 'err');
+    }
+  }
+  window.activarNotificaciones = activarNotificaciones;
+
+  async function cerrarSesion() {
+    // Borrar suscripción push antes de cerrar sesión
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        const sub = await reg?.pushManager?.getSubscription();
+        if (sub) {
+          await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+          await sub.unsubscribe();
+        }
+      }
+    } catch(e) { console.warn('Error borrando suscripción:', e); }
+    await sb.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'vertex_login.html';
+  }
+
+  verificarPresencia();
+  cargarClases();
+
+  // Ocultar overlay cuando carguen los datos principales
+  Promise.all([
+    verificarPresencia(),
+    cargarClases(),
+    loadRankingInst()
+  ]).finally(() => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.remove(), 300);
+    }
+  });
+  cargarResenas();
+  cargarRanking();
+  checkEscuelita();
+  cargarMisGrupos();
+
+  // Skeletons iniciales
+  try {
+    document.getElementById('stat-puntaje').innerHTML='<span class="sk" style="display:inline-block;width:50px;height:32px"></span>';
+    document.getElementById('stat-clases-hoy').innerHTML='<span class="sk" style="display:inline-block;width:30px;height:32px"></span>';
+    document.getElementById('rank-body-content').innerHTML = rankSkeletonHTML();
+    // stat-resenas removed
+    document.getElementById('lista-clases').innerHTML=`
+      ${[1,2,3].map(()=>`<div style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;gap:14px;align-items:center">
+        <div><div class="sk" style="width:44px;height:14px;margin-bottom:6px"></div><div class="sk" style="width:24px;height:10px"></div></div>
+        <div style="flex:1"><div class="sk" style="width:60%;height:14px;margin-bottom:6px"></div><div class="sk" style="width:80%;height:10px"></div></div>
+        <div class="sk" style="width:80px;height:30px;border-radius:6px"></div>
+      </div>`).join('')}`;
+  } catch(e) {}
