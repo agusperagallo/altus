@@ -1356,6 +1356,7 @@ function toggleDark(force) {
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500" id="mdg-instructor">—</div>
           <div style="font-size:12px;color:var(--silver);margin-top:2px" id="mdg-edades">—</div>
+          <button onclick="abrirCambiarInstructorGrupo()" style="background:none;border:none;padding:0;margin-top:6px;font-size:11px;color:var(--accent2);font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Cambiar instructor →</button>
         </div>
         <div style="text-align:center">
           <div style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--navy)" id="mdg-count">0</div>
@@ -1430,6 +1431,59 @@ function toggleDark(force) {
           Programar sesión de hoy
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR INSTRUCTOR DE GRUPO (ESCUELITA) -->
+<div class="modal-overlay" id="modal-cambiar-inst-grupo">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><span class="modal-title">Cambiar instructor</span><button class="modal-close" id="mcig-close">&times;</button></div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--silver);margin-bottom:16px" id="mcig-grupo-nombre">—</div>
+
+      <div class="fg" style="margin-bottom:16px">
+        <label>Nuevo instructor</label>
+        <select id="mcig-instructor" style="height:38px;border:1px solid var(--line);border-radius:5px;padding:0 11px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none;width:100%">
+          <option value="">Seleccionar instructor...</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Aplicar a</label>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;border:1.5px solid var(--line);border-radius:8px" id="mcig-opt-todas-label">
+            <input type="radio" name="mcig-alcance" value="todas" id="mcig-todas" checked style="height:auto;width:auto;margin-top:2px;flex-shrink:0">
+            <div>
+              <div style="font-size:13px;font-weight:500;color:var(--text)">De hoy en adelante</div>
+              <div style="font-size:11px;color:var(--silver);margin-top:2px">Todas las sesiones futuras programadas, y las que se programen después</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px;border:1.5px solid var(--line);border-radius:8px" id="mcig-opt-rango-label">
+            <input type="radio" name="mcig-alcance" value="rango" id="mcig-rango" style="height:auto;width:auto;margin-top:2px;flex-shrink:0">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:500;color:var(--text)">Solo un rango de fechas</div>
+              <div style="font-size:11px;color:var(--silver);margin-top:2px;margin-bottom:8px">Por ejemplo, una semana puntual — el grupo vuelve al instructor de siempre después</div>
+              <div id="mcig-rango-panel" style="display:none;gap:10px;margin-top:8px" >
+                <div style="display:flex;gap:10px">
+                  <div style="flex:1">
+                    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Desde</label>
+                    <input type="date" id="mcig-desde" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none">
+                  </div>
+                  <div style="flex:1">
+                    <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Hasta</label>
+                    <input type="date" id="mcig-hasta" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 8px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div id="mcig-preview" style="font-size:12px;color:var(--silver);margin-bottom:16px">—</div>
+
+      <button id="mcig-confirmar" style="width:100%;height:42px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">Confirmar cambio</button>
     </div>
   </div>
 </div>
