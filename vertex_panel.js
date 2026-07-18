@@ -170,10 +170,14 @@ document.getElementById('mt-cerrar-btn').addEventListener('click', async() => {
   await sb.from('temporadas').update({ activa: false, fecha_cierre: new Date().toISOString().split('T')[0] }).eq('activa', true);
 
   // 4. Si reinicio total: calcular promedio y resetear
+  //    Usa el puntaje efectivo (respeta qué componentes cuentan según
+  //    "Configurar ranking"), no el puntaje_total crudo — para que el
+  //    reinicio no vuelva a mezclar un componente que el supervisor
+  //    desactivó a propósito.
   if (reinicio) {
-    const promedio = snapshots?.length
-      ? snapshots.reduce((s, r) => s + (r.puntaje_total || 0), 0) / snapshots.length
-      : 5.0;
+    await cargarRankingCfg();
+    const efectivos = (snapshots||[]).map(s => calcularPuntajeEfectivo(s)).filter(v => v != null);
+    const promedio = efectivos.length ? efectivos.reduce((s,v)=>s+v,0)/efectivos.length : 5.0;
     await sb.from('ranking_snapshot').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     // Insertar puntaje base para todos los instructores activos
     const { data: insts } = await sb.from('instructores').select('id').eq('activo', true);
@@ -2481,8 +2485,10 @@ function mostrarConfirmacion() {
 // la carga masiva por Excel, para que nadie arranque sin snapshot (eso hacía que
 // el ranking los tratara como "0" y siempre quedaran primeros).
 async function asignarPuntajeBase(instructorId) {
-  const {data:snaps} = await sb.from('ranking_snapshot').select('puntaje_total');
-  const prom = snaps?.length ? snaps.reduce((s,r)=>s+(r.puntaje_total||0),0)/snaps.length : 5;
+  await cargarRankingCfg();
+  const {data:snaps} = await sb.from('ranking_snapshot').select('*');
+  const efectivos = (snaps||[]).map(s => calcularPuntajeEfectivo(s)).filter(v => v != null);
+  const prom = efectivos.length ? efectivos.reduce((s,v)=>s+v,0)/efectivos.length : 5;
   await sb.from('ranking_snapshot').insert({instructor_id:instructorId,puntaje_opinion:prom,puntaje_asistencia:prom,puntaje_fidelizacion:prom,puntaje_historico:prom,puntaje_perfil:prom,puntaje_total:prom});
 }
 
