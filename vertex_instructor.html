@@ -1316,24 +1316,49 @@ window.cerrarListaNinos = function() {
       ${[1,2,3,4,5].map(barSk).join('')}
     </div>`;
   }
+  // ── CONFIGURACIÓN DE RANKING — qué componentes cuentan (definida por el supervisor) ──
+  const RANKING_COMPONENTES = [
+    {key:'puntaje_opinion',      cfgKey:'ranking_incluye_opinion'},
+    {key:'puntaje_asistencia',   cfgKey:'ranking_incluye_asistencia'},
+    {key:'puntaje_fidelizacion', cfgKey:'ranking_incluye_fidelizacion'},
+    {key:'puntaje_historico',    cfgKey:'ranking_incluye_historico'},
+    {key:'puntaje_perfil',       cfgKey:'ranking_incluye_perfil'},
+  ];
+  let RANKING_CFG = {ranking_incluye_opinion:true, ranking_incluye_asistencia:true, ranking_incluye_fidelizacion:true, ranking_incluye_historico:true, ranking_incluye_perfil:true};
+  function calcularPuntajeEfectivo(snapshot) {
+    if (!snapshot) return null;
+    const activos = RANKING_COMPONENTES.filter(c => RANKING_CFG[c.cfgKey] !== false);
+    const valores = activos.map(c => snapshot[c.key]).filter(v => v != null);
+    if (!valores.length) return null;
+    return valores.reduce((a,b)=>a+b, 0) / valores.length;
+  }
+
   window.loadRankingInst = async function() {
     if (!INSTRUCTOR_ID) return;
     const cont = document.getElementById('rank-body-content');
     if (cont) cont.innerHTML = rankSkeletonHTML();
 
-    const {data:insts} = await sb.from('instructores')
-      .select('id, nombre, ranking_snapshot(*)')
-      .eq('activo', true);
+    const [{data:insts}, {data:cfg}] = await Promise.all([
+      sb.from('instructores').select('id, nombre, ranking_snapshot(*)').eq('activo', true),
+      sb.from('configuracion').select(RANKING_COMPONENTES.map(c=>c.cfgKey).join(',')).single()
+    ]);
+    if (cfg) RANKING_CFG = cfg;
 
     if (!insts?.length) { if(cont) cont.innerHTML = '<div class="empty">Sin datos</div>'; return; }
 
     const ranked = insts.map(i => {
       const snap = i.ranking_snapshot?.[i.ranking_snapshot.length-1];
-      return { id:i.id, nombre:i.nombre, total:snap?.puntaje_total||0,
-        opinion:snap?.puntaje_opinion||0, asistencia:snap?.puntaje_asistencia||0,
-        fidelizacion:snap?.puntaje_fidelizacion||0, historial:snap?.puntaje_historial||0,
-        perfil:snap?.puntaje_perfil||0 };
-    }).sort((a,b) => b.total - a.total);
+      return { id:i.id, nombre:i.nombre, total: calcularPuntajeEfectivo(snap),
+        opinion:snap?.puntaje_opinion, asistencia:snap?.puntaje_asistencia,
+        fidelizacion:snap?.puntaje_fidelizacion, historial:snap?.puntaje_historico,
+        perfil:snap?.puntaje_perfil };
+    }).sort((a,b) => {
+      // Sin puntaje calculado (recién ingresado) siempre al final, nunca compite con un "0" artificial
+      const tieneA = a.total != null, tieneB = b.total != null;
+      if (tieneA !== tieneB) return tieneA ? -1 : 1;
+      if (!tieneA && !tieneB) return a.nombre.localeCompare(b.nombre, 'es');
+      return b.total - a.total;
+    });
 
     const miPos = ranked.findIndex(i => i.id === INSTRUCTOR_ID);
     const yo    = ranked[miPos];
@@ -1378,9 +1403,10 @@ window.cerrarListaNinos = function() {
     }
 
     if (!yo || !cont) return;
+    const totalTxt = yo.total != null ? yo.total.toFixed(1) : '—';
 
     // Actualizar stat del dashboard
-    document.getElementById('stat-puntaje') && (document.getElementById('stat-puntaje').textContent = yo.total.toFixed(1));
+    document.getElementById('stat-puntaje') && (document.getElementById('stat-puntaje').textContent = totalTxt);
     document.getElementById('stat-posicion') && (document.getElementById('stat-posicion').textContent = `Posición ${miPos+1}`);
 
     // ── Actualizar panel de pestaña Puntaje ─────────────────
@@ -1393,7 +1419,7 @@ window.cerrarListaNinos = function() {
     cont.innerHTML = `
       <div class="rank-body">
         <div style="display:flex;align-items:baseline;gap:6px">
-          <div class="rank-num">${yo.total.toFixed(1)}</div>
+          <div class="rank-num">${totalTxt}</div>
           <div class="rank-max">/ 10</div>
         </div>
         <div class="rank-pos">Posición ${miPos+1} del ranking</div>
