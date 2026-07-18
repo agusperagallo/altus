@@ -223,6 +223,17 @@ body.dark{scrollbar-color:#30363D #010409;scrollbar-width:thin}
   pointer-events: auto;
 }
 
+/* ── Toggle / switch reutilizable — preset para checkboxes tipo on/off ── */
+.vtx-switch{position:relative;display:inline-flex;align-items:center;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.vtx-switch input{position:absolute;opacity:0;width:0;height:0;margin:0;cursor:pointer}
+.vtx-switch-track{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:background .2s;pointer-events:none}
+.vtx-switch-dot{position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none}
+.vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}
+.vtx-switch input:checked + .vtx-switch-track .vtx-switch-dot{transform:translateX(18px)}
+.vtx-switch input:disabled + .vtx-switch-track{opacity:.5;cursor:not-allowed}
+body.dark .vtx-switch-track{background:#30363D}
+body.dark .vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}
+
 /* ── SKELETON LOADING ───────────────────────── */
 .sk {
   background: linear-gradient(90deg, #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);

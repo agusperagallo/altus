@@ -157,9 +157,10 @@
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v1M8 14v1M1 8h1M14 8h1M3.5 3.5l.7.7M11.8 11.8l.7.7M3.5 12.5l.7-.7M11.8 4.2l.7-.7"/><circle cx="8" cy="8" r="3"/></svg>
               Modo oscuro
             </div>
-            <div id="dark-toggle" onclick="toggleDark()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-              <div id="dark-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-            </div>
+            <label class="vtx-switch">
+              <input type="checkbox" id="dark-toggle" onchange="toggleDark()">
+              <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+            </label>
           </div>
           <button class="profile-menu-item danger" id="pm-logout">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H2v12h4M11 5l3 3-3 3M6 8h8"/></svg>
@@ -736,17 +737,16 @@
         <input type="text" id="ma-punto" placeholder="Ej: Base del telesilla 2, Sector principiantes..." autocomplete="off">
       </div>
       <!-- Tipo de clase -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ice);border:1px solid var(--line);border-radius:7px;margin-bottom:18px">
-        <div style="flex:1;cursor:pointer" onclick="toggleRequerida()">
+      <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--ice);border:1px solid var(--line);border-radius:7px;margin-bottom:18px;cursor:pointer">
+        <div style="flex:1">
           <div style="font-size:13px;font-weight:500;color:var(--navy)">El cliente solicitó este instructor</div>
           <div style="font-size:11px;color:var(--silver);margin-top:2px">Clase requerida — impacta en el reporte de horas</div>
         </div>
-        <div onclick="toggleRequerida()" style="position:relative;width:44px;height:24px;flex-shrink:0;margin-left:12px;cursor:pointer">
-          <input type="checkbox" id="ma-requerida" style="opacity:0;width:0;height:0;position:absolute">
-          <div id="ma-slider-track" style="position:absolute;inset:0;background:#CBD5E1;border-radius:24px;transition:.2s"></div>
-          <div id="ma-slider-dot" style="position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-        </div>
-      </div>
+        <span class="vtx-switch" style="margin-left:12px">
+          <input type="checkbox" id="ma-requerida">
+          <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+        </span>
+      </label>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-outline" id="ma-cancel">Cancelar</button>
         <button class="btn btn-primary" id="ma-confirm">Confirmar asignación</button>
@@ -1297,13 +1297,12 @@
 
 <script>
 // Modo oscuro — función global disponible inmediatamente
-function toggleDark() {
-  const isDark = document.body.classList.toggle('dark');
+function toggleDark(force) {
+  const isDark = force != null ? force : document.body.classList.toggle('dark');
+  if (force != null) document.body.classList.toggle('dark', force);
   localStorage.setItem('vertex_dark', isDark ? '1' : '0');
   const toggle = document.getElementById('dark-toggle');
-  const knob   = document.getElementById('dark-knob');
-  if (toggle) toggle.style.background = isDark ? '#1D9E75' : '';
-  if (knob)   knob.style.transform    = isDark ? 'translateX(18px)' : 'translateX(0)';
+  if (toggle) toggle.checked = isDark;
 }
 // Aplicar al cargar si estaba activado
 (function() {
@@ -1312,9 +1311,7 @@ function toggleDark() {
     document.addEventListener('DOMContentLoaded', function() {
       document.body.classList.add('dark');
       const toggle = document.getElementById('dark-toggle');
-      const knob   = document.getElementById('dark-knob');
-      if (toggle) toggle.style.background = '#1D9E75';
-      if (knob)   knob.style.transform    = 'translateX(18px)';
+      if (toggle) toggle.checked = true;
     });
   }
 })();
@@ -3810,8 +3807,6 @@ function openModalAsignar(inst) {
 function toggleRequerida(force) {
   const cb = document.getElementById('ma-requerida');
   cb.checked = force !== undefined ? force : !cb.checked;
-  document.getElementById('ma-slider-track').style.background = cb.checked ? 'var(--accent)' : '#CBD5E1';
-  document.getElementById('ma-slider-dot').style.left = cb.checked ? '22px' : '2px';
 }
 window.toggleRequerida = toggleRequerida;
 
@@ -4279,7 +4274,10 @@ document.getElementById('pm-ranking-cfg').addEventListener('click', async () => 
   document.getElementById('mrc-lista').innerHTML = RANKING_COMPONENTES.map(c => `
     <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer" class="mrc-row">
       <span style="font-size:13px">${c.label}</span>
-      <input type="checkbox" data-cfg="${c.cfgKey}" ${RANKING_CFG[c.cfgKey]!==false?'checked':''} style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
+      <span class="vtx-switch">
+        <input type="checkbox" data-cfg="${c.cfgKey}" ${RANKING_CFG[c.cfgKey]!==false?'checked':''}>
+        <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+      </span>
     </label>`).join('');
   document.querySelectorAll('#mrc-lista .mrc-row:last-child').forEach(el => el.style.borderBottom='none');
   openModal('modal-ranking-cfg');

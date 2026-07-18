@@ -265,6 +265,17 @@ input:focus,select:focus{border-color:var(--accent)}
 .fab-menu.open .fab-row{pointer-events:all}
 .fab-row{display:flex;align-items:center;gap:10px;pointer-events:none}
 .fab-label{background:var(--navy);color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);font-family:'DM Sans',sans-serif}
+/* ── Toggle / switch reutilizable — preset para checkboxes tipo on/off ── */
+.vtx-switch{position:relative;display:inline-flex;align-items:center;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.vtx-switch input{position:absolute;opacity:0;width:0;height:0;margin:0;cursor:pointer}
+.vtx-switch-track{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:background .2s;pointer-events:none}
+.vtx-switch-dot{position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none}
+.vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}
+.vtx-switch input:checked + .vtx-switch-track .vtx-switch-dot{transform:translateX(18px)}
+.vtx-switch input:disabled + .vtx-switch-track{opacity:.5;cursor:not-allowed}
+body.dark .vtx-switch-track{background:#30363D}
+body.dark .vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}
+
 .fab-icon{width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .15s}
 .fab-icon:hover{background:var(--navy);color:#fff}
 .fab-main{width:50px;height:50px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(29,158,117,.4);transition:all .2s;pointer-events:all}
