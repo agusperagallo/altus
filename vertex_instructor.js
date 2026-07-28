@@ -20,6 +20,19 @@
     'sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-'
   );
 
+  // Escapa texto libre (nombres, comentarios de reseñas, notas médicas, etc.) antes de
+  // insertarlo con innerHTML. Las reseñas las escribe cualquiera desde vertex_resena.html
+  // sin login — sin esto, un comentario con HTML/JS se ejecutaría tal cual acá.
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // ID del instructor logueado
   const INSTRUCTOR_ID = localStorage.getItem('vertex_instructor_id') || null;
 
@@ -361,7 +374,7 @@
       return `<div style="border-bottom:1px solid var(--ice2)">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px ${alertas.length?'6px':'12px'} 20px">
           <div>
-            <div style="font-size:14px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:14px;font-weight:500">${escapeHtml(n.nombre)}</div>
             <div style="font-size:11px;color:var(--silver)">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</div>
           </div>
           <div style="display:flex;gap:8px">
@@ -478,12 +491,12 @@ window.cerrarListaNinos = function() {
       const ninos = (g.grupo_ninos||[]).filter(n=>n.activo);
       return `<div style="border-bottom:1px solid var(--ice2)">
         <div style="padding:14px 16px 8px">
-          <div style="font-size:14px;font-weight:600;color:var(--navy)">${g.nombre}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--navy)">${escapeHtml(g.nombre)}</div>
           <div style="font-size:11px;color:var(--silver);margin-top:1px">${g.nivel||''} · ${g.edad_min}-${g.edad_max} años · ${ninos.length} niños</div>
         </div>
         <div style="padding:0 16px 12px">
           ${ninos.map(n => `<div onclick="abrirFichaNinoInst('${n.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--ice2);border-radius:8px;margin-bottom:6px;cursor:pointer">
-            <div style="font-size:13px;font-weight:500">${n.nombre}</div>
+            <div style="font-size:13px;font-weight:500">${escapeHtml(n.nombre)}</div>
             <div style="font-size:11px;color:var(--silver)">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años ›</div>
           </div>`).join('') || '<div style="font-size:12px;color:var(--silver);padding:8px 0">Sin niños en este grupo</div>'}
         </div>
@@ -523,7 +536,7 @@ window.cerrarListaNinos = function() {
 
     const seccion = (titulo, items) => items.some(i=>i[1]) ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">${titulo}</div>
-      ${items.filter(i=>i[1]).map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--ice2)"><span style="font-size:12px;color:var(--silver)">${label}</span><span style="font-size:13px;font-weight:500;text-align:right;max-width:60%">${val}</span></div>`).join('')}
+      ${items.filter(i=>i[1]).map(([label,val])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--ice2)"><span style="font-size:12px;color:var(--silver)">${label}</span><span style="font-size:13px;font-weight:500;text-align:right;max-width:60%">${escapeHtml(val)}</span></div>`).join('')}
     ` : '';
 
     body.innerHTML = `
@@ -535,9 +548,9 @@ window.cerrarListaNinos = function() {
       ${(n.alergias || n.condiciones_medicas || n.medicacion) ? `
       <div style="background:var(--danger-bg);border-radius:10px;padding:12px 14px;margin-top:14px">
         <div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">⚠️ Información médica</div>
-        ${n.alergias ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Alergias:</strong> ${n.alergias}</div>` : ''}
-        ${n.condiciones_medicas ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Condiciones:</strong> ${n.condiciones_medicas}</div>` : ''}
-        ${n.medicacion ? `<div style="font-size:13px;color:var(--text)"><strong>Medicación:</strong> ${n.medicacion}</div>` : ''}
+        ${n.alergias ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Alergias:</strong> ${escapeHtml(n.alergias)}</div>` : ''}
+        ${n.condiciones_medicas ? `<div style="font-size:13px;color:var(--text);margin-bottom:3px"><strong>Condiciones:</strong> ${escapeHtml(n.condiciones_medicas)}</div>` : ''}
+        ${n.medicacion ? `<div style="font-size:13px;color:var(--text)"><strong>Medicación:</strong> ${escapeHtml(n.medicacion)}</div>` : ''}
       </div>` : ''}
 
       ${seccion('Tutor / Padre 1', [['Nombre', n.tutor1_nombre], ['Relación', n.tutor1_relacion]])}
@@ -545,7 +558,7 @@ window.cerrarListaNinos = function() {
 
       ${n.observaciones ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin:14px 0 8px">Observaciones</div>
-      <div style="font-size:13px;color:var(--text);background:var(--ice2);border-radius:8px;padding:10px 12px">${n.observaciones}</div>
+      <div style="font-size:13px;color:var(--text);background:var(--ice2);border-radius:8px;padding:10px 12px">${escapeHtml(n.observaciones)}</div>
       ` : ''}
 
       ${n.dias_semana?.length ? `
@@ -750,15 +763,15 @@ window.cerrarListaNinos = function() {
         <div class="resena-item">
           <div class="resena-top">
             <div>
-              <div class="resena-nombre">${r.clases?.clientes?.nombre || '—'}</div>
-              <div class="resena-fecha">${fecha} · ${r.clases?.disciplina || ''} Niv. ${r.clases?.nivel || ''}</div>
+              <div class="resena-nombre">${escapeHtml(r.clases?.clientes?.nombre) || '—'}</div>
+              <div class="resena-fecha">${fecha} · ${escapeHtml(r.clases?.disciplina) || ''} Niv. ${escapeHtml(r.clases?.nivel) || ''}</div>
             </div>
             <div class="resena-scores">
               <div class="resena-score">Clase <strong>${r.puntaje_clase}/5</strong></div>
               <div class="resena-score">Trato <strong>${r.puntaje_trato}/5</strong></div>
             </div>
           </div>
-          ${r.comentario ? `<div class="resena-texto">"${r.comentario}"</div>` : ''}
+          ${r.comentario ? `<div class="resena-texto">"${escapeHtml(r.comentario)}"</div>` : ''}
         </div>`;
     });
 

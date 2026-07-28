@@ -29,6 +29,20 @@ const hoy = new Date();
 const fechaISO = new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).split(' ')[0];
 const sb = createClient('https://pngtxnpywchizyyynuyb.supabase.co','sb_publishable_-TBqMvOtGY0CPamchZN_jA_vPYl4f5-', { auth: { persistSession: true, autoRefreshToken: true } });
 
+// Escapa texto libre (nombres, comentarios de reseñas, notas médicas, etc.) antes de
+// insertarlo con innerHTML. Las reseñas en particular las escribe cualquiera desde
+// vertex_resena.html sin login — sin esto, un comentario con HTML/JS se ejecutaría
+// tal cual en la sesión de quien lo mire después (supervisor o instructor).
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Cliente aislado, exclusivo para crear cuentas nuevas (signUp) sin afectar
 // la sesión activa del supervisor logueado en el cliente principal "sb".
 // Usa una storageKey distinta para que no comparta ni pise la sesión guardada.
@@ -126,7 +140,7 @@ async function cargarTemporadas() {
     const tipo = t.reinicio_total ? 'Reinicio total' : 'Puntajes continuados';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--ice)">
       <div>
-        <div style="font-size:13px;font-weight:500;color:var(--text)">${t.nombre}</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">${escapeHtml(t.nombre)}</div>
         <div style="font-size:11px;color:var(--silver);margin-top:2px">${inicio} → ${cierre} · ${tipo}</div>
       </div>
     </div>`;
@@ -257,7 +271,7 @@ async function loadFamilias() {
     if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500;color:var(--navy)">${n.nombre} <span style="font-size:12px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${escapeHtml(n.nombre)} <span style="font-size:12px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${n.grupos?.nombre||'—'}</div>
           ${n.tutor1_nombre ? `<div style="font-size:12px;color:var(--silver);margin-top:2px">${n.tutor1_nombre}${n.tutor1_relacion?' ('+n.tutor1_relacion+')':''}</div>` : ''}
           ${alertas.length ? `<div style="font-size:11px;color:var(--danger);margin-top:4px">${alertas.join(' · ')}</div>` : ''}
@@ -271,7 +285,7 @@ async function loadFamilias() {
 
     return `<div class="t-row">
       <div style="flex:1">
-        <div style="font-weight:500">${n.nombre} <span style="font-size:11px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
+        <div style="font-weight:500">${escapeHtml(n.nombre)} <span style="font-size:11px;color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
         ${alertas.length ? `<div style="font-size:10px;color:var(--danger);margin-top:2px">${alertas.join(' · ')}</div>` : ''}
       </div>
       <div style="flex:1;font-size:12px;color:var(--muted)">${n.grupos?.nombre||'—'}</div>
@@ -361,7 +375,7 @@ async function loadAsistEscNinos() {
     const pctTxt = pct===null?'—':pct+'%';
 
     if (isMobile) return `<div style="padding:12px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:13px;font-weight:500">${n.nombre}</div><div style="font-size:11px;color:var(--silver)">${n.grupos?.nombre||'—'}</div></div>
+      <div><div style="font-size:13px;font-weight:500">${escapeHtml(n.nombre)}</div><div style="font-size:11px;color:var(--silver)">${n.grupos?.nombre||'—'}</div></div>
       <div style="display:flex;gap:10px;align-items:center">
         <div style="text-align:center"><div style="font-size:13px;font-weight:600;color:#0F6E56">${pres}</div><div style="font-size:9px;color:var(--silver)">PRES</div></div>
         <div style="text-align:center"><div style="font-size:13px;font-weight:600;color:var(--danger)">${aus}</div><div style="font-size:9px;color:var(--silver)">AUS</div></div>
@@ -370,7 +384,7 @@ async function loadAsistEscNinos() {
     </div>`;
 
     return `<div class="t-row">
-      <div style="flex:1;font-weight:500">${n.nombre}</div>
+      <div style="flex:1;font-weight:500">${escapeHtml(n.nombre)}</div>
       <div style="flex:1;font-size:12px;color:var(--muted)">${n.grupos?.nombre||'—'}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;color:#0F6E56;font-weight:500">${pres}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;color:var(--danger);font-weight:500">${aus}</div>
@@ -478,7 +492,7 @@ async function loadAsistEscInstructores() {
     const onclick = `onclick="abrirDetalleSesionesInstEsc('${inst.id}','${inst.nombre.replace(/'/g,"\\'")}')" style="cursor:pointer"`;
 
     if (isMobile) return `<div ${onclick} style="padding:14px 16px;border-bottom:1px solid var(--ice);display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
+      <div style="font-size:13px;font-weight:500">${escapeHtml(inst.nombre)}</div>
       <div style="display:flex;gap:14px;align-items:center">
         <div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--navy)">${deLaSemana.length}</div><div style="font-size:9px;color:var(--silver)">SEM</div></div>
         <div style="text-align:center"><div style="font-size:14px;font-weight:600;color:var(--navy)">${delMes.length}</div><div style="font-size:9px;color:var(--silver)">MES</div></div>
@@ -486,7 +500,7 @@ async function loadAsistEscInstructores() {
     </div>`;
 
     return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
-      <div style="flex:1;font-weight:500">${inst.nombre}</div>
+      <div style="flex:1;font-weight:500">${escapeHtml(inst.nombre)}</div>
       <div style="width:100px;text-align:center;flex-shrink:0">${deLaSemana.length} sesiones</div>
       <div style="width:100px;text-align:center;flex-shrink:0">${delMes.length} sesiones</div>
       <div style="width:110px;text-align:center;flex-shrink:0">${horasMes.toFixed(1)} hs</div>
@@ -636,17 +650,17 @@ async function abrirDetalleSesionAsist(grupoId, fecha, fechaStr) {
     ${presentes.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✓ Presentes</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
-        ${presentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
+        ${presentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${escapeHtml(n.nombre)} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
     ${ausentes.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">✕ Ausentes</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px">
-        ${ausentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${n.nombre} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
+        ${ausentes.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px">${escapeHtml(n.nombre)} <span style="color:var(--silver);font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
     ${sinRegistro.length ? `
       <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;font-weight:500">— Sin registrar</div>
       <div style="border:1px solid var(--line);border-radius:8px;overflow:hidden">
-        ${sinRegistro.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px;color:var(--silver)">${n.nombre} <span style="font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
+        ${sinRegistro.map(n=>`<div style="padding:9px 14px;border-bottom:1px solid var(--ice);font-size:13px;color:var(--silver)">${escapeHtml(n.nombre)} <span style="font-size:11px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>`).join('')}
       </div>` : ''}
   `;
 }
@@ -844,7 +858,7 @@ async function buscarClienteExistente() {
     return `<div onclick="abrirPreviewCliente(${JSON.stringify(c).replace(/"/g,'&quot;')})" style="padding:12px 14px;border-bottom:1px solid var(--ice);cursor:pointer;display:flex;align-items:center;gap:12px;transition:background .1s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(c.nombre||'?')[0].toUpperCase()}</div>
       <div style="min-width:0">
-        <div style="font-size:13px;font-weight:500;color:var(--navy)">${c.nombre}</div>
+        <div style="font-size:13px;font-weight:500;color:var(--navy)">${escapeHtml(c.nombre)}</div>
         <div style="font-size:11px;color:var(--silver);margin-top:1px">${info}${ultimaClase?' · Últ: '+ultimaClase:''}</div>
       </div>
       <div style="margin-left:auto;color:var(--silver);font-size:16px;flex-shrink:0">›</div>
@@ -979,7 +993,7 @@ async function loadEscGruposHoy() {
         <div style="display:flex;align-items:center;gap:14px">
           <div style="width:44px;height:44px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:600;flex-shrink:0">${g.nombre[0]}</div>
           <div>
-            <div style="font-size:14px;font-weight:500;color:var(--text)">${g.nombre}</div>
+            <div style="font-size:14px;font-weight:500;color:var(--text)">${escapeHtml(g.nombre)}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">${g.instructores?.nombre||'Sin instructor'} · ${g.edad_min}-${g.edad_max} años${g.nivel?' · '+g.nivel:''}</div>
           </div>
         </div>
@@ -1057,7 +1071,7 @@ async function loadEscAdminGrupos() {
     if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div>
-          <div style="font-size:14px;font-weight:500;color:var(--navy)">${g.nombre}</div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${escapeHtml(g.nombre)}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${g.instructores?.nombre||'Sin instructor'} · ${g.edad_min}-${g.edad_max} años · ${ninos} niños</div>
         </div>
         ${badge(g.activo?'Activo':'Inactivo',g.activo?'#0F6E56':'var(--silver)',g.activo?'#E1F5EE':'var(--ice)')}
@@ -1069,7 +1083,7 @@ async function loadEscAdminGrupos() {
       </div>
     </div>`;
     return `<div class="t-row">
-      <div style="flex:1;font-weight:500">${g.nombre}</div>
+      <div style="flex:1;font-weight:500">${escapeHtml(g.nombre)}</div>
       <div style="width:120px;flex-shrink:0;font-size:12px;color:var(--muted)">${g.edad_min}-${g.edad_max} años</div>
       <div style="flex:1;font-size:12px;color:var(--muted)">${g.instructores?.nombre||'—'}</div>
       <div style="width:80px;text-align:center;flex-shrink:0">${ninos}</div>
@@ -1113,7 +1127,7 @@ async function cargarNinosGrupo(grupoId) {
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ice)">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px">
-          ${n.nombre}
+          ${escapeHtml(n.nombre)}
           ${tieneInfo ? `<span style="font-size:9px;background:#E6F1FB;color:#185FA5;padding:1px 6px;border-radius:10px;font-weight:500">Ficha</span>` : ''}
         </div>
         <div style="font-size:11px;color:var(--silver);margin-top:2px">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años${diasTxt ? ' · '+diasTxt : ''}${n.alergias ? ' · ⚠️ '+n.alergias : ''}</div>
@@ -1146,7 +1160,7 @@ async function buscarNinoExistente() {
   if (!data?.length) { res.innerHTML='<div style="font-size:12px;color:var(--silver);padding:4px 0">Sin resultados</div>'; return; }
   res.innerHTML = data.map(n => `
     <div onclick="cargarNinoExistente('${n.id}')" style="padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:5px;cursor:pointer;background:#fff;transition:background .15s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background='#fff'">
-      <div style="font-size:13px;font-weight:500">${n.nombre} <span style="color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
+      <div style="font-size:13px;font-weight:500">${escapeHtml(n.nombre)} <span style="color:var(--silver);font-weight:400">${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</span></div>
       <div style="font-size:11px;color:var(--muted)">${n.grupos?.nombre||'Sin grupo'}</div>
     </div>`).join('');
 }
@@ -1453,7 +1467,7 @@ async function abrirCambiarInstructorGrupo() {
   const sel = document.getElementById('mcig-instructor');
   sel.innerHTML = '<option value="">Seleccionar instructor...</option>';
   const {data:insts} = await sb.from('instructores').select('id,nombre').eq('activo',true).eq('escuelita',true).order('nombre');
-  (insts||[]).forEach(i => { sel.innerHTML += `<option value="${i.id}">${i.nombre}</option>`; });
+  (insts||[]).forEach(i => { sel.innerHTML += `<option value="${i.id}">${escapeHtml(i.nombre)}</option>`; });
 
   document.getElementById('mcig-todas').checked = true;
   document.getElementById('mcig-rango-panel').style.display = 'none';
@@ -1567,7 +1581,7 @@ async function abrirModalNuevoGrupo() {
   const {data} = await sb.from('instructores').select('id,nombre').eq('activo',true).eq('escuelita',true).order('nombre');
   const sel = document.getElementById('ng-instructor');
   sel.innerHTML='<option value="">Seleccionar instructor...</option>';
-  data?.forEach(i => { sel.innerHTML+=`<option value="${i.id}">${i.nombre}</option>`; });
+  data?.forEach(i => { sel.innerHTML+=`<option value="${i.id}">${escapeHtml(i.nombre)}</option>`; });
   openModal('modal-nuevo-grupo');
 }
 
@@ -2005,7 +2019,7 @@ window.onArchivoSeleccionado = function(input) {
         </tr>
         ${cmDatos.map((r,i)=>`
           <tr style="background:${i%2===0?'#fff':'var(--ice)'}">
-            <td style="padding:7px 10px;font-weight:500">${r.nombre}</td>
+            <td style="padding:7px 10px;font-weight:500">${escapeHtml(r.nombre)}</td>
             <td style="padding:7px 10px;text-align:center;font-size:11px;color:var(--muted)">${r.dni||'—'}</td>
             <td style="padding:7px 10px;text-align:center">${r.nivel}</td>
             <td style="padding:7px 10px;font-size:11px;color:var(--muted)">${r.disciplinas.join(', ')}</td>
@@ -2138,7 +2152,7 @@ window.generarPDFInvitaciones = async function(importados) {
 ${importados.map((inst,idx)=>`
   <div class="card">
     <div class="card-left">
-      <div class="card-name">${inst.nombre}</div>
+      <div class="card-name">${escapeHtml(inst.nombre)}</div>
       <div class="card-role">Instructor · Temporada 2026</div>
       <div class="code-box">
         <div class="code-label">CÓDIGO DE ACTIVACIÓN</div>
@@ -2320,7 +2334,7 @@ document.getElementById('btn-buscar').addEventListener('click', async()=>{
     return `<div class="rk-row" data-instid="${inst.id}" data-nom="${inst.nombre}" data-sc="${total}" data-meta="Niv.${inst.nivel_certificado} · ${discs}">
       <div class="rk-num ${i<3?'top':''}">${i+1}</div>
       <div>
-        <div class="inst-name">${inst.nombre}
+        <div class="inst-name">${escapeHtml(inst.nombre)}
           ${hablaIdioma?`<span style="font-size:10px;background:#E1F5EE;color:#0F6E56;padding:1px 6px;border-radius:10px;font-weight:500;margin-left:4px">🗣 ${idiomaCliente}</span>`:''}
           ${fueraDePerfil?`<span style="font-size:10px;color:var(--warn);font-weight:500"> ⚠ fuera de perfil</span>`:''}</div>
         <div class="inst-meta">Niv.${inst.nivel_certificado} · ${discs}${idiomasInst?` · ${idiomasInst}`:''}</div>
@@ -2700,7 +2714,7 @@ async function cargarTopRanking() {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:16px">${medallas[idx]}</span>
-        <span style="font-size:13px;font-weight:500">${i.nombre}</span>
+        <span style="font-size:13px;font-weight:500">${escapeHtml(i.nombre)}</span>
       </div>
       <span style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--navy)">${i.puntaje.toFixed(1)}</span>
     </div>`).join('');
@@ -2730,7 +2744,7 @@ async function cargarCumpleanos() {
     const fechaStr = n.fecha.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
       <div>
-        <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
+        <div style="font-size:13px;font-weight:500">🎂 ${escapeHtml(n.nombre)}</div>
         <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años</div>
       </div>
       <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
@@ -2782,7 +2796,7 @@ async function initPresencia() {
     else badge=`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this,'pendiente')">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`;
     const sub=presente?'Confirmó presencia':franco?'Franco — no computable':ausente?'Marcado ausente':'Sin confirmar';
     return `<div class="pres-item">
-      <div><div class="pres-name">${inst.nombre}</div><div class="pres-sub">${sub}</div></div>
+      <div><div class="pres-name">${escapeHtml(inst.nombre)}</div><div class="pres-sub">${sub}</div></div>
       ${badge}
     </div>`;
   }).join('');
@@ -2911,7 +2925,7 @@ function renderRanking() {
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${i<3?'var(--navy)':'var(--silver)'};flex-shrink:0;width:20px;text-align:center">${i+1}</span>
           <div style="min-width:0">
-            <div style="font-size:13px;font-weight:500">${inst.nombre}</div>
+            <div style="font-size:13px;font-weight:500">${escapeHtml(inst.nombre)}</div>
             <div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div>
           </div>
         </div>
@@ -2923,7 +2937,7 @@ function renderRanking() {
     const dim = c => RANKING_CFG[c] === false ? 'opacity:.4' : '';
     return `<div class="t-row" style="cursor:pointer" onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="width:40px;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:15px;color:${i<3?'var(--navy)':'var(--silver)'};font-weight:600;text-align:center">${i+1}</div>
-      <div style="flex:1;${colStyle('nombre')}"><div style="font-weight:500">${inst.nombre}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
+      <div style="flex:1;${colStyle('nombre')}"><div style="font-weight:500">${escapeHtml(inst.nombre)}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
       <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_opinion')};${dim('ranking_incluye_opinion')}">${pill(fn('puntaje_opinion'))}</div>
       <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_asistencia')};${dim('ranking_incluye_asistencia')}">${pill(fn('puntaje_asistencia'))}</div>
       <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_fidelizacion')};${dim('ranking_incluye_fidelizacion')}">${pill(fn('puntaje_fidelizacion'))}</div>
@@ -3125,7 +3139,7 @@ async function loadInstructores() {
         <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;font-family:'Cormorant Garamond',serif">${initials}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inst.nombre}</div>
+            <div style="font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(inst.nombre)}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">Niv. ${inst.nivel_certificado} · ${discs}</div>
             <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">${badgesCE}${btnInvitacion}</div>
           </div>
@@ -3141,7 +3155,7 @@ async function loadInstructores() {
     }
     return `<div class="t-row" style="overflow:hidden">
       <div style="flex:1;min-width:0;overflow:hidden">
-        <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${inst.nombre}</div>
+        <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(inst.nombre)}</div>
         <div style="display:flex;gap:4px;margin-top:3px">${badgesCE}${btnInvitacion}</div>
       </div>
       <div style="width:50px;text-align:center;flex-shrink:0">${inst.nivel_certificado}</div>
@@ -3283,7 +3297,7 @@ async function loadClientes() {
     if (isMobile) return `<div style="padding:14px 16px;border-bottom:1px solid var(--ice)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px" onclick="abrirClienteDetalle('${c.id}')" style="cursor:pointer">
         <div>
-          <div style="font-size:14px;font-weight:500;color:var(--navy)">${c.nombre}</div>
+          <div style="font-size:14px;font-weight:500;color:var(--navy)">${escapeHtml(c.nombre)}</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.disciplina||'—'} · ${c.nivel_validado||'—'} · ${c.totalClases} clase${c.totalClases!==1?'s':''}</div>
           ${tel?`<div style="font-size:12px;color:var(--accent2);margin-top:2px">${telLink}</div>`:''}
         </div>
@@ -3299,7 +3313,7 @@ async function loadClientes() {
     </div>`;
 
     return `<div class="t-row" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
-      <div style="flex:1;font-weight:500;color:var(--navy);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">${c.nombre}</div>
+      <div style="flex:1;font-weight:500;color:var(--navy);cursor:pointer" onclick="abrirClienteDetalle('${c.id}')">${escapeHtml(c.nombre)}</div>
       <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.disciplina||'—'}</div>
       <div style="width:90px;flex-shrink:0;font-size:12px;color:var(--muted)">${c.nivel_validado||c.nivel_declarado||'—'}</div>
       <div style="width:150px;flex-shrink:0;font-size:12px">${telLink} ${waLink}</div>
@@ -3416,7 +3430,7 @@ async function loadAsistencia() {
         <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:50%;background:${pC};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;font-family:'Cormorant Garamond',serif">${initials2}</div>
           <div style="flex:1">
-            <div style="font-size:15px;font-weight:600;color:var(--navy)">${inst.nombre}</div>
+            <div style="font-size:15px;font-weight:600;color:var(--navy)">${escapeHtml(inst.nombre)}</div>
             <div style="font-size:12px;color:var(--silver);margin-top:2px">${total} días laborables${francos>0?` · ☀ ${francos} franco${francos>1?'s':''}`:''}</div>
           </div>
           <div style="text-align:right">
@@ -3445,7 +3459,7 @@ async function loadAsistencia() {
       </div>`;
     }
     return `<div class="t-row" ${onclick} onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
-      <div style="flex:1;font-weight:500">${inst.nombre}</div>
+      <div style="flex:1;font-weight:500">${escapeHtml(inst.nombre)}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:#0F6E56">${pres}</div>
       <div style="width:90px;text-align:center;flex-shrink:0;font-weight:500;color:var(--danger)">${total-pres}</div>
       <div style="width:90px;text-align:center;flex-shrink:0">${total}${francos>0?` <span style="font-size:10px;color:#4A5FAD">(+${francos}fr)</span>`:''}</div>
@@ -3670,7 +3684,7 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);${disabled?'opacity:0.5;':'cursor:pointer;'}transition:background .1s"
       ${!disabled?`onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''" onclick="confirmarCambioInstructor('${inst.id}','${inst.nombre}')"`:''}>
       <div>
-        <div style="font-size:13px;font-weight:500;color:${col}">${inst.nombre}</div>
+        <div style="font-size:13px;font-weight:500;color:${col}">${escapeHtml(inst.nombre)}</div>
         <div style="font-size:11px;color:var(--silver);margin-top:2px">${sub}</div>
       </div>
       <span class="pill ${parseFloat(total)>=7?'pill-ok':parseFloat(total)>=5?'pill-mid':'pill-low'}">${total}</span>
@@ -3808,7 +3822,7 @@ async function loadEscInicio() {
       const fechaStr = n.fechaProx.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--ice)">
         <div>
-          <div style="font-size:13px;font-weight:500">🎂 ${n.nombre}</div>
+          <div style="font-size:13px;font-weight:500">🎂 ${escapeHtml(n.nombre)}</div>
           <div style="font-size:11px;color:var(--silver)">${fechaStr} · Cumple ${calcEdad(n.fecha_nacimiento)||n.edad||'—'} años · ${n.grupos?.nombre||'—'}</div>
         </div>
         <span style="font-size:11px;font-weight:500;color:${n.dias===0?'var(--accent2)':'var(--muted)'}">${txt}</span>
@@ -3845,11 +3859,11 @@ async function loadEscInicio() {
   if (!conMed.length) { contFichas.innerHTML='<div class="empty">Ningún niño con condiciones médicas hoy</div>'; escAlerta.style.display='none'; }
   else {
     escAlerta.style.display='block';
-    escAlertaLista.innerHTML = conMed.map(n=>`<div style="margin-bottom:4px"><strong>${n.nombre}</strong> (${n.grupos?.nombre||'—'}): ${[n.alergias,n.medicacion].filter(Boolean).join(' · ')}</div>`).join('');
+    escAlertaLista.innerHTML = conMed.map(n=>`<div style="margin-bottom:4px"><strong>${escapeHtml(n.nombre)}</strong> (${escapeHtml(n.grupos?.nombre)||'—'}): ${escapeHtml([n.alergias,n.medicacion].filter(Boolean).join(' · '))}</div>`).join('');
     contFichas.innerHTML = conMed.map(n=>`
       <div style="padding:12px 18px;border-bottom:1px solid var(--ice)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <div style="font-size:13px;font-weight:500">⚕️ ${n.nombre}</div>
+          <div style="font-size:13px;font-weight:500">⚕️ ${escapeHtml(n.nombre)}</div>
           <span style="font-size:10px;color:var(--silver)">${n.grupos?.nombre||'—'}</span>
         </div>
         ${n.alergias?`<div style="font-size:11px;color:var(--danger);margin-bottom:2px">⚠ ${n.alergias}</div>`:''}
