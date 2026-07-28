@@ -711,19 +711,19 @@ window.cerrarListaNinos = function() {
             <div class="clase-dur">${c.duracion_horas} h</div>
           </div>
           <div class="clase-info">
-            <div class="clase-cliente">${c.clientes?.nombre || '—'}</div>
-            <div class="clase-meta">${c.disciplina} · Nivel ${c.nivel} · ${c.clientes?.rango_etario || ''}</div>
-            ${c.punto_encuentro ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;font-weight:500">📍 ${c.punto_encuentro}</div>` : ''}
+            <div class="clase-cliente">${escapeHtml(c.clientes?.nombre) || '—'}</div>
+            <div class="clase-meta">${escapeHtml(c.disciplina)} · Nivel ${escapeHtml(c.nivel)} · ${escapeHtml(c.clientes?.rango_etario) || ''}</div>
+            ${c.punto_encuentro ? `<div style="font-size:11px;color:var(--accent);margin-top:3px;font-weight:500">📍 ${escapeHtml(c.punto_encuentro)}</div>` : ''}
           </div>
           <div class="clase-actions">
             ${completada
               ? `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`
               : confirmado && yaEmpezó
-              ? `<button class="btn-sm" style="color:var(--accent2);border-color:var(--accent);font-weight:500" onclick="abrirModalFinalizar('${c.id}','${c.clientes?.nombre||'—'}','${c.disciplina} · Nivel ${c.nivel}','${horaInicio}','${c.duracion_horas} h', this)">Finalizar</button>`
+              ? `<button class="btn-sm" style="color:var(--accent2);border-color:var(--accent);font-weight:500" onclick="abrirModalFinalizar('${c.id}', this)">Finalizar</button>`
               : confirmado
               ? `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`
               : `<button class="btn-sm" onclick="confirmarClase('${c.id}', this)">Confirmar</button>
-                 <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('${c.clientes?.nombre}','${horaInicio}','${c.id}')">Ausencia</button>`
+                 <button class="btn-sm" style="color:var(--danger);border-color:#FECACA" onclick="abrirAusencia('${c.id}')">Ausencia</button>`
             }
           </div>
         </div>`;
@@ -804,12 +804,13 @@ window.cerrarListaNinos = function() {
 
   let claseAFinalizar = null;
 
-  window.abrirModalFinalizar = function(claseId, cliente, detalle, hora, duracion, btn) {
+  window.abrirModalFinalizar = async function(claseId, btn) {
     claseAFinalizar = { id: claseId, btn };
-    document.getElementById('fin-cliente').textContent = cliente;
-    document.getElementById('fin-detalle').textContent = detalle;
-    document.getElementById('fin-hora').textContent = hora;
-    document.getElementById('fin-dur').textContent = duracion;
+    const {data:c} = await sb.from('clases').select('duracion_horas, disciplina, nivel, hora_inicio, clientes(nombre)').eq('id',claseId).single();
+    document.getElementById('fin-cliente').textContent = c?.clientes?.nombre || '—';
+    document.getElementById('fin-detalle').textContent = c ? `${c.disciplina} · Nivel ${c.nivel}` : '—';
+    document.getElementById('fin-hora').textContent = c?.hora_inicio?.slice(0,5) || '—';
+    document.getElementById('fin-dur').textContent = c ? `${c.duracion_horas} h` : '—';
     abrirModal('modal-finalizar');
   };
 
@@ -832,13 +833,16 @@ window.cerrarListaNinos = function() {
   });
 
   window.finalizarClase = async function(claseId, btn) {
-    window.abrirModalFinalizar(claseId, '—', '—', '—', '—', btn);
+    window.abrirModalFinalizar(claseId, btn);
   };
 
   // --- AUSENCIA ---
   let claseAusenteId = null;
-  window.abrirAusencia = function(cliente, hora, claseId) {
+  window.abrirAusencia = async function(claseId) {
     claseAusenteId = claseId || null;
+    const {data:c} = claseId ? await sb.from('clases').select('hora_inicio, clientes(nombre)').eq('id',claseId).single() : {data:null};
+    const cliente = c?.clientes?.nombre || '—';
+    const hora = c?.hora_inicio?.slice(0,5) || '—';
     document.getElementById('ausencia-info').textContent = `${cliente} — ${hora} hs`;
     document.getElementById('ausencia-meta').textContent = 'La clase quedará sin asignación';
     abrirModal('modal-ausencia');

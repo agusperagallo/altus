@@ -993,7 +993,7 @@ async function loadEscGruposHoy() {
     const estadoBg    = sesionHoy?.estado==='completada'?'#E1F5EE':sesionHoy?.estado==='programada'?'#E6F1FB':'var(--ice)';
     const estadoLabel = sesionHoy?.estado==='completada'?'Completada':sesionHoy?.estado==='programada'?'Programada':'Sin sesión';
     return `
-    <div style="padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s" onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s" onclick="abrirDetalleGrupo('${g.id}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:14px">
           <div style="width:44px;height:44px;border-radius:10px;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:600;flex-shrink:0">${g.nombre[0]}</div>
@@ -1082,9 +1082,9 @@ async function loadEscAdminGrupos() {
         ${badge(g.activo?'Activo':'Inactivo',g.activo?'#0F6E56':'var(--silver)',g.activo?'#E1F5EE':'var(--ice)')}
       </div>
       <div style="display:flex;gap:8px">
-        <button onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Ver grupo</button>
+        <button onclick="abrirDetalleGrupo('${g.id}')" style="flex:1;height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Ver grupo</button>
         <button onclick="toggleGrupo('${g.id}',${g.activo})" style="flex:1;height:32px;border:none;border-radius:6px;background:${g.activo?'var(--danger-bg)':'#E1F5EE'};color:${g.activo?'var(--danger)':'#0F6E56'};font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">${g.activo?'Dar de baja':'Activar'}</button>
-        <button onclick="eliminarGrupo('${g.id}','${g.nombre}')" style="height:32px;width:32px;border:none;border-radius:6px;background:var(--danger-bg);color:var(--danger);font-size:14px;cursor:pointer">✕</button>
+        <button onclick="eliminarGrupo('${g.id}')" style="height:32px;width:32px;border:none;border-radius:6px;background:var(--danger-bg);color:var(--danger);font-size:14px;cursor:pointer">✕</button>
       </div>
     </div>`;
     return `<div class="t-row">
@@ -1094,9 +1094,9 @@ async function loadEscAdminGrupos() {
       <div style="width:80px;text-align:center;flex-shrink:0">${ninos}</div>
       <div style="width:100px;text-align:center;flex-shrink:0">${badge(g.activo?'Activo':'Inactivo',g.activo?'#0F6E56':'var(--silver)',g.activo?'#E1F5EE':'var(--ice)')}</div>
       <div style="width:120px;text-align:center;flex-shrink:0;display:flex;gap:4px;justify-content:center">
-        <button class="inst-action-btn" onclick="abrirDetalleGrupo('${g.id}','${g.nombre}','${g.instructores?.nombre||'Sin instructor'}','${g.edad_min}-${g.edad_max} años')">Ver</button>
+        <button class="inst-action-btn" onclick="abrirDetalleGrupo('${g.id}')">Ver</button>
         <button class="inst-action-btn ${g.activo?'danger':''}" onclick="toggleGrupo('${g.id}',${g.activo})">${g.activo?'Baja':'Activar'}</button>
-        <button class="inst-action-btn danger" onclick="eliminarGrupo('${g.id}','${g.nombre}')" title="Eliminar grupo">✕</button>
+        <button class="inst-action-btn danger" onclick="eliminarGrupo('${g.id}')" title="Eliminar grupo">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -1104,14 +1104,16 @@ async function loadEscAdminGrupos() {
 
 // Detalle grupo
 let grupoActual = null;
-async function abrirDetalleGrupo(id, nombre, instructor, edades) {
+async function abrirDetalleGrupo(id) {
   grupoActual = id;
-  document.getElementById('mdg-titulo').textContent = nombre;
-  document.getElementById('mdg-instructor').textContent = instructor;
-  document.getElementById('mdg-edades').textContent = edades;
+  const {data:g} = await sb.from('grupos').select('nombre, edad_min, edad_max, instructores(nombre)').eq('id',id).single();
+  document.getElementById('mdg-titulo').textContent = g?.nombre || '—';
+  document.getElementById('mdg-instructor').textContent = g?.instructores?.nombre || 'Sin instructor';
+  document.getElementById('mdg-edades').textContent = g ? `${g.edad_min}-${g.edad_max} años` : '—';
   openModal('modal-detalle-grupo');
   await cargarNinosGrupo(id);
 }
+window.abrirDetalleGrupo = abrirDetalleGrupo;
 
 async function cargarNinosGrupo(grupoId) {
   const {data} = await sb.from('grupo_ninos').select('*').eq('grupo_id',grupoId).eq('activo',true).order('nombre');
@@ -1566,7 +1568,9 @@ async function toggleGrupo(id, activo) {
   loadEscAdminGrupos();
 }
 
-async function eliminarGrupo(id, nombre) {
+async function eliminarGrupo(id) {
+  const {data:g} = await sb.from('grupos').select('nombre').eq('id',id).single();
+  const nombre = g?.nombre || 'este grupo';
   if (!confirm(`¿Eliminar el grupo "${nombre}"? Se eliminarán también sus sesiones. Esta acción no se puede deshacer.`)) return;
   await sb.from('sesiones_escuelita').delete().eq('grupo_id',id);
   await sb.from('grupo_ninos').delete().eq('grupo_id',id);
@@ -1850,14 +1854,13 @@ document.getElementById('mei-save').addEventListener('click', async()=>{
   loadInstructores();
 });
 
-async function editarInstructor(id, nombre, nivel, telefono, email) {
+async function editarInstructor(id) {
+  const {data} = await sb.from('instructores').select('nombre, nivel_certificado, telefono, email, escuelita, idiomas, activo_cerro').eq('id',id).single();
   document.getElementById('mei-id').value = id;
-  document.getElementById('mei-nom').value = nombre;
-  document.getElementById('mei-tel').value = telefono;
-  document.getElementById('mei-email').value = email;
-  document.getElementById('mei-nivel').value = nivel;
-  // Cargar escuelita e idiomas desde DB
-  const {data} = await sb.from('instructores').select('escuelita, idiomas, activo_cerro').eq('id',id).single();
+  document.getElementById('mei-nom').value = data?.nombre || '';
+  document.getElementById('mei-tel').value = data?.telefono || '';
+  document.getElementById('mei-email').value = data?.email || '';
+  document.getElementById('mei-nivel').value = data?.nivel_certificado || '';
   meiEscuelita = !!data?.escuelita;
   meiCerro = data?.activo_cerro !== false;
   document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
@@ -1870,13 +1873,15 @@ async function editarInstructor(id, nombre, nivel, telefono, email) {
   });
   openModal('modal-edit-inst');
 }
+window.editarInstructor = editarInstructor;
 
 // ── BAJAS TEMPORALES ────────────────────────────────────────
 let instBajaTempId = null;
 
-async function abrirBajaTemporal(instId, instNombre) {
+async function abrirBajaTemporal(instId) {
   instBajaTempId = instId;
-  document.getElementById('bt-nombre').textContent = instNombre;
+  const {data:inst} = await sb.from('instructores').select('nombre').eq('id',instId).single();
+  document.getElementById('bt-nombre').textContent = inst?.nombre || '—';
   document.getElementById('bt-inicio').value = new Date().toISOString().split('T')[0];
   document.getElementById('bt-fin').value = '';
 
@@ -1926,7 +1931,7 @@ async function cerrarBajaTemporal(bajaId) {
   const {error} = await sb.from('bajas_temporales').update({fecha_fin: hoy}).eq('id', bajaId);
   if (error) { toast('Error al actualizar','err'); return; }
   toast('Alta registrada ✓');
-  abrirBajaTemporal(instBajaTempId, document.getElementById('bt-nombre').textContent);
+  abrirBajaTemporal(instBajaTempId);
 }
 window.cerrarBajaTemporal = cerrarBajaTemporal;
 
@@ -2190,7 +2195,9 @@ window.onload = function() {
 }
 window.generarPDFInvitaciones = generarPDFInvitaciones;
 
-window.reenviarInvitacion = function(instId, nombre, codigo) {
+window.reenviarInvitacion = async function(instId, codigo) {
+  const {data:inst} = await sb.from('instructores').select('nombre').eq('id',instId).single();
+  const nombre = escapeHtml(inst?.nombre || 'Instructor');
   const APP_URL = window.location.origin;
   const activarURL = `${APP_URL}/vertex_activar.html?codigo=${codigo}`;
   const win = window.open('', '_blank');
@@ -2458,14 +2465,16 @@ document.getElementById('mp-presente').addEventListener('click',()=>{ applyCorr(
 document.getElementById('mp-ausente').addEventListener('click',()=>{ applyCorr('ausente'); });
 document.getElementById('mp-franco').addEventListener('click',()=>{ applyCorr('franco'); });
 let corrInstId = null;
-function openCorr(instId, nom, btn, estadoActual) {
+async function openCorr(instId, btn, estadoActual) {
   corrBtn=btn; corrInstId=instId;
-  document.getElementById('mp-nom').textContent=nom;
+  const {data:inst} = await sb.from('instructores').select('nombre').eq('id',instId).single();
+  document.getElementById('mp-nom').textContent=inst?.nombre || '—';
   document.getElementById('mp-opt-presente').style.display = estadoActual==='presente' ? 'none' : 'block';
   document.getElementById('mp-opt-ausente').style.display = estadoActual==='ausente' ? 'none' : 'block';
   document.getElementById('mp-opt-franco').style.display = estadoActual==='franco' ? 'none' : 'block';
   openModal('modal-presencia');
 }
+window.openCorr = openCorr;
 async function applyCorr(st) {
   closeModal('modal-presencia');
   if (!corrInstId) return;
@@ -2796,10 +2805,10 @@ async function initPresencia() {
     const franco=reg?.tipo==='franco';
     if(presente) conf++;
     let badge;
-    if(presente) badge=`<button class="pres-badge pres-ok" onclick="openCorr('${inst.id}','${inst.nombre}',this,'presente')" title="Click para corregir">Presente ✓</button>`;
-    else if(franco) badge=`<button class="pres-badge" style="background:#E8ECFF;color:#4A5FAD;border-color:#C5CCEE" onclick="openCorr('${inst.id}','${inst.nombre}',this,'franco')" title="Click para corregir">Franco ☀</button>`;
-    else if(ausente) badge=`<button class="pres-badge pres-aus" onclick="openCorr('${inst.id}','${inst.nombre}',this,'ausente')" title="Click para corregir">Ausente</button>`;
-    else badge=`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}','${inst.nombre}',this,'pendiente')">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`;
+    if(presente) badge=`<button class="pres-badge pres-ok" onclick="openCorr('${inst.id}',this,'presente')" title="Click para corregir">Presente ✓</button>`;
+    else if(franco) badge=`<button class="pres-badge" style="background:#E8ECFF;color:#4A5FAD;border-color:#C5CCEE" onclick="openCorr('${inst.id}',this,'franco')" title="Click para corregir">Franco ☀</button>`;
+    else if(ausente) badge=`<button class="pres-badge pres-aus" onclick="openCorr('${inst.id}',this,'ausente')" title="Click para corregir">Ausente</button>`;
+    else badge=`<button class="pres-badge ${new Date().getHours()>=17?'pres-aus':'pres-pend'}" onclick="openCorr('${inst.id}',this,'pendiente')">${new Date().getHours()>=17?'Ausente':'Pendiente'}</button>`;
     const sub=presente?'Confirmó presencia':franco?'Franco — no computable':ausente?'Marcado ausente':'Sin confirmar';
     return `<div class="pres-item">
       <div><div class="pres-name">${escapeHtml(inst.nombre)}</div><div class="pres-sub">${sub}</div></div>
@@ -2927,7 +2936,7 @@ function renderRanking() {
     const total = calcularPuntajeEfectivo(s);
     const totalTxt = total != null ? total.toFixed(1) : '—';
     if (isMobile) {
-      return `<div onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--ice);cursor:pointer">
+      return `<div onclick="abrirDetalleInstructor('${inst.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--ice);cursor:pointer">
         <div style="display:flex;align-items:center;gap:10px;min-width:0">
           <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:${i<3?'var(--navy)':'var(--silver)'};flex-shrink:0;width:20px;text-align:center">${i+1}</span>
           <div style="min-width:0">
@@ -2941,7 +2950,7 @@ function renderRanking() {
     // Resaltar columna activa
     const colStyle = col => col === rkSortCol ? 'background:rgba(29,158,117,.06)' : '';
     const dim = c => RANKING_CFG[c] === false ? 'opacity:.4' : '';
-    return `<div class="t-row" style="cursor:pointer" onclick="abrirDetalleInstructor('${inst.id}','${inst.nombre}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+    return `<div class="t-row" style="cursor:pointer" onclick="abrirDetalleInstructor('${inst.id}')" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div style="width:40px;flex-shrink:0;font-family:'Cormorant Garamond',serif;font-size:15px;color:${i<3?'var(--navy)':'var(--silver)'};font-weight:600;text-align:center">${i+1}</div>
       <div style="flex:1;${colStyle('nombre')}"><div style="font-weight:500">${escapeHtml(inst.nombre)}</div><div style="font-size:11px;color:var(--silver)">Niv. ${inst.nivel_certificado}</div></div>
       <div style="width:80px;text-align:center;flex-shrink:0;${colStyle('puntaje_opinion')};${dim('ranking_incluye_opinion')}">${pill(fn('puntaje_opinion'))}</div>
@@ -2972,16 +2981,18 @@ async function loadRanking() {
   renderRanking();
 }
 
-async function abrirDetalleInstructor(instId, nombre) {
+async function abrirDetalleInstructor(instId) {
   await cargarRankingCfg();
   // Cargar datos del instructor para modal de detalle
-  const [{data:snap},{data:resenas},{data:clases}] = await Promise.all([
+  const [{data:instInfo},{data:snap},{data:resenas},{data:clases}] = await Promise.all([
+    sb.from('instructores').select('nombre').eq('id',instId).single(),
     sb.from('ranking_snapshot').select('*').eq('instructor_id',instId).order('calculado_en',{ascending:false}).limit(1),
     sb.from('resenas').select('puntaje_clase,puntaje_trato,comentario,creado_en').in('clase_id',
       (await sb.from('clases').select('id').eq('instructor_id',instId)).data?.map(c=>c.id)||[]
     ).order('creado_en',{ascending:false}).limit(5),
     sb.from('clases').select('estado,instructor_confirmo,fecha').eq('instructor_id',instId).order('fecha',{ascending:false}).limit(20)
   ]);
+  const nombre = instInfo?.nombre || '—';
 
   const s = snap?.[0];
   const totalEfectivo = calcularPuntajeEfectivo(s);
@@ -3140,7 +3151,7 @@ async function loadInstructores() {
     const badgesCE = `${inst.activo_cerro!==false?'<span style="font-size:10px;background:#EEF2FF;color:#3730A3;padding:1px 6px;border-radius:10px;font-weight:500">⛷ Escuela</span>':''}${inst.escuelita?'<span style="font-size:10px;background:#F0FDF4;color:#166534;padding:1px 6px;border-radius:10px;font-weight:500">🎿 Escuelita</span>':''}`;
     // Invitación pendiente — tiene código sin usar y sin email (nunca activó la cuenta)
     const invPendiente = (inst.invitaciones||[]).find(i => !i.usado);
-    const btnInvitacion = invPendiente && !inst.email ? `<button onclick="reenviarInvitacion('${inst.id}','${inst.nombre}','${invPendiente.codigo}')" title="Cuenta pendiente de activación" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500">⏳ Pendiente</button>` : '';    if (isMobile) {
+    const btnInvitacion = invPendiente && !inst.email ? `<button onclick="reenviarInvitacion('${inst.id}','${invPendiente.codigo}')" title="Cuenta pendiente de activación" style="font-size:10px;padding:2px 8px;border-radius:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500">⏳ Pendiente</button>` : '';    if (isMobile) {
       return `<div style="margin:0 12px 10px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--line);overflow:hidden">
         <div style="padding:14px 14px 10px;display:flex;align-items:center;gap:12px">
           <div style="width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;font-family:'Cormorant Garamond',serif">${initials}</div>
@@ -3153,8 +3164,8 @@ async function loadInstructores() {
         </div>
         ${inst.telefono ? `<div style="padding:0 14px 10px;font-size:12px;color:var(--silver);display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3c0 8 6 11 10 10l1-3-3-1-1 2C8 10 6 8 5 6l2-1L6 2z"/></svg>${inst.telefono}</div>` : ''}
         <div style="padding:10px 14px;border-top:1px solid var(--ice);display:flex;gap:8px;background:var(--ice)">
-          <button class="inst-action-btn" onclick="editarInstructor('${inst.id}','${inst.nombre}','${inst.nivel_certificado}','${inst.telefono||''}','${inst.email||''}')" style="flex:1;border-radius:8px">Editar</button>
-          ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')" style="flex:1;border-radius:8px">Baja temp.</button>` : ''}
+          <button class="inst-action-btn" onclick="editarInstructor('${inst.id}')" style="flex:1;border-radius:8px">Editar</button>
+          ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}')" style="flex:1;border-radius:8px">Baja temp.</button>` : ''}
           <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})" style="flex:1;border-radius:8px">${inst.activo?'Dar de baja':'Activar'}</button>
         </div>
       </div>`;
@@ -3169,8 +3180,8 @@ async function loadInstructores() {
       <div style="width:110px;flex-shrink:0;font-size:12px;color:var(--muted)">${inst.telefono||'—'}</div>
       <div style="width:70px;text-align:center;flex-shrink:0">${badge(inst.activo?'Activo':'Inact.',inst.activo?'#0F6E56':'var(--silver)',inst.activo?'#E1F5EE':'var(--ice)')}</div>
       <div style="width:180px;text-align:center;flex-shrink:0;display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
-        <button class="inst-action-btn" onclick="editarInstructor('${inst.id}','${inst.nombre}','${inst.nivel_certificado}','${inst.telefono||''}','${inst.email||''}')">Editar</button>
-        ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}','${inst.nombre}')">Baja temp.</button>` : ''}
+        <button class="inst-action-btn" onclick="editarInstructor('${inst.id}')">Editar</button>
+        ${inst.activo ? `<button class="inst-action-btn" onclick="abrirBajaTemporal('${inst.id}')">Baja temp.</button>` : ''}
         <button class="inst-action-btn ${inst.activo?'danger':''}" onclick="toggleActivoInstructor('${inst.id}',${inst.activo})">${inst.activo?'Baja':'Activar'}</button>
       </div>
     </div>`;
@@ -3688,7 +3699,7 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
     const sub = esActual ? 'Instructor actual' : ocupado ? 'Ocupado en este horario' : `Niv. ${inst.nivel_certificado}`;
     const col = esActual ? 'var(--silver)' : ocupado ? 'var(--danger)' : 'var(--text)';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);${disabled?'opacity:0.5;':'cursor:pointer;'}transition:background .1s"
-      ${!disabled?`onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''" onclick="confirmarCambioInstructor('${inst.id}','${inst.nombre}')"`:''}>
+      ${!disabled?`onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''" onclick="confirmarCambioInstructor('${inst.id}')"`:''}>
       <div>
         <div style="font-size:13px;font-weight:500;color:${col}">${escapeHtml(inst.nombre)}</div>
         <div style="font-size:11px;color:var(--silver);margin-top:2px">${sub}</div>
@@ -3698,8 +3709,10 @@ async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel)
   }).join('');
 }
 
-async function confirmarCambioInstructor(instId, instNombre) {
+async function confirmarCambioInstructor(instId) {
   if (!claseACambiar) return;
+  const {data:inst} = await sb.from('instructores').select('nombre').eq('id',instId).single();
+  const instNombre = inst?.nombre || 'el instructor seleccionado';
   await sb.from('clases').update({instructor_id:instId}).eq('id',claseACambiar);
   audit('instructor_cambiado','clases',claseACambiar,{nuevo_instructor_id:instId,nuevo_instructor:instNombre});
   closeModal('modal-cambiar-inst');
@@ -3707,6 +3720,7 @@ async function confirmarCambioInstructor(instId, instNombre) {
   loadClases(); initClasesHoy();
   claseACambiar=null;
 }
+window.confirmarCambioInstructor = confirmarCambioInstructor;
 
 // Finalizar clase — modal
 let claseAdminFinalizar = null;
@@ -3842,7 +3856,7 @@ async function loadEscInicio() {
   document.getElementById('esc-dash-grupos-ct').textContent = `${gruposHoy?.length||0} grupos`;
   if (!gruposHoy?.length) contGrupos.innerHTML='<div class="empty">Sin sesiones hoy</div>';
   else contGrupos.innerHTML = gruposHoy.map(s=>`
-    <div onclick="abrirDetalleGrupo('${s.grupos?.id}','${s.grupos?.nombre||'—'}','${s.grupos?.instructores?.nombre||'Sin instructor'}','${s.grupos?.edad_min||'?'}-${s.grupos?.edad_max||'?'} años')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
+    <div onclick="abrirDetalleGrupo('${s.grupos?.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--ice);cursor:pointer;transition:background .1s" onmouseover="this.style.background='var(--ice)'" onmouseout="this.style.background=''">
       <div>
         <div style="font-size:13px;font-weight:500">${s.grupos?.nombre||'—'}</div>
         <div style="font-size:11px;color:var(--silver)">${s.grupos?.instructores?.nombre||'Sin instructor'}</div>
