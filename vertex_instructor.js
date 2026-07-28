@@ -104,6 +104,11 @@
     return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
+  window.cerrarSesionCuentaInactiva = async function() {
+    await sb.auth.signOut();
+    window.location.href = 'vertex_login.html';
+  };
+
   // Auth check y datos del usuario
   sb.auth.getSession().then(async ({ data }) => {
     if (!data?.session) { window.location.href = 'vertex_login.html'; return; }
@@ -113,8 +118,20 @@
     // (por el caché agresivo de Safari/PWA) mientras la sesión activa es de otro
     // usuario — sin esto, se mostraba primero el instructor cacheado y recién
     // después corregía. Se valida contra la tabla usuarios antes de pintar nada.
-    const { data: usuario } = await sb.from('usuarios').select('rol, instructor_id').eq('id', data.session.user.id).single();
+    const { data: usuario } = await sb.from('usuarios').select('rol, instructor_id, instructores(activo)').eq('id', data.session.user.id).single();
     if (usuario) {
+      // Cuenta desactivada por el supervisor — cortar acá, antes de pedir cualquier
+      // otro dato. No se debe disparar ningún GET más (clases, ranking, grupos, etc.)
+      if (usuario.rol === 'instructor' && usuario.instructores?.activo === false) {
+        document.getElementById('loading-overlay')?.remove();
+        const overlay = document.getElementById('cuenta-inactiva-overlay');
+        if (overlay) overlay.style.display = 'flex';
+        localStorage.removeItem('vertex_instructor_id');
+        localStorage.removeItem('vertex_rol');
+        localStorage.removeItem('vertex_email');
+        await sb.auth.signOut();
+        return;
+      }
       const idCacheado = localStorage.getItem('vertex_instructor_id');
       const idReal = usuario.instructor_id ? String(usuario.instructor_id) : null;
       const rolDesactualizado = usuario.rol && usuario.rol !== localStorage.getItem('vertex_rol');
