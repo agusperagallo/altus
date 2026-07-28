@@ -770,8 +770,13 @@ function normalizarFecha(val) {
   return val;
 }
 
-function initDatePickers() {
-  if (typeof flatpickr === 'undefined') return;
+function initDatePickers(intento) {
+  intento = intento || 0;
+  if (typeof flatpickr === 'undefined') {
+    // Flatpickr todavía no cargó (CDN lenta) — reintentar unas veces antes de rendirse
+    if (intento < 8) setTimeout(() => initDatePickers(intento + 1), 400);
+    return;
+  }
   const locale = {
     weekdays:{shorthand:['Do','Lu','Ma','Mi','Ju','Vi','Sá'],longhand:['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']},
     months:{shorthand:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],longhand:['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']},
@@ -2366,6 +2371,7 @@ function openModalAsignar(inst) {
   document.getElementById('ma-sc').textContent=inst.score||'—';
   const hora=document.getElementById('cli-hora').value, fin=document.getElementById('cli-horafin').value;
   document.getElementById('ma-horario').textContent=hora&&fin?`${hora} — ${fin}`:'—';
+  initDatePickers();
   openModal('modal-asignar');
 }
 function toggleRequerida(force) {
