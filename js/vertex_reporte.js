@@ -12,6 +12,29 @@ function setRepTab(tab) {
 }
 window.setRepTab = setRepTab;
 
+// ── CONFIGURACIÓN DE RANKING — qué componentes cuentan (definida por el supervisor) ──
+// Copia autocontenida del mismo helper de vertex_panel.html: este archivo se carga
+// como <script src> independiente, sin módulos, así que no comparte el scope del
+// inline script — se mantiene una copia igual acá para no depender del orden de carga.
+const REP_RANKING_COMPONENTES = [
+  {key:'puntaje_opinion',      cfgKey:'ranking_incluye_opinion'},
+  {key:'puntaje_asistencia',   cfgKey:'ranking_incluye_asistencia'},
+  {key:'puntaje_fidelizacion', cfgKey:'ranking_incluye_fidelizacion'},
+  {key:'puntaje_historico',    cfgKey:'ranking_incluye_historico'},
+  {key:'puntaje_perfil',       cfgKey:'ranking_incluye_perfil'},
+];
+async function cargarRankingCfgReporte() {
+  const {data} = await sb.from('configuracion').select(REP_RANKING_COMPONENTES.map(c=>c.cfgKey).join(',')).single();
+  return data || {ranking_incluye_opinion:true, ranking_incluye_asistencia:true, ranking_incluye_fidelizacion:true, ranking_incluye_historico:true, ranking_incluye_perfil:true};
+}
+function calcularPuntajeEfectivoReporte(snapshot, cfg) {
+  if (!snapshot) return null;
+  const activos = REP_RANKING_COMPONENTES.filter(c => cfg[c.cfgKey] !== false);
+  const valores = activos.map(c => snapshot[c.key]).filter(v => v != null);
+  if (!valores.length) return null;
+  return valores.reduce((a,b)=>a+b, 0) / valores.length;
+}
+
 // ── Vertex Reporte Mensual ────────────────────────────────────
 // Genera el reporte mensual de gestión del cerro
 
@@ -45,13 +68,14 @@ async function loadReporte() {
   const [
     {data:clases}, {data:clasesAnt},
     {data:insts},  {data:registrosAsist},
-    {data:clientesMes}
+    {data:clientesMes}, rankingCfg
   ] = await Promise.all([
     sb.from('clases').select('*, instructores(nombre), clientes(id,creado_en)').gte('fecha',desde).lte('fecha',hasta),
     sb.from('clases').select('id,estado').gte('fecha',mesAntD).lte('fecha',mesAntH),
     sb.from('instructores').select('id, nombre, ranking_snapshot(*)').eq('activo',true),
     sb.from('asistencia').select('instructor_id, tipo').gte('registrado_en',desde+'T00:00:00').lte('registrado_en',hasta+'T23:59:59'),
-    sb.from('clientes').select('id, creado_en').gte('creado_en',desde).lte('creado_en',hasta+'T23:59:59')
+    sb.from('clientes').select('id, creado_en').gte('creado_en',desde).lte('creado_en',hasta+'T23:59:59'),
+    cargarRankingCfgReporte()
   ]);
 
   const clasesTotal    = clases?.length || 0;
@@ -86,8 +110,13 @@ async function loadReporte() {
 
   const rankingMes = (insts||[]).map(i => {
     const snap = i.ranking_snapshot?.[i.ranking_snapshot.length-1];
-    return { nombre:i.nombre, id:i.id, total:snap?.puntaje_total||0, opinion:snap?.puntaje_opinion||0 };
-  }).sort((a,b) => b.total - a.total);
+    return { nombre:i.nombre, id:i.id, total:calcularPuntajeEfectivoReporte(snap, rankingCfg), opinion:snap?.puntaje_opinion||0 };
+  }).sort((a,b) => {
+    const tieneA = a.total != null, tieneB = b.total != null;
+    if (tieneA !== tieneB) return tieneA ? -1 : 1;
+    if (!tieneA && !tieneB) return a.nombre.localeCompare(b.nombre, 'es');
+    return b.total - a.total;
+  });
 
   // Helpers de UI
   const pct       = (n,d) => d>0 ? Math.round((n/d)*100)+'%' : '0%';
@@ -180,7 +209,7 @@ async function loadReporte() {
                 const p = total>0 ? Math.round((a.pres/total)*100) : 0;
                 return `<div style="padding:10px 18px;border-bottom:1px solid var(--ice)">
                   <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-                    <div style="font-size:13px;font-weight:500">${i.nombre}</div>
+                    <div style="font-size:13px;font-weight:500">${escapeHtml(i.nombre)}</div>
                     <div style="font-size:12px;font-weight:600;color:${barColor(p)}">${p}%</div>
                   </div>
                   <div style="height:5px;background:var(--ice);border-radius:3px;overflow:hidden">
@@ -196,12 +225,17 @@ async function loadReporte() {
           <div class="panel">
             <div class="panel-head"><span class="panel-title">Ranking del mes</span></div>
             <div style="padding:8px 0">
-              ${rankingMes.map((i,idx)=>`
+              ${rankingMes.map((i,idx)=>{
+                const t = i.total!=null ? i.total.toFixed(1) : '—';
+                const bg = i.total==null?'var(--ice)':i.total>=7?'#E1F5EE':i.total>=5?'#FFF8E0':'#FFE8E8';
+                const col = i.total==null?'var(--silver)':i.total>=7?'#0F6E56':i.total>=5?'#92400E':'#991B1B';
+                return `
                 <div style="display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--ice)">
                   <div style="font-size:13px;font-weight:600;color:${idx===0?'#B45309':idx===1?'#6B7280':idx===2?'#92400E':'var(--silver)'};min-width:20px">${idx+1}</div>
-                  <div style="font-size:13px;font-weight:500;flex:1">${i.nombre}</div>
-                  <span style="font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:${i.total>=7?'#E1F5EE':i.total>=5?'#FFF8E0':'#FFE8E8'};color:${i.total>=7?'#0F6E56':i.total>=5?'#92400E':'#991B1B'}">${i.total.toFixed(1)}</span>
-                </div>`).join('')||'<div class="empty">Sin datos</div>'}
+                  <div style="font-size:13px;font-weight:500;flex:1">${escapeHtml(i.nombre)}</div>
+                  <span style="font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:${bg};color:${col}">${t}</span>
+                </div>`;
+              }).join('')||'<div class="empty">Sin datos</div>'}
             </div>
           </div>
         </div>
@@ -264,13 +298,14 @@ async function loadReporteTemporada() {
   const cont = document.getElementById('rep-contenido-temporada');
   cont.innerHTML = '<div class="empty">Cargando temporada...</div>';
 
-  const [{data:clases},{data:insts},{data:registrosAsist}] = await Promise.all([
+  const [{data:clases},{data:insts},{data:registrosAsist},rankingCfg] = await Promise.all([
     sb.from('clases').select('instructor_id, duracion_horas, disciplina, estado, instructores(nombre)')
       .gte('fecha', desde).lte('fecha', hasta),
     sb.from('instructores').select('id, nombre, creado_en, ranking_snapshot(*)')
       .eq('activo', true).order('nombre'),
     sb.from('asistencia').select('instructor_id, tipo')
       .gte('registrado_en', desde+'T00:00:00').lte('registrado_en', hasta+'T23:59:59'),
+    cargarRankingCfgReporte(),
   ]);
 
   const clasesTotal = clases?.length || 0;
@@ -307,9 +342,14 @@ async function loadReporteTemporada() {
     const diasInst = Math.max(0, Math.round((new Date(hasta)-new Date(desdeEf))/86400000)+1);
     const pct = pctN(a.pres, diasInst - a.francos);
     const d = porInst[i.nombre]||{clases:0,horas:0};
-    return {nombre:i.nombre, id:i.id, total:snap?.puntaje_total||0,
+    return {nombre:i.nombre, id:i.id, total:calcularPuntajeEfectivoReporte(snap, rankingCfg),
             clases:d.clases, horas:d.horas, pct, color:barColor(pct)};
-  }).sort((a,b)=>b.total-a.total);
+  }).sort((a,b)=>{
+    const tieneA = a.total != null, tieneB = b.total != null;
+    if (tieneA !== tieneB) return tieneA ? -1 : 1;
+    if (!tieneA && !tieneB) return a.nombre.localeCompare(b.nombre, 'es');
+    return b.total - a.total;
+  });
 
   cont.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;padding:12px 16px;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -368,13 +408,18 @@ async function loadReporteTemporada() {
       <div>
         <div class="panel"><div class="panel-head"><span class="panel-title">Ranking de la temporada</span></div>
           <div style="padding:8px 0">
-            ${ranking.map((i,idx)=>`
+            ${ranking.map((i,idx)=>{
+              const t = i.total!=null ? i.total.toFixed(1) : '—';
+              const bg = i.total==null?'var(--ice)':i.total>=7?'#E1F5EE':i.total>=5?'#FFF8E0':'#FFE8E8';
+              const col = i.total==null?'var(--silver)':i.total>=7?'#0F6E56':i.total>=5?'#92400E':'#991B1B';
+              return `
               <div style="display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--ice)">
                 <div style="font-size:13px;font-weight:600;color:${idx===0?'#B45309':idx===1?'#6B7280':idx===2?'#92400E':'var(--silver)'};min-width:20px">${idx+1}</div>
-                <div style="font-size:13px;font-weight:500;flex:1">${i.nombre}</div>
+                <div style="font-size:13px;font-weight:500;flex:1">${escapeHtml(i.nombre)}</div>
                 <div style="font-size:11px;color:var(--muted)">${i.clases} clases · ${i.horas.toFixed(1)} hs</div>
-                <span style="font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:${i.total>=7?'#E1F5EE':i.total>=5?'#FFF8E0':'#FFE8E8'};color:${i.total>=7?'#0F6E56':i.total>=5?'#92400E':'#991B1B'}">${i.total.toFixed(1)}</span>
-              </div>`).join('')||'<div class="empty">Sin datos</div>'}
+                <span style="font-size:12px;font-weight:600;padding:2px 10px;border-radius:20px;background:${bg};color:${col}">${t}</span>
+              </div>`;
+            }).join('')||'<div class="empty">Sin datos</div>'}
           </div>
         </div>
         <div class="panel"><div class="panel-head"><span class="panel-title">Asistencia de la temporada</span></div>
@@ -382,7 +427,7 @@ async function loadReporteTemporada() {
             ${ranking.map(i=>`
               <div style="padding:10px 18px;border-bottom:1px solid var(--ice)">
                 <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-                  <div style="font-size:13px;font-weight:500">${i.nombre}</div>
+                  <div style="font-size:13px;font-weight:500">${escapeHtml(i.nombre)}</div>
                   <div style="font-size:12px;font-weight:600;color:${i.color}">${i.pct}%</div>
                 </div>
                 <div style="height:5px;background:var(--ice);border-radius:3px;overflow:hidden">
