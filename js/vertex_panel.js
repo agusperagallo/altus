@@ -2714,53 +2714,91 @@ async function loadDashboardExtras() {
 }
 
 // ── PARTE DIARIO + CLIMA (Cerro Bayo) ────────────────────
+// Tarjeta chica en el dashboard con un resumen ("8/11 medios abiertos");
+// tocarla abre un modal con el detalle completo (clima + lista de medios).
+// El modal tiene su propio scroll interno (max-height + overflow-y:auto),
+// así no estira el dashboard ni bloquea el scroll de la página.
+let parteDiarioData = null;
+
 async function cargarParteDiario() {
-  const cont = document.getElementById('parte-diario-contenido');
-  const horaEl = document.getElementById('parte-diario-hora');
-  if (!cont) return;
+  const resumenEl = document.getElementById('parte-diario-resumen');
+  if (!resumenEl) return;
 
   try {
     const res = await fetch('/api/estado-pistas');
     if (!res.ok) throw new Error('respuesta no OK');
-    const data = await res.json();
+    parteDiarioData = await res.json();
 
-    horaEl.textContent = data.ultima_actualizacion ? `Act. ${data.ultima_actualizacion}` : '—';
+    const medios = parteDiarioData.medios || [];
+    const abiertos = medios.filter(m => m.estado === 'abierto').length;
+    const climaBase = (parteDiarioData.clima || []).find(c => c.zona === 'Base');
 
-    const chipClima = (zona, c) => `
-      <div style="background:var(--ice);border-radius:8px;padding:10px 12px;text-align:center;flex:1">
-        <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${escapeHtml(zona)}</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--navy)">${escapeHtml(c?.temperatura)||'—'}</div>
-        <div style="font-size:11px;color:var(--silver);margin-top:2px">${escapeHtml(c?.viento)||'—'} · ${escapeHtml(c?.nieve_acumulada)||'—'} nieve</div>
-      </div>`;
-
-    const claseEstado = e => e==='abierto' ? 'pres-ok' : e==='cerrado' ? 'pres-aus' : e==='pausa' ? 'pill-mid' : 'pres-pend';
-    const textoEstado = e => e==='abierto' ? 'Abierto' : e==='cerrado' ? 'Cerrado' : e==='pausa' ? 'Con pausas' : 'Revisar';
-
-    const filaMedio = m => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ice)">
-        <div style="font-size:13px">${escapeHtml(m.nombre)}</div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:11px;color:var(--silver)">${escapeHtml(m.horario)||''}</span>
-          <span class="pill ${claseEstado(m.estado)}" style="font-size:11px;padding:2px 10px">${textoEstado(m.estado)}</span>
-        </div>
-      </div>`;
-
-    const climaHTML = (data.clima||[]).length
-      ? `<div style="display:flex;gap:10px;margin-bottom:16px">${data.clima.map(c=>chipClima(c.zona,c)).join('')}</div>`
-      : '';
-
-    const mediosHTML = (data.medios||[]).length
-      ? `<div>${data.medios.map(filaMedio).join('')}</div>`
-      : '<div class="empty">Sin datos de medios de elevación</div>';
-
-    cont.innerHTML = climaHTML + mediosHTML;
+    resumenEl.textContent = medios.length
+      ? `${abiertos}/${medios.length} medios abiertos${climaBase?.temperatura ? ' · ' + climaBase.temperatura : ''}`
+      : 'Sin datos por ahora';
 
   } catch (e) {
     console.warn('[Parte diario] Error:', e);
-    cont.innerHTML = '<div class="empty">No se pudo cargar el parte diario — probá de nuevo en un momento</div>';
-    horaEl.textContent = '—';
+    resumenEl.textContent = 'No se pudo cargar — tocá para reintentar';
+    parteDiarioData = null;
   }
 }
+
+function abrirParteDiario() {
+  openModal('modal-parte-diario');
+  if (parteDiarioData) {
+    renderParteDiarioModal();
+  } else {
+    const cont = document.getElementById('parte-diario-contenido');
+    cont.innerHTML = '<div class="empty">Cargando...</div>';
+    cargarParteDiario().then(() => {
+      if (parteDiarioData) renderParteDiarioModal();
+      else cont.innerHTML = '<div class="empty">No se pudo cargar el parte diario — probá de nuevo en un momento</div>';
+    });
+  }
+}
+window.abrirParteDiario = abrirParteDiario;
+
+function renderParteDiarioModal() {
+  const cont = document.getElementById('parte-diario-contenido');
+  const data = parteDiarioData;
+  if (!cont || !data) return;
+
+  const chipClima = (zona, c) => `
+    <div style="background:var(--ice);border-radius:8px;padding:10px 12px;text-align:center;flex:1">
+      <div style="font-size:10px;color:var(--silver);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">${escapeHtml(zona)}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--navy)">${escapeHtml(c?.temperatura)||'—'}</div>
+      <div style="font-size:11px;color:var(--silver);margin-top:2px">${escapeHtml(c?.viento)||'—'} · ${escapeHtml(c?.nieve_acumulada)||'—'} nieve</div>
+    </div>`;
+
+  const claseEstado = e => e==='abierto' ? 'pres-ok' : e==='cerrado' ? 'pres-aus' : e==='pausa' ? 'pill-mid' : 'pres-pend';
+  const textoEstado = e => e==='abierto' ? 'Abierto' : e==='cerrado' ? 'Cerrado' : e==='pausa' ? 'Con pausas' : 'Revisar';
+
+  const filaMedio = m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--ice)">
+      <div style="font-size:13px">${escapeHtml(m.nombre)}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;color:var(--silver)">${escapeHtml(m.horario)||''}</span>
+        <span class="pill ${claseEstado(m.estado)}" style="font-size:11px;padding:2px 10px">${textoEstado(m.estado)}</span>
+      </div>
+    </div>`;
+
+  const horaHTML = data.ultima_actualizacion
+    ? `<div style="font-size:11px;color:var(--silver);margin-bottom:14px">Actualizado: ${escapeHtml(data.ultima_actualizacion)}</div>`
+    : '';
+
+  const climaHTML = (data.clima||[]).length
+    ? `<div style="display:flex;gap:10px;margin-bottom:16px">${data.clima.map(c=>chipClima(c.zona,c)).join('')}</div>`
+    : '';
+
+  const mediosHTML = (data.medios||[]).length
+    ? `<div>${data.medios.map(filaMedio).join('')}</div>`
+    : '<div class="empty">Sin datos de medios de elevación</div>';
+
+  cont.innerHTML = horaHTML + climaHTML + mediosHTML;
+}
+
+document.getElementById('mpd-close')?.addEventListener('click', () => closeModal('modal-parte-diario'));
 
 async function cargarTopRanking() {
   const cont = document.getElementById('top-ranking-lista');
