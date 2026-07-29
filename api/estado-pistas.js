@@ -7,17 +7,10 @@
 // lado del servidor (evita el bloqueo de CORS que tendría el navegador del
 // cliente) y devuelve solo los datos, ya parseados.
 //
-// IMPORTANTE — estado desconocido de los medios de elevación:
-// El clima y los nombres/horarios de los medios están verificados letra por
-// letra contra la página real. El "estado" (abierto/pausa/cerrado) de cada
-// medio se muestra ahí con un ícono/color, no con texto — no tuve forma de
-// inspeccionar ese HTML exacto para saber qué clase/atributo lo marca. El
-// parser de abajo intenta detectarlo con patrones razonables (alt de imagen,
-// nombre de clase CSS) pero, si no lo reconoce con confianza, devuelve
-// estado: null en vez de arriesgar un "abierto" que en realidad esté cerrado.
-// Si en algún momento me pasás el HTML real de una fila de la tabla de medios
-// (botón derecho → Inspeccionar sobre el ícono de estado, copiar ese <td>),
-// ajusto PARSEAR_ESTADO_MEDIO para que sea exacto.
+// Verificado contra su robots.txt (User-agent: * / Crawl-delay: 10, sin
+// Disallow) y contra un HTML real de la página el 29/07/2026 — clima, nombres
+// de medios/horarios, y el mapeo de estado (estado1=abierto, estado2=pausa,
+// estado3=cerrado) están confirmados, no son una aproximación.
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -25,12 +18,38 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://www.cerrobayo.com.ar/montana/estado/', {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VertexCB/1.0)' }
-    });
+    // Timeout propio de 8s: si cerrobayo.com.ar tarda o no responde, preferimos
+    // nuestro propio error claro a que Vercel mate la función entera con un
+    // 502/504 genérico sin explicación.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    let response;
+    try {
+      response = await fetch('https://www.cerrobayo.com.ar/montana/estado/', {
+        headers: {
+          // Headers de navegador real — algunos sitios bloquean pedidos con
+          // solo User-Agent y sin el resto de los headers típicos de un browser.
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'es-AR,es;q=0.9',
+        },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
-      return res.status(502).json({ error: 'No se pudo consultar cerrobayo.com.ar', status: response.status });
+      // Devolvemos el motivo real (código + primeros caracteres del cuerpo) en
+      // vez de un mensaje genérico, para poder diagnosticar sin acceso a los
+      // logs de Vercel.
+      const cuerpo = await response.text().catch(() => '');
+      return res.status(502).json({
+        error: 'cerrobayo.com.ar respondió con error',
+        status_cerrobayo: response.status,
+        preview: cuerpo.slice(0, 300),
+      });
     }
 
     const html = await response.text();
@@ -43,7 +62,10 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('[estado-pistas] Error:', err);
-    return res.status(500).json({ error: 'Error interno al leer el parte diario' });
+    if (err.name === 'AbortError') {
+      return res.status(504).json({ error: 'cerrobayo.com.ar no respondió a tiempo (timeout 8s)' });
+    }
+    return res.status(500).json({ error: 'Error interno al leer el parte diario', detalle: err.message });
   }
 }
 
