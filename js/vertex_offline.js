@@ -2,8 +2,9 @@
 // Maneja caché local de datos del día y sincronización offline
 
 const VERTEX_DB_NAME    = 'vertex_offline';
-const VERTEX_DB_VERSION = 1;
+const VERTEX_DB_VERSION = 2; // v2: agrega 'acciones_pendientes' (presencia, confirmar/finalizar clase, ausencia)
 const SYNC_KEY         = 'vertex_sync_queue';
+const ACCIONES_KEY     = 'vertex_acciones_pendientes';
 
 // ── IndexedDB setup ─────────────────────────────────────────
 function abrirDB() {
@@ -17,6 +18,8 @@ function abrirDB() {
         db.createObjectStore('ninos_grupo', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('asistencia_offline'))
         db.createObjectStore('asistencia_offline', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('acciones_pendientes'))
+        db.createObjectStore('acciones_pendientes', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('meta'))
         db.createObjectStore('meta', { keyPath: 'clave' });
     };
@@ -72,9 +75,12 @@ function mostrarBannerOffline(show) {
   banner.style.display = show ? 'flex' : 'none';
 }
 
-window.addEventListener('online',  () => { estaOnline = true;  mostrarBannerOffline(false); sincronizarPendientes(); });
+window.addEventListener('online',  () => { estaOnline = true;  mostrarBannerOffline(false); sincronizarPendientes(); sincronizarAccionesPendientes(); });
 window.addEventListener('offline', () => { estaOnline = false; mostrarBannerOffline(true); });
 if (!estaOnline) mostrarBannerOffline(true);
+// Si la app se abre ya con señal (pero había quedado algo pendiente de una sesión
+// offline anterior), sincronizar sin esperar a un evento 'online' que puede no llegar.
+if (estaOnline) { sincronizarPendientes(); sincronizarAccionesPendientes(); }
 
 // ── Guardar datos del día ────────────────────────────────────
 async function cachearDatosDelDia(instructorId, gruposIds) {
@@ -199,6 +205,93 @@ async function cacheFrescoDeHoy() {
   } catch { return false; }
 }
 
+// ── Cola genérica de acciones del instructor ─────────────────
+// Complementa a marcarAsistenciaOffline (que es específica de niños de Escuelita)
+// con el mismo patrón para: presencia propia, confirmar/finalizar clase, ausencia.
+// A diferencia de esa, esta no depende de "estaOnline()" para decidir —
+// intenta el pedido real primero (ejecutarOEncolar) y solo encola si falla,
+// porque en la montaña a veces figura "con señal" pero el pedido igual se cae.
+
+async function encolarAccion(tipo, payload) {
+  const registro = {
+    id: `${tipo}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    tipo,
+    payload,
+    sincronizado: false,
+    creado_en: new Date().toISOString()
+  };
+  await dbPut('acciones_pendientes', registro);
+  const queue = JSON.parse(localStorage.getItem(ACCIONES_KEY) || '[]');
+  queue.push(registro);
+  localStorage.setItem(ACCIONES_KEY, JSON.stringify(queue));
+  return registro;
+}
+
+async function ejecutarAccion(item) {
+  switch (item.tipo) {
+    case 'presencia':
+      await sb.from('asistencia').insert(item.payload);
+      break;
+    case 'confirmar_clase':
+      await sb.from('clases').update({ instructor_confirmo: true }).eq('id', item.payload.clase_id);
+      break;
+    case 'finalizar_clase':
+      await sb.from('clases').update({ estado: 'completada' }).eq('id', item.payload.clase_id);
+      try { await sb.rpc('calcular_ranking'); } catch(e) {}
+      break;
+    case 'ausencia':
+      await sb.from('asistencia').insert(item.payload);
+      break;
+    default:
+      throw new Error('Tipo de acción offline desconocido: ' + item.tipo);
+  }
+}
+
+// Intenta el pedido real ahora mismo; si falla por lo que sea (sin señal,
+// timeout, micro-corte), lo encola para reintentar cuando vuelva la conexión.
+// Devuelve {ok:true, offline:false} si salió al toque, {ok:true, offline:true} si quedó pendiente.
+async function ejecutarOEncolar(tipo, payload) {
+  try {
+    await ejecutarAccion({ tipo, payload });
+    return { ok: true, offline: false };
+  } catch (e) {
+    await encolarAccion(tipo, payload);
+    return { ok: true, offline: true };
+  }
+}
+
+async function sincronizarAccionesPendientes() {
+  const queue = JSON.parse(localStorage.getItem(ACCIONES_KEY) || '[]');
+  const pendientes = queue.filter(q => !q.sincronizado);
+  if (!pendientes.length) return;
+
+  console.log(`[Vertex Offline] Sincronizando ${pendientes.length} acción(es) pendiente(s)...`);
+  let ok = 0;
+  for (const item of pendientes) {
+    try {
+      await ejecutarAccion(item);
+      item.sincronizado = true;
+      ok++;
+    } catch (e) {
+      console.warn('[Vertex Offline] Error al sincronizar acción:', item.id, e);
+    }
+  }
+  localStorage.setItem(ACCIONES_KEY, JSON.stringify(queue));
+
+  if (ok > 0) {
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F6E56;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;font-family:DM Sans,sans-serif';
+    toast.textContent = `✓ ${ok} acción${ok>1?'es':''} sincronizada${ok>1?'s':''}`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+}
+
+function hayAccionesPendientes() {
+  const queue = JSON.parse(localStorage.getItem(ACCIONES_KEY) || '[]');
+  return queue.some(q => !q.sincronizado);
+}
+
 // Exportar para uso desde el panel
 window.vertexOffline = {
   cachearDatosDelDia,
@@ -207,5 +300,8 @@ window.vertexOffline = {
   marcarAsistenciaOffline,
   sincronizarPendientes,
   cacheFrescoDeHoy,
-  estaOnline: () => estaOnline
+  estaOnline: () => estaOnline,
+  ejecutarOEncolar,
+  sincronizarAccionesPendientes,
+  hayAccionesPendientes
 };

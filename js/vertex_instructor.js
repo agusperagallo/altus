@@ -646,19 +646,23 @@ window.cerrarListaNinos = function() {
     const ahora = new Date();
     const horaStr = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit', timeZone:'America/Argentina/Buenos_Aires' });
 
+    let offline = false;
     if (INSTRUCTOR_ID) {
-      await sb.from('asistencia').insert({
+      const r = await vertexOffline.ejecutarOEncolar('presencia', {
         instructor_id: INSTRUCTOR_ID,
         clase_id: null,
         tipo: 'presente',
         registrado_en: new Date().toLocaleString('sv-SE', {timeZone:'America/Argentina/Buenos_Aires'}).replace(' ','T')
       });
+      offline = r.offline;
     }
 
     document.getElementById('presencia-pendiente').style.display = 'none';
     document.getElementById('presencia-ok').style.display = 'flex';
-    document.getElementById('presencia-hora-txt').textContent = `Registrada a las ${horaStr} hs`;
-    toast('Presencia registrada');
+    document.getElementById('presencia-hora-txt').textContent = offline
+      ? `Registrada a las ${horaStr} hs — se va a sincronizar cuando vuelva la señal`
+      : `Registrada a las ${horaStr} hs`;
+    toast(offline ? 'Presencia guardada — sin señal por ahora' : 'Presencia registrada');
   };
 
   // --- CARGAR CLASES DEL DÍA ---
@@ -789,24 +793,33 @@ window.cerrarListaNinos = function() {
 
   // --- CONFIRMAR CLASE ---
   window.confirmarClase = async function(claseId, btn) {
+    let offline = false;
     if (claseId && claseId.includes('-')) {
-      await sb.from('clases').update({ instructor_confirmo: true }).eq('id', claseId);
+      const r = await vertexOffline.ejecutarOEncolar('confirmar_clase', { clase_id: claseId });
+      offline = r.offline;
     }
     if (btn) {
       btn.textContent = 'Confirmada';
       btn.classList.add('confirmado');
       btn.nextElementSibling && (btn.nextElementSibling.style.display = 'none');
       const div = btn.parentElement;
-      div.innerHTML = `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada</span>`;
+      div.innerHTML = `<span class="chip" style="background:var(--ice2);color:var(--silver);font-size:11px;padding:3px 10px;border-radius:20px">Confirmada${offline?' ⏳':''}</span>`;
     }
-    toast('Asistencia confirmada');
+    toast(offline ? 'Guardado — se sincroniza sin señal' : 'Asistencia confirmada');
   };
 
   let claseAFinalizar = null;
 
   window.abrirModalFinalizar = async function(claseId, btn) {
     claseAFinalizar = { id: claseId, btn };
-    const {data:c} = await sb.from('clases').select('duracion_horas, disciplina, nivel, hora_inicio, clientes(nombre)').eq('id',claseId).single();
+    let c;
+    if (vertexOffline.estaOnline()) {
+      const res = await sb.from('clases').select('duracion_horas, disciplina, nivel, hora_inicio, clientes(nombre)').eq('id',claseId).single();
+      c = res.data;
+    } else {
+      const cacheadas = await vertexOffline.obtenerClasesOffline();
+      c = cacheadas.find(x => x.id === claseId);
+    }
     document.getElementById('fin-cliente').textContent = c?.clientes?.nombre || '—';
     document.getElementById('fin-detalle').textContent = c ? `${c.disciplina} · Nivel ${c.nivel}` : '—';
     document.getElementById('fin-hora').textContent = c?.hora_inicio?.slice(0,5) || '—';
@@ -819,14 +832,13 @@ window.cerrarListaNinos = function() {
     const btn = document.getElementById('btn-confirmar-fin');
     btn.textContent = 'Finalizando...';
     btn.disabled = true;
-    await sb.from('clases').update({ estado: 'completada' }).eq('id', claseAFinalizar.id);
-    try { await sb.rpc('calcular_ranking'); } catch(e) {}
+    const r = await vertexOffline.ejecutarOEncolar('finalizar_clase', { clase_id: claseAFinalizar.id });
     if (claseAFinalizar.btn) {
       const div = claseAFinalizar.btn.parentElement;
-      div.innerHTML = `<span class="chip chip-ok"><span class="chip-dot"></span>Completada</span>`;
+      div.innerHTML = `<span class="chip chip-ok"><span class="chip-dot"></span>Completada${r.offline?' ⏳':''}</span>`;
     }
     cerrarModal('modal-finalizar');
-    toast('Clase finalizada correctamente');
+    toast(r.offline ? 'Guardado — se sincroniza sin señal' : 'Clase finalizada correctamente');
     claseAFinalizar = null;
     btn.textContent = 'Confirmar finalización';
     btn.disabled = false;
@@ -840,7 +852,16 @@ window.cerrarListaNinos = function() {
   let claseAusenteId = null;
   window.abrirAusencia = async function(claseId) {
     claseAusenteId = claseId || null;
-    const {data:c} = claseId ? await sb.from('clases').select('hora_inicio, clientes(nombre)').eq('id',claseId).single() : {data:null};
+    let c = null;
+    if (claseId) {
+      if (vertexOffline.estaOnline()) {
+        const res = await sb.from('clases').select('hora_inicio, clientes(nombre)').eq('id',claseId).single();
+        c = res.data;
+      } else {
+        const cacheadas = await vertexOffline.obtenerClasesOffline();
+        c = cacheadas.find(x => x.id === claseId);
+      }
+    }
     const cliente = c?.clientes?.nombre || '—';
     const hora = c?.hora_inicio?.slice(0,5) || '—';
     document.getElementById('ausencia-info').textContent = `${cliente} — ${hora} hs`;
@@ -849,11 +870,13 @@ window.cerrarListaNinos = function() {
   };
 
   window.reportarAusencia = async function() {
+    let offline = false;
     if (claseAusenteId) {
-      await sb.from('asistencia').insert({ clase_id: claseAusenteId, tipo: 'ausente_sin_aviso' });
+      const r = await vertexOffline.ejecutarOEncolar('ausencia', { clase_id: claseAusenteId, tipo: 'ausente_sin_aviso' });
+      offline = r.offline;
     }
     cerrarModal('modal-ausencia');
-    toast('Ausencia reportada al equipo');
+    toast(offline ? 'Guardado — se sincroniza sin señal' : 'Ausencia reportada al equipo');
     claseAusenteId = null;
   };
 
