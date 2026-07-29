@@ -188,14 +188,19 @@
       </button>
     </div>
 
-    <!-- Parte diario + clima (Cerro Bayo) -->
-    <div class="panel" id="panel-parte-diario">
-      <div class="panel-head">
-        <span class="panel-title">Parte diario — Cerro Bayo</span>
-        <span class="panel-meta" id="parte-diario-hora">—</span>
-      </div>
-      <div style="padding:14px 18px" id="parte-diario-contenido">
-        <div class="empty">Cargando...</div>
+    <!-- Parte diario + clima (Cerro Bayo) — tarjeta chica, el detalle se abre en modal -->
+    <div class="panel" id="panel-parte-diario" onclick="abrirParteDiario()" style="cursor:pointer;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--ice);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="var(--navy)" stroke-width="1.4"><path d="M1 13.5l4.5-7 3 4 2-3L14.5 13.5z"/></svg>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:500">Parte diario — Cerro Bayo</div>
+            <div style="font-size:11px;color:var(--silver)" id="parte-diario-resumen">Cargando...</div>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--silver)" stroke-width="1.5" style="flex-shrink:0"><path d="M6 3l5 5-5 5"/></svg>
       </div>
     </div>
 
@@ -1284,6 +1289,19 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARTE DIARIO — DETALLE COMPLETO -->
+<div class="modal-overlay" id="modal-parte-diario">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <span class="modal-title">Parte diario — Cerro Bayo</span>
+      <button class="modal-close" id="mpd-close">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto" id="parte-diario-contenido">
+      <div class="empty">Cargando...</div>
     </div>
   </div>
 </div>
