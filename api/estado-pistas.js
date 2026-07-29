@@ -55,6 +55,23 @@ export default async function handler(req, res) {
     const html = await response.text();
     const data = parsearParteDiario(html);
 
+    // Si el parser no encontró NADA (ni clima ni medios), algo raro llegó del
+    // otro lado — probablemente no sea la página real (bloqueo, challenge de
+    // bot, redirección). Devolvemos una vista previa del HTML crudo para
+    // poder diagnosticarlo, en vez de un JSON vacío sin explicación.
+    const vacio = !data.clima?.length && !data.medios?.length && !data.ultima_actualizacion;
+    if (vacio) {
+      return res.status(200).json({
+        ...data,
+        _diagnostico: {
+          aviso: 'El parser no encontró nada — esto no es el resultado esperado',
+          largo_html_recibido: html.length,
+          contiene_texto_esperado: html.includes('Medios de Elevación'),
+          preview_html: html.slice(0, 800),
+        }
+      });
+    }
+
     // Cachear 5 minutos en el CDN de Vercel — el parte no cambia tan seguido
     // como para pegarle a la web del cerro en cada carga del dashboard.
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
