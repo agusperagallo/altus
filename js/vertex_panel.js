@@ -1601,6 +1601,7 @@ document.getElementById('mng-save').addEventListener('click', async()=>{
   const instId   = document.getElementById('ng-instructor').value;
   if (!nombre) { toast('Ingresá el nombre del grupo','err'); return; }
   if (!edadMin||!edadMax) { toast('Ingresá el rango de edades','err'); return; }
+  if (edadMin > edadMax) { toast('La edad mínima no puede ser mayor que la máxima','err'); return; }
 
   const {data:temp} = await sb.from('temporadas').select('id').eq('activa',true).single();
   const {error} = await sb.from('grupos').insert({
@@ -3155,13 +3156,13 @@ async function loadClases() {
   tabla.innerHTML=data.map(c=>{
     const esMobile = window.innerWidth < 768;
     const accionBtns = c.estado==='asignada' ? `
-      <button class="inst-action-btn" title="Finalizar" onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+      <button class="inst-action-btn" title="Finalizar" onclick="abrirFinalizarAdmin('${c.id}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"><path d="M4 12l5 5L20 7"/></svg>
       </button>
-      <button class="inst-action-btn" title="Cambiar instructor" onclick="abrirCambiarInstructor('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina}','${c.nivel}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+      <button class="inst-action-btn" title="Cambiar instructor" onclick="abrirCambiarInstructor('${c.id}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
       </button>
-      <button class="inst-action-btn" title="Cancelar clase" onclick="abrirCancelarClase('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
+      <button class="inst-action-btn" title="Cancelar clase" onclick="abrirCancelarClase('${c.id}')" style="width:28px;padding:0;display:flex;align-items:center;justify-content:center">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>` : '';
 
@@ -3181,9 +3182,9 @@ async function loadClases() {
           <div>${estadoBadge}</div>
         </div>
         ${c.estado==='asignada' ? `<div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="abrirFinalizarAdmin('${c.id}','${c.instructores?.nombre||'—'}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina} · ${c.nivel}')" style="flex:1;height:34px;border:1px solid #E1F5EE;border-radius:6px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Finalizar</button>
-          <button onclick="abrirCambiarInstructor('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}','${c.disciplina}','${c.nivel}')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cambiar</button>
-          <button onclick="abrirCancelarClase('${c.id}','${c.clientes?.nombre||'—'}','${c.hora_inicio?.slice(0,5)||'—'}')" style="flex:1;height:34px;border:1px solid var(--danger-bg);border-radius:6px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cancelar</button>
+          <button onclick="abrirFinalizarAdmin('${c.id}')" style="flex:1;height:34px;border:1px solid #E1F5EE;border-radius:6px;background:#E1F5EE;color:#0F6E56;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer">Finalizar</button>
+          <button onclick="abrirCambiarInstructor('${c.id}')" style="flex:1;height:34px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cambiar</button>
+          <button onclick="abrirCancelarClase('${c.id}')" style="flex:1;height:34px;border:1px solid var(--danger-bg);border-radius:6px;background:var(--danger-bg);color:var(--danger);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Cancelar</button>
         </div>` : ''}
       </div>`;
     }
@@ -3749,28 +3750,31 @@ document.getElementById('mcc-confirm').addEventListener('click', async()=>{
   claseACancelar=null;
 });
 
-function abrirCancelarClase(claseId, cliente, hora) {
+async function abrirCancelarClase(claseId) {
   claseACancelar = claseId;
+  const {data:c} = await sb.from('clases').select('hora_inicio, clientes(nombre)').eq('id',claseId).single();
   document.getElementById('mcc-info').innerHTML=`
-    <div style="font-size:13px;font-weight:500;margin-bottom:3px">${cliente}</div>
-    <div style="font-size:12px;color:var(--muted)">${hora} hs</div>`;
+    <div style="font-size:13px;font-weight:500;margin-bottom:3px">${escapeHtml(c?.clientes?.nombre)||'—'}</div>
+    <div style="font-size:12px;color:var(--muted)">${escapeHtml(c?.hora_inicio?.slice(0,5))||'—'} hs</div>`;
   openModal('modal-cancelar');
 }
+window.abrirCancelarClase = abrirCancelarClase;
 
 // Cambiar instructor
 let claseACambiar = null;
 document.getElementById('mci-close').addEventListener('click',()=>closeModal('modal-cambiar-inst'));
 document.getElementById('mci-cancel').addEventListener('click',()=>closeModal('modal-cambiar-inst'));
 
-async function abrirCambiarInstructor(claseId, cliente, hora, disciplina, nivel) {
+async function abrirCambiarInstructor(claseId) {
   claseACambiar = claseId;
-  document.getElementById('mci-info').innerHTML=`
-    <div style="font-size:13px;font-weight:500;margin-bottom:3px">${cliente}</div>
-    <div style="font-size:12px;color:var(--muted)">${hora} hs · ${disciplina} · ${nivel}</div>`;
   openModal('modal-cambiar-inst');
+  document.getElementById('mci-info').innerHTML = `<div class="empty">Cargando...</div>`;
   const lista = document.getElementById('mci-lista');
   lista.innerHTML='<div class="empty">Cargando...</div>';
-  const {data:claseActual} = await sb.from('clases').select('instructor_id,fecha,hora_inicio,hora_fin,duracion_horas').eq('id',claseId).single();
+  const {data:claseActual} = await sb.from('clases').select('instructor_id,fecha,hora_inicio,hora_fin,duracion_horas,disciplina,nivel,clientes(nombre)').eq('id',claseId).single();
+  document.getElementById('mci-info').innerHTML=`
+    <div style="font-size:13px;font-weight:500;margin-bottom:3px">${escapeHtml(claseActual?.clientes?.nombre)||'—'}</div>
+    <div style="font-size:12px;color:var(--muted)">${escapeHtml(claseActual?.hora_inicio?.slice(0,5))||'—'} hs · ${escapeHtml(claseActual?.disciplina)||''} · ${escapeHtml(claseActual?.nivel)||''}</div>`;
   const instActualId = claseActual?.instructor_id;
   const {data:conflictos} = await sb.from('clases').select('instructor_id').eq('fecha',claseActual?.fecha).neq('id',claseId).neq('estado','cancelada').lt('hora_inicio',claseActual?.hora_fin).gt('hora_fin',claseActual?.hora_inicio);
   const ocupados = new Set((conflictos||[]).map(c=>c.instructor_id));
@@ -3826,13 +3830,16 @@ document.getElementById('mf-confirm').addEventListener('click', async()=>{
   claseAdminFinalizar = null;
 });
 
-function abrirFinalizarAdmin(claseId, instructor, cliente, hora, detalle) {
+async function abrirFinalizarAdmin(claseId) {
   claseAdminFinalizar = claseId;
-  document.getElementById('mf-info').innerHTML = `
-    <div style="font-size:13px;font-weight:500;margin-bottom:4px">${cliente}</div>
-    <div style="font-size:12px;color:var(--muted)">${instructor} · ${hora} hs · ${detalle}</div>`;
+  document.getElementById('mf-info').innerHTML = `<div class="empty">Cargando...</div>`;
   openModal('modal-finalizar');
+  const {data:c} = await sb.from('clases').select('hora_inicio, disciplina, nivel, clientes(nombre), instructores(nombre)').eq('id',claseId).single();
+  document.getElementById('mf-info').innerHTML = `
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px">${escapeHtml(c?.clientes?.nombre)||'—'}</div>
+    <div style="font-size:12px;color:var(--muted)">${escapeHtml(c?.instructores?.nombre)||'—'} · ${escapeHtml(c?.hora_inicio?.slice(0,5))||'—'} hs · ${escapeHtml(c?.disciplina)||''} · ${escapeHtml(c?.nivel)||''}</div>`;
 }
+window.abrirFinalizarAdmin = abrirFinalizarAdmin;
 
 async function finalizarClase(claseId) {
   const {error} = await sb.from('clases').update({estado:'completada'}).eq('id',claseId);
@@ -3849,9 +3856,13 @@ async function finalizarClase(claseId) {
 
   if (tel) {
     try {
+      const { data: sesion } = await sb.auth.getSession();
       const resp = await fetch('/api/send-whatsapp', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: {
+          'Content-Type':'application/json',
+          'Authorization': `Bearer ${sesion?.session?.access_token || ''}`,
+        },
         body: JSON.stringify({
           telefono: tel,
           instructor: clase?.instructores?.nombre,
