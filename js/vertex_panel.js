@@ -2938,33 +2938,36 @@ function calcularPuntajeEfectivo(snapshot) {
   return valores.reduce((a,b)=>a+b, 0) / valores.length;
 }
 
+// Componente Alpine del modal "Configurar ranking" — reemplaza el armado manual
+// de HTML (antes: RANKING_COMPONENTES.map(...).join('') + innerHTML) por x-for/x-model.
+// cargarRankingCfg(), sb, toast(), audit(), openModal/closeModal: sin cambios, se siguen usando igual.
+function rankingConfig() {
+  return {
+    componentes: RANKING_COMPONENTES,
+    cfg: {},
+    async cargar() {
+      await cargarRankingCfg();
+      this.cfg = { ...RANKING_CFG };
+    },
+    async guardar() {
+      const { error } = await sb.from('configuracion').update(this.cfg).not('id', 'is', null);
+      if (error) { toast('Error al guardar', 'err'); return; }
+      RANKING_CFG = { ...RANKING_CFG, ...this.cfg };
+      closeModal('modal-ranking-cfg');
+      toast('Ranking actualizado ✓');
+      audit('ranking_config_actualizado', 'configuracion', null, this.cfg);
+      if (document.getElementById('pg-ranking')?.style.display !== 'none') renderRanking();
+      cargarTopRanking();
+    },
+    cerrar() { closeModal('modal-ranking-cfg'); }
+  };
+}
+
 document.getElementById('pm-ranking-cfg').addEventListener('click', async () => {
   document.getElementById('profile-menu').classList.remove('open');
-  await cargarRankingCfg();
-  document.getElementById('mrc-lista').innerHTML = RANKING_COMPONENTES.map(c => `
-    <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer" class="mrc-row">
-      <span style="font-size:13px">${c.label}</span>
-      <span class="vtx-switch">
-        <input type="checkbox" data-cfg="${c.cfgKey}" ${RANKING_CFG[c.cfgKey]!==false?'checked':''}>
-        <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
-      </span>
-    </label>`).join('');
-  document.querySelectorAll('#mrc-lista .mrc-row:last-child').forEach(el => el.style.borderBottom='none');
+  const modal = document.getElementById('modal-ranking-cfg');
+  await Alpine.$data(modal).cargar();
   openModal('modal-ranking-cfg');
-});
-document.getElementById('mrc-close').addEventListener('click', () => closeModal('modal-ranking-cfg'));
-document.getElementById('mrc-guardar').addEventListener('click', async () => {
-  const update = {};
-  document.querySelectorAll('#mrc-lista input[type=checkbox]').forEach(inp => { update[inp.dataset.cfg] = inp.checked; });
-  const {error} = await sb.from('configuracion').update(update).not('id','is',null);
-  if (error) { toast('Error al guardar','err'); return; }
-  RANKING_CFG = {...RANKING_CFG, ...update};
-  closeModal('modal-ranking-cfg');
-  toast('Ranking actualizado ✓');
-  audit('ranking_config_actualizado', 'configuracion', null, update);
-  // Se aplica al instante: re-renderizar lo que esté visible ahora mismo
-  if (document.getElementById('pg-ranking')?.style.display !== 'none') renderRanking();
-  cargarTopRanking();
 });
 
 // ── PÁGINAS ────────────────────────────────────────────
