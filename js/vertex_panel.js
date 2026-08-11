@@ -1466,87 +1466,97 @@ async function programarSesion() {
 // semana de rotación entre instructores). sesiones_escuelita.instructor_id
 // es independiente del instructor_id del grupo, así que cambiar sesiones
 // puntuales no afecta las demás.
+// Componente Alpine del modal "Cambiar instructor de grupo" — reemplaza el
+// armado manual del <select> (antes: forEach + innerHTML+=) y las 3 escuchas
+// separadas para radios/fechas (antes: 3 addEventListener repitiendo la misma
+// lógica) por reactividad: x-model mantiene todo sincronizado solo, y
+// x-effect recalcula la vista previa automáticamente cuando algo cambia.
+// grupoActual sigue siendo la variable global de siempre — no se toca.
+function cambiarInstructorGrupo() {
+  return {
+    grupoNombre: '—',
+    instructores: [],
+    nuevoInstId: '',
+    alcance: 'todas',
+    desde: '',
+    hasta: '',
+    preview: '—',
+    guardando: false,
+
+    async abrir() {
+      if (!grupoActual) return;
+      const { data: grupo } = await sb.from('grupos').select('nombre').eq('id', grupoActual).single();
+      this.grupoNombre = grupo?.nombre ? `Grupo: ${grupo.nombre}` : '—';
+
+      const { data: insts } = await sb.from('instructores').select('id,nombre').eq('activo', true).eq('escuelita', true).order('nombre');
+      this.instructores = insts || [];
+
+      this.nuevoInstId = '';
+      this.alcance = 'todas';
+      this.desde = fechaISO;
+      this.hasta = '';
+
+      openModal('modal-cambiar-inst-grupo');
+      this.previsualizar();
+    },
+
+    async previsualizar() {
+      // Leer estas 3 primero (aunque no se usen si cortamos abajo) para que
+      // Alpine las registre como dependencias del x-effect — si el "return"
+      // de grupoActual pasara antes de leerlas, el efecto nunca se enteraría
+      // de que cambiaron y no se volvería a ejecutar solo.
+      const alcance = this.alcance, desde = this.desde, hasta = this.hasta;
+      if (!grupoActual) return;
+      let q = sb.from('sesiones_escuelita').select('id', { count: 'exact', head: true }).eq('grupo_id', grupoActual).neq('estado', 'cancelada');
+      if (alcance === 'rango') {
+        if (!desde || !hasta) { this.preview = 'Elegí el rango de fechas'; return; }
+        q = q.gte('fecha', desde).lte('fecha', hasta);
+      } else {
+        q = q.gte('fecha', fechaISO);
+      }
+      const { count } = await q;
+      this.preview = `${count || 0} ${count === 1 ? 'sesión' : 'sesiones'} se va${count === 1 ? '' : 'n'} a reasignar`;
+    },
+
+    async guardar() {
+      if (!grupoActual) return;
+      if (!this.nuevoInstId) { toast('Seleccioná un instructor', 'err'); return; }
+
+      this.guardando = true;
+
+      let q = sb.from('sesiones_escuelita').update({ instructor_id: this.nuevoInstId }).eq('grupo_id', grupoActual).neq('estado', 'cancelada');
+      if (this.alcance === 'rango') {
+        if (!this.desde || !this.hasta) { toast('Elegí el rango de fechas', 'err'); this.guardando = false; return; }
+        q = q.gte('fecha', this.desde).lte('fecha', this.hasta);
+      } else {
+        q = q.gte('fecha', fechaISO);
+        // "De hoy en adelante" también actualiza el instructor por defecto del
+        // grupo, para que las próximas sesiones que se programen ya salgan
+        // asignadas a él sin tener que repetir el cambio cada vez.
+        await sb.from('grupos').update({ instructor_id: this.nuevoInstId }).eq('id', grupoActual);
+      }
+
+      const { error } = await q;
+      this.guardando = false;
+      if (error) { toast('Error al reasignar', 'err'); return; }
+
+      audit('grupo_instructor_cambiado', 'grupos', grupoActual, { nuevo_instructor_id: this.nuevoInstId, alcance: this.alcance === 'rango' ? `${this.desde} a ${this.hasta}` : 'de hoy en adelante' });
+      closeModal('modal-cambiar-inst-grupo');
+      toast('Instructor reasignado ✓');
+      const { data: grupoUpd } = await sb.from('grupos').select('nombre,instructor_id,instructores(nombre)').eq('id', grupoActual).single();
+      document.getElementById('mdg-instructor').textContent = grupoUpd?.instructores?.nombre || '—';
+      loadEscGruposHoy();
+    },
+
+    cerrar() { closeModal('modal-cambiar-inst-grupo'); }
+  };
+}
+
 async function abrirCambiarInstructorGrupo() {
-  if (!grupoActual) return;
-  const {data:grupo} = await sb.from('grupos').select('nombre').eq('id',grupoActual).single();
-  document.getElementById('mcig-grupo-nombre').textContent = grupo?.nombre ? `Grupo: ${grupo.nombre}` : '—';
-
-  const sel = document.getElementById('mcig-instructor');
-  sel.innerHTML = '<option value="">Seleccionar instructor...</option>';
-  const {data:insts} = await sb.from('instructores').select('id,nombre').eq('activo',true).eq('escuelita',true).order('nombre');
-  (insts||[]).forEach(i => { sel.innerHTML += `<option value="${i.id}">${escapeHtml(i.nombre)}</option>`; });
-
-  document.getElementById('mcig-todas').checked = true;
-  document.getElementById('mcig-rango-panel').style.display = 'none';
-  document.getElementById('mcig-desde').value = fechaISO;
-  document.getElementById('mcig-hasta').value = '';
-  actualizarPreviewCambioInstructor();
-  openModal('modal-cambiar-inst-grupo');
+  const modal = document.getElementById('modal-cambiar-inst-grupo');
+  await Alpine.$data(modal).abrir();
 }
 window.abrirCambiarInstructorGrupo = abrirCambiarInstructorGrupo;
-
-document.querySelectorAll('input[name="mcig-alcance"]').forEach(r => r.addEventListener('change', () => {
-  const esRango = document.getElementById('mcig-rango').checked;
-  document.getElementById('mcig-rango-panel').style.display = esRango ? 'flex' : 'none';
-  actualizarPreviewCambioInstructor();
-}));
-document.getElementById('mcig-desde')?.addEventListener('change', actualizarPreviewCambioInstructor);
-document.getElementById('mcig-hasta')?.addEventListener('change', actualizarPreviewCambioInstructor);
-
-async function actualizarPreviewCambioInstructor() {
-  const prev = document.getElementById('mcig-preview');
-  if (!grupoActual) return;
-  const esRango = document.getElementById('mcig-rango').checked;
-  let q = sb.from('sesiones_escuelita').select('id',{count:'exact',head:true}).eq('grupo_id',grupoActual).neq('estado','cancelada');
-  if (esRango) {
-    const desde = document.getElementById('mcig-desde').value;
-    const hasta = document.getElementById('mcig-hasta').value;
-    if (!desde || !hasta) { prev.textContent = 'Elegí el rango de fechas'; return; }
-    q = q.gte('fecha',desde).lte('fecha',hasta);
-  } else {
-    q = q.gte('fecha',fechaISO);
-  }
-  const {count} = await q;
-  prev.textContent = `${count||0} sesión${count===1?'':'es'} se va${count===1?'':'n'} a reasignar`;
-}
-
-document.getElementById('mcig-close').addEventListener('click', () => closeModal('modal-cambiar-inst-grupo'));
-
-document.getElementById('mcig-confirmar').addEventListener('click', async () => {
-  if (!grupoActual) return;
-  const nuevoInstId = document.getElementById('mcig-instructor').value;
-  if (!nuevoInstId) { toast('Seleccioná un instructor','err'); return; }
-  const esRango = document.getElementById('mcig-rango').checked;
-
-  const btn = document.getElementById('mcig-confirmar');
-  btn.textContent = 'Guardando...'; btn.disabled = true;
-
-  let q = sb.from('sesiones_escuelita').update({instructor_id:nuevoInstId}).eq('grupo_id',grupoActual).neq('estado','cancelada');
-  let desde, hasta;
-  if (esRango) {
-    desde = document.getElementById('mcig-desde').value;
-    hasta = document.getElementById('mcig-hasta').value;
-    if (!desde || !hasta) { toast('Elegí el rango de fechas','err'); btn.textContent='Confirmar cambio'; btn.disabled=false; return; }
-    q = q.gte('fecha',desde).lte('fecha',hasta);
-  } else {
-    q = q.gte('fecha',fechaISO);
-    // "De hoy en adelante" también actualiza el instructor por defecto del
-    // grupo, para que las próximas sesiones que se programen ya salgan
-    // asignadas a él sin tener que repetir el cambio cada vez.
-    await sb.from('grupos').update({instructor_id:nuevoInstId}).eq('id',grupoActual);
-  }
-
-  const {error} = await q;
-  btn.textContent = 'Confirmar cambio'; btn.disabled = false;
-  if (error) { toast('Error al reasignar','err'); return; }
-
-  audit('grupo_instructor_cambiado','grupos',grupoActual,{nuevo_instructor_id:nuevoInstId,alcance:esRango?`${desde} a ${hasta}`:'de hoy en adelante'});
-  closeModal('modal-cambiar-inst-grupo');
-  toast('Instructor reasignado ✓');
-  const {data:grupoUpd} = await sb.from('grupos').select('nombre,instructor_id,instructores(nombre)').eq('id',grupoActual).single();
-  document.getElementById('mdg-instructor').textContent = grupoUpd?.instructores?.nombre || '—';
-  loadEscGruposHoy();
-});
 
 async function finalizarSesion(id) {
   if (!confirm('¿Finalizar esta sesión?')) return;
