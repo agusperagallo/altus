@@ -1804,6 +1804,13 @@ function ocultarLoadingOverlay() {
 }
 
 function setPage(page, fromSidebarNav) {
+  // Cerrar cualquier modal que haya quedado abierto antes de cambiar de página.
+  // Si no, puede quedar flotando encima (position:fixed, cubre toda la pantalla)
+  // tapando el contenido nuevo y bloqueando el scroll — pasaba, por ejemplo, si
+  // guardabas un cambio de instructor desde el detalle de un grupo y navegabas
+  // a otra sección sin cerrar el detalle a mano primero.
+  document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+
   localStorage.setItem('vertex_page', page);
   const allPages = [...PAGES, ...PAGES_ESCUELITA];
   allPages.forEach(p => { const el=document.getElementById('pg-'+p); if(el) el.style.display=p===page?'block':'none'; });
