@@ -1476,6 +1476,7 @@ function cambiarInstructorGrupo() {
   return {
     grupoNombre: '—',
     instructores: [],
+    instructorActualId: null,
     nuevoInstId: '',
     alcance: 'todas',
     desde: '',
@@ -1485,11 +1486,14 @@ function cambiarInstructorGrupo() {
 
     async abrir() {
       if (!grupoActual) return;
-      const { data: grupo } = await sb.from('grupos').select('nombre').eq('id', grupoActual).single();
+      const { data: grupo } = await sb.from('grupos').select('nombre, instructor_id').eq('id', grupoActual).single();
       this.grupoNombre = grupo?.nombre ? `Grupo: ${grupo.nombre}` : '—';
+      this.instructorActualId = grupo?.instructor_id || null;
 
       const { data: insts } = await sb.from('instructores').select('id,nombre').eq('activo', true).eq('escuelita', true).order('nombre');
-      this.instructores = insts || [];
+      // El instructor que ya está a cargo no tiene sentido que aparezca como
+      // opción para "cambiarlo" — sería elegir a la misma persona.
+      this.instructores = (insts || []).filter(i => i.id !== this.instructorActualId);
 
       this.nuevoInstId = '';
       this.alcance = 'todas';
