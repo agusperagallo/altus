@@ -1545,7 +1545,12 @@ function cambiarInstructorGrupo() {
       toast('Instructor reasignado ✓');
       const { data: grupoUpd } = await sb.from('grupos').select('nombre,instructor_id,instructores(nombre)').eq('id', grupoActual).single();
       document.getElementById('mdg-instructor').textContent = grupoUpd?.instructores?.nombre || '—';
+      // Refrescar las dos listas donde puede aparecer este grupo — el modal se
+      // puede abrir desde "Grupos de hoy" o desde "Administrar grupos", y antes
+      // solo se refrescaba la primera, dejando la otra con el instructor viejo
+      // hasta recargar la página.
       loadEscGruposHoy();
+      if (typeof loadEscAdminGrupos === 'function') loadEscAdminGrupos();
     },
 
     cerrar() { closeModal('modal-cambiar-inst-grupo'); }
