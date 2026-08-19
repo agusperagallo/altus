@@ -1339,125 +1339,89 @@ async function quitarNino(id) {
 }
 
 // Programacion de sesiones
-let sesTipo = 'hoy';
-let sesDias = new Set();
+// Componente Alpine del formulario "Programar sesión" — reemplaza el toggle
+// Solo hoy/Rango armado a mano (antes: 2 botones con estilo pisado a JS) por
+// el preset .vtx-segment ya establecido en el resto de la app, y los botones
+// de días de la semana (antes: document.createElement en un bucle al cargar
+// la página) por x-for. La generación de fechas (generarFechasSesiones) es la
+// misma lógica de siempre, ahora como método del componente.
+function programarSesionForm() {
+  return {
+    hora: '09:00',
+    dur: '2',
+    tipo: 'hoy',
+    desde: '',
+    hasta: '',
+    diasLabels: ['Lu','Ma','Mi','Ju','Vi','Sá','Do'],
+    diasSeleccionados: [],
+    preview: 'Seleccioná los días y las fechas',
+    programando: false,
 
-// Generar botones de días al cargar
-document.addEventListener('DOMContentLoaded', () => {
-  const container = document.getElementById('ses-dias-container');
-  if (!container) return;
-  ['Lu','Ma','Mi','Ju','Vi','Sá','Do'].forEach((d,i) => {
-    const btn = document.createElement('button');
-    btn.id = 'ses-dia-'+i;
-    btn.textContent = d;
-    btn.onclick = () => toggleSesDia(i);
-    btn.style.cssText = 'width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-family:\'DM Sans\',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s';
-    container.appendChild(btn);
-  });
-});
+    toggleDia(idx) {
+      const i = this.diasSeleccionados.indexOf(idx);
+      if (i === -1) this.diasSeleccionados.push(idx); else this.diasSeleccionados.splice(i, 1);
+    },
 
-function setSesTopo(tipo) {
-  sesTipo = tipo;
-  document.getElementById('ses-tipo-hoy').style.background = tipo==='hoy' ? 'var(--navy)' : '#fff';
-  document.getElementById('ses-tipo-hoy').style.color = tipo==='hoy' ? '#fff' : 'var(--muted)';
-  document.getElementById('ses-tipo-rango').style.background = tipo==='rango' ? 'var(--navy)' : '#fff';
-  document.getElementById('ses-tipo-rango').style.color = tipo==='rango' ? '#fff' : 'var(--muted)';
-  document.getElementById('ses-rango-panel').style.display = tipo==='rango' ? 'block' : 'none';
-}
-window.setSesTopo = setSesTopo;
-
-function toggleSesDia(idx) {
-  const btn = document.getElementById('ses-dia-'+idx);
-  if (sesDias.has(idx)) {
-    sesDias.delete(idx);
-    btn.style.background = '#fff';
-    btn.style.color = 'var(--muted)';
-    btn.style.borderColor = 'var(--line)';
-  } else {
-    sesDias.add(idx);
-    btn.style.background = 'var(--navy)';
-    btn.style.color = '#fff';
-    btn.style.borderColor = 'var(--navy)';
-  }
-  actualizarPreviewSesiones();
-}
-window.toggleSesDia = toggleSesDia;
-
-function actualizarPreviewSesiones() {
-  const desde = document.getElementById('ses-desde').value;
-  const hasta = document.getElementById('ses-hasta').value;
-  const preview = document.getElementById('ses-preview');
-  if (!desde || !hasta || sesDias.size === 0) {
-    preview.textContent = 'Seleccioná los días y las fechas';
-    return;
-  }
-  const fechas = generarFechasSesiones(desde, hasta);
-  preview.textContent = `${fechas.length} sesión${fechas.length!==1?'es':''} a programar`;
-}
-
-function generarFechasSesiones(desde, hasta) {
-  const fechas = [];
-  // Los días en JS: 0=Dom, 1=Lun... Los nuestros: 0=Lu(1), 1=Ma(2), 2=Mi(3), 3=Ju(4), 4=Vi(5), 5=Sá(6), 6=Do(0)
-  const mapDia = [1,2,3,4,5,6,0];
-  const cur = new Date(desde+'T12:00:00');
-  const fin = new Date(hasta+'T12:00:00');
-  while (cur <= fin) {
-    const diaSemana = cur.getDay();
-    for (const idx of sesDias) {
-      if (mapDia[idx] === diaSemana) {
-        fechas.push(cur.toISOString().split('T')[0]);
-        break;
+    generarFechas(desde, hasta) {
+      const fechas = [];
+      // Los días en JS: 0=Dom, 1=Lun... Los nuestros: 0=Lu(1), 1=Ma(2), 2=Mi(3), 3=Ju(4), 4=Vi(5), 5=Sá(6), 6=Do(0)
+      const mapDia = [1,2,3,4,5,6,0];
+      const cur = new Date(desde+'T12:00:00');
+      const fin = new Date(hasta+'T12:00:00');
+      while (cur <= fin) {
+        const diaSemana = cur.getDay();
+        if (this.diasSeleccionados.some(idx => mapDia[idx] === diaSemana)) {
+          fechas.push(cur.toISOString().split('T')[0]);
+        }
+        cur.setDate(cur.getDate()+1);
       }
+      return fechas;
+    },
+
+    actualizarPreview() {
+      const tipo = this.tipo, desde = this.desde, hasta = this.hasta, dias = this.diasSeleccionados.length;
+      if (tipo !== 'rango') return;
+      if (!desde || !hasta || dias === 0) { this.preview = 'Seleccioná los días y las fechas'; return; }
+      const fechas = this.generarFechas(desde, hasta);
+      this.preview = `${fechas.length} ${fechas.length === 1 ? 'sesión' : 'sesiones'} a programar`;
+    },
+
+    async programar() {
+      if (!grupoActual) return;
+      this.programando = true;
+      const { data: grupo } = await sb.from('grupos').select('instructor_id').eq('id', grupoActual).single();
+
+      let fechas = [];
+      if (this.tipo === 'hoy') {
+        fechas = [fechaISO];
+      } else {
+        if (!this.desde || !this.hasta) { toast('Seleccioná fecha desde y hasta', 'err'); this.programando = false; return; }
+        if (this.diasSeleccionados.length === 0) { toast('Seleccioná al menos un día de la semana', 'err'); this.programando = false; return; }
+        fechas = this.generarFechas(this.desde, this.hasta);
+        if (fechas.length === 0) { toast('No hay días que coincidan en ese rango', 'err'); this.programando = false; return; }
+        if (fechas.length > 60) { toast('Máximo 60 sesiones por programación', 'err'); this.programando = false; return; }
+      }
+
+      const sesiones = fechas.map(fecha => ({
+        grupo_id: grupoActual,
+        instructor_id: grupo?.instructor_id,
+        fecha, hora_inicio: this.hora,
+        duracion_horas: parseFloat(this.dur),
+        estado: 'programada'
+      }));
+
+      const { error } = await sb.from('sesiones_escuelita').insert(sesiones);
+      this.programando = false;
+      if (error) { toast('Error al programar sesiones', 'err'); return; }
+
+      closeModal('modal-detalle-grupo');
+      const horaGuardada = this.hora;
+      this.tipo = 'hoy'; this.diasSeleccionados = []; this.desde = ''; this.hasta = ''; this.preview = 'Seleccioná los días y las fechas';
+
+      toast(fechas.length === 1 ? `Sesión programada para las ${horaGuardada} hs` : `${fechas.length} sesiones programadas`);
+      loadEscGruposHoy();
     }
-    cur.setDate(cur.getDate()+1);
-  }
-  return fechas;
-}
-
-async function programarSesion() {
-  if (!grupoActual) return;
-  const hora = document.getElementById('ses-hora')?.value || '09:00';
-  const dur  = parseFloat(document.getElementById('ses-dur')?.value || '2');
-  const {data:grupo} = await sb.from('grupos').select('instructor_id').eq('id',grupoActual).single();
-
-  let fechas = [];
-  if (sesTipo === 'hoy') {
-    fechas = [fechaISO];
-  } else {
-    const desde = document.getElementById('ses-desde').value;
-    const hasta = document.getElementById('ses-hasta').value;
-    if (!desde || !hasta) { toast('Seleccioná fecha desde y hasta','err'); return; }
-    if (sesDias.size === 0) { toast('Seleccioná al menos un día de la semana','err'); return; }
-    fechas = generarFechasSesiones(desde, hasta);
-    if (fechas.length === 0) { toast('No hay días que coincidan en ese rango','err'); return; }
-    if (fechas.length > 60) { toast('Máximo 60 sesiones por programación','err'); return; }
-  }
-
-  const btn = document.querySelector('#modal-detalle-grupo .btn-primary:last-child');
-  if (btn) { btn.textContent = 'Programando...'; btn.disabled = true; }
-
-  const sesiones = fechas.map(fecha => ({
-    grupo_id: grupoActual,
-    instructor_id: grupo?.instructor_id,
-    fecha, hora_inicio: hora,
-    duracion_horas: dur,
-    estado: 'programada'
-  }));
-
-  const {error} = await sb.from('sesiones_escuelita').insert(sesiones);
-  if (error) { toast('Error al programar sesiones','err'); if(btn){btn.textContent='Programar';btn.disabled=false;} return; }
-
-  closeModal('modal-detalle-grupo');
-  // Reset
-  sesTipo='hoy'; sesDias=new Set();
-  setSesTopo('hoy');
-  [0,1,2,3,4,5,6].forEach(i=>{
-    const b=document.getElementById('ses-dia-'+i);
-    if(b){b.style.background='#fff';b.style.color='var(--muted)';b.style.borderColor='var(--line)';}
-  });
-
-  toast(fechas.length===1 ? `Sesión programada para las ${hora} hs` : `${fechas.length} sesiones programadas`);
-  loadEscGruposHoy();
+  };
 }
 
 // ── CAMBIAR INSTRUCTOR DE UN GRUPO DE ESCUELITA ─────────
@@ -1643,12 +1607,7 @@ window.abrirFichaNino = abrirFichaNino;
 window.guardarFichaNino = guardarFichaNino;
 window.cerrarModal = cerrarModal;
 window.quitarNino = quitarNino;
-window.programarSesion = programarSesion;
 
-// Listeners para preview de sesiones
-document.addEventListener('change', e => {
-  if (e.target.id === 'ses-desde' || e.target.id === 'ses-hasta') actualizarPreviewSesiones();
-});
 window.finalizarSesion = finalizarSesion;
 window.cancelarSesion = cancelarSesion;
 window.toggleGrupo = toggleGrupo;
