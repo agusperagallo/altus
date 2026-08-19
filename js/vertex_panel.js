@@ -2494,6 +2494,21 @@ function abrirNuevoInstructorDesdeEscuelita() {
   }, 100);
 }
 window.abrirNuevoInstructorDesdeEscuelita = abrirNuevoInstructorDesdeEscuelita;
+
+// Botón "Nuevo" de la página Instructores — a diferencia del atajo de arriba
+// (que navega hasta esta página primero), acá ya estamos parados en ella, así
+// que alcanza con abrir el modal y, si el modo actual es Escuelita, precargar
+// los mismos valores por defecto que el atajo del botón flotante.
+function abrirNuevoInstructorSegunModo() {
+  openModal('modal-inst');
+  if (modoActual === 'escuelita') {
+    if (!niEscuelita) toggleEscuelita();
+    if (niCerro) toggleCerro();
+    toast('Escuelita activada. Habilitá Escuela si también da clases individuales.');
+  }
+}
+window.abrirNuevoInstructorSegunModo = abrirNuevoInstructorSegunModo;
+
 document.getElementById('mi-close').addEventListener('click',()=>closeModal('modal-inst'));
 function irPaso(n) {
   [1,2,3,4].forEach(i=>{
