@@ -842,7 +842,7 @@
 <div class="modal-overlay" id="modal-inst">
   <div class="modal" style="max-width:540px">
     <div class="modal-head"><span class="modal-title">Nuevo instructor</span><button class="modal-close" id="mi-close">&times;</button></div>
-    <div class="modal-body">
+    <div class="modal-body" x-data="instructorTags()">
       <div style="display:flex;gap:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:20px">
         <button class="paso-tab active" data-paso="1">1. Datos</button>
         <button class="paso-tab" data-paso="2">2. Perfil</button>
@@ -871,34 +871,56 @@
 
       <!-- PASO 2 — PERFIL -->
       <div id="inst-p2" style="display:none">
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc"><button class="nivel-btn" data-niv="0">0</button><button class="nivel-btn" data-niv="1">1</button><button class="nivel-btn" data-niv="2">2</button><button class="nivel-btn" data-niv="3">3</button><button class="nivel-btn" data-niv="4">4</button><button class="nivel-btn" data-niv="5">5</button></div><div style="font-size:11px;color:var(--silver);margin-top:4px">0 = Sin nivel certificado</div></div>
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc"><button class="tag-btn" data-val="Esqui">Esqui</button><button class="tag-btn" data-val="Snowboard">Snowboard</button><button class="tag-btn" data-val="Esqui Adaptado">Esquí Adaptado</button></div></div>
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Idiomas (además de español)</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-idiomas"><button class="tag-btn" data-val="Inglés">Inglés</button><button class="tag-btn" data-val="Portugués">Portugués</button><button class="tag-btn" data-val="Francés">Francés</button><button class="tag-btn" data-val="Alemán">Alemán</button><button class="tag-btn" data-val="Italiano">Italiano</button></div></div>
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv"><button class="tag-btn" data-val="principiante">Principiante</button><button class="tag-btn" data-val="intermedio">Intermedio</button><button class="tag-btn" data-val="avanzado">Avanzado</button></div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Nivel certificado</label><div class="nivel-row" id="ni-nc">
+          <template x-for="n in ['0','1','2','3','4','5']" :key="n">
+            <button type="button" class="nivel-btn" :class="{active: nivelCertLocal === n}" :data-niv="n" @click="setNivel(n)" x-text="n"></button>
+          </template>
+        </div><div style="font-size:11px;color:var(--silver);margin-top:4px">0 = Sin nivel certificado</div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Disciplinas</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-disc">
+          <template x-for="o in discsOpciones" :key="o.val">
+            <button type="button" class="tag-btn" :class="{active: discs.includes(o.val)}" :data-val="o.val" @click="toggleTag('discs', o.val)" x-text="o.label"></button>
+          </template>
+        </div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Idiomas (además de español)</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-idiomas">
+          <template x-for="o in idiomasOpciones" :key="o.val">
+            <button type="button" class="tag-btn" :class="{active: idiomas.includes(o.val)}" :data-val="o.val" @click="toggleTag('idiomas', o.val)" x-text="o.label"></button>
+          </template>
+        </div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Niveles que acepta</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-niv">
+          <template x-for="o in nivsOpciones" :key="o.val">
+            <button type="button" class="tag-btn" :class="{active: nivs.includes(o.val)}" :data-val="o.val" @click="toggleTag('nivs', o.val)" x-text="o.label"></button>
+          </template>
+        </div></div>
         <div style="margin-bottom:12px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
           <div>
             <div style="font-size:13px;font-weight:500;color:var(--text)">⛷ Habilitado para Escuela</div>
             <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a clases de la Escuela</div>
           </div>
-          <div id="ni-cerro-toggle" onclick="toggleCerro()" style="width:40px;height:22px;border-radius:11px;background:var(--accent);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-            <div id="ni-cerro-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:20px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-          </div>
+          <label class="vtx-switch">
+            <input type="checkbox" :checked="cerro" @change="setCerro($event.target.checked)">
+            <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+          </label>
         </div>
         <div style="margin-bottom:18px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
           <div>
             <div style="font-size:13px;font-weight:500;color:var(--text)">🎿 Habilitado para Escuelita</div>
             <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
           </div>
-          <div id="ni-escuelita-toggle" onclick="toggleEscuelita()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-            <div id="ni-escuelita-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-          </div>
+          <label class="vtx-switch">
+            <input type="checkbox" :checked="escuelita" @change="setEscuelita($event.target.checked)">
+            <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+          </label>
         </div>
         <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p2-back">Atrás</button><button class="btn btn-primary" id="p2-next">Siguiente</button></div>
       </div>
 
       <!-- PASO 3 — PREFERENCIAS -->
       <div id="inst-p3" style="display:none">
-        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Rangos etarios</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-rang"><button class="tag-btn" data-val="ninos">Niños (4-12)</button><button class="tag-btn" data-val="adolescentes">Adolescentes (13-17)</button><button class="tag-btn" data-val="adultos">Adultos (18-60)</button><button class="tag-btn" data-val="mayores">Adultos mayores (60+)</button></div></div>
+        <div style="margin-bottom:18px"><label style="display:block;margin-bottom:8px">Rangos etarios</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="ni-rang">
+          <template x-for="o in rangsOpciones" :key="o.val">
+            <button type="button" class="tag-btn" :class="{active: rangs.includes(o.val)}" :data-val="o.val" @click="toggleTag('rangs', o.val)" x-text="o.label"></button>
+          </template>
+        </div></div>
         <div style="display:flex;justify-content:space-between"><button class="btn btn-outline" id="p3-back">Atrás</button><button class="btn btn-primary" id="p3-next">Ver confirmación</button></div>
       </div>
 
