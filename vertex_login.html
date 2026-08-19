@@ -14,7 +14,7 @@
 </head>
 <body>
 
-<div class="card">
+<div class="card" id="view-login">
   <div class="brand">
     <div class="brand-name">VERTEX</div>
     <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
@@ -36,8 +36,68 @@
   </button>
 
   <div class="error-msg" id="error-msg"></div>
+  <div class="error-msg" id="success-msg" style="color:var(--accent)"></div>
+
+  <div style="text-align:center;margin-top:14px">
+    <button type="button" onclick="mostrarVista('view-recovery')" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif">¿Olvidaste tu contraseña?</button>
+  </div>
 
   <div class="footer-txt">Sistema interno &mdash; Temporada 2026</div>
+</div>
+
+<!-- PEDIR RECUPERACIÓN — solo el email, manda el link -->
+<div class="card" id="view-recovery" style="display:none">
+  <div class="brand">
+    <div class="brand-name">VERTEX</div>
+    <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
+  </div>
+  <hr class="divider">
+
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.4">Ingresá tu email y te mandamos un link para elegir una contraseña nueva.</div>
+
+  <div class="form-group">
+    <label>Email</label>
+    <input type="email" id="recovery-email" placeholder="correo@ejemplo.com" autocomplete="email" onkeydown="if(event.key==='Enter') pedirRecuperacion()">
+  </div>
+
+  <button class="btn-login" id="btn-recovery" onclick="pedirRecuperacion()">
+    <span id="btn-recovery-text">Enviar link</span>
+    <div class="spinner" id="spinner-recovery"></div>
+  </button>
+
+  <div class="error-msg" id="recovery-error"></div>
+  <div class="error-msg" id="recovery-success" style="color:var(--accent)"></div>
+
+  <div style="text-align:center;margin-top:14px">
+    <button type="button" onclick="mostrarVista('view-login')" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif">Volver a ingresar</button>
+  </div>
+</div>
+
+<!-- PONER CONTRASEÑA NUEVA — aparece solo si se llegó por un link de recuperación válido -->
+<div class="card" id="view-set-password" style="display:none">
+  <div class="brand">
+    <div class="brand-name">VERTEX</div>
+    <div class="brand-sub">Cerro Bayo &mdash; Villa La Angostura</div>
+  </div>
+  <hr class="divider">
+
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Elegí tu nueva contraseña.</div>
+
+  <div class="form-group">
+    <label>Nueva contraseña</label>
+    <input type="password" id="new-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+  </div>
+  <div class="form-group">
+    <label>Repetir contraseña</label>
+    <input type="password" id="new-password-confirm" placeholder="Mínimo 6 caracteres" autocomplete="new-password" onkeydown="if(event.key==='Enter') guardarNuevaContrasena()">
+  </div>
+
+  <button class="btn-login" id="btn-set-password" onclick="guardarNuevaContrasena()">
+    <span id="btn-set-password-text">Guardar contraseña</span>
+    <div class="spinner" id="spinner-set-password"></div>
+  </button>
+
+  <div class="error-msg" id="set-password-error"></div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -116,17 +176,106 @@
     el.style.display = 'block';
   }
 
-  // Si ya hay sesión activa, redirigir directamente
-  sb.auth.getSession().then(({ data }) => {
-    if (data?.session) {
-      const rol = localStorage.getItem('vertex_rol');
-      if (rol === 'instructor') {
-        window.location.href = 'vertex_instructor.html';
-      } else if (rol) {
-        window.location.href = 'vertex_panel.html';
-      }
+  function mostrarVista(id) {
+    ['view-login', 'view-recovery', 'view-set-password'].forEach(v => {
+      document.getElementById(v).style.display = v === id ? 'block' : 'none';
+    });
+    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'none';
+    document.getElementById('recovery-error').style.display = 'none';
+    document.getElementById('recovery-success').style.display = 'none';
+  }
+
+  // Pedir el mail de recuperación — Supabase manda el link, con la URL de
+  // vuelta apuntando siempre a donde esté corriendo la página ahora mismo
+  // (no hardcodeada), para no depender de que el dominio esté bien
+  // configurado en la sección de Auth del dashboard.
+  async function pedirRecuperacion() {
+    const email = document.getElementById('recovery-email').value.trim();
+    const btn = document.getElementById('btn-recovery');
+    const spinner = document.getElementById('spinner-recovery');
+    const btnText = document.getElementById('btn-recovery-text');
+    const errorEl = document.getElementById('recovery-error');
+    const successEl = document.getElementById('recovery-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    if (!email) { errorEl.textContent = 'Ingresá tu email'; errorEl.style.display = 'block'; return; }
+
+    btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Enviando...';
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Enviar link';
+
+    if (error) {
+      errorEl.textContent = 'No se pudo enviar el link. Probá de nuevo en un momento.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    successEl.textContent = 'Listo — revisá tu correo (y la carpeta de spam) para el link de recuperación.';
+    successEl.style.display = 'block';
+  }
+
+  async function guardarNuevaContrasena() {
+    const pass1 = document.getElementById('new-password').value;
+    const pass2 = document.getElementById('new-password-confirm').value;
+    const btn = document.getElementById('btn-set-password');
+    const spinner = document.getElementById('spinner-set-password');
+    const btnText = document.getElementById('btn-set-password-text');
+    const errorEl = document.getElementById('set-password-error');
+    errorEl.style.display = 'none';
+
+    if (!pass1 || pass1.length < 6) { errorEl.textContent = 'La contraseña debe tener al menos 6 caracteres'; errorEl.style.display = 'block'; return; }
+    if (pass1 !== pass2) { errorEl.textContent = 'Las contraseñas no coinciden'; errorEl.style.display = 'block'; return; }
+
+    btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Guardando...';
+
+    const { error } = await sb.auth.updateUser({ password: pass1 });
+
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Guardar contraseña';
+
+    if (error) {
+      errorEl.textContent = 'No se pudo guardar la contraseña. Pedí un nuevo link e intentá de nuevo.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // Cerrar la sesión temporal de recuperación y sacar el token de la URL,
+    // para no dejarlo visible ni reusable si alguien más ve la pantalla.
+    await sb.auth.signOut();
+    history.replaceState(null, '', window.location.pathname);
+    mostrarVista('view-login');
+    document.getElementById('success-msg').textContent = 'Contraseña actualizada — iniciá sesión con tu nueva contraseña.';
+    document.getElementById('success-msg').style.display = 'block';
+  }
+
+  // Supabase detecta solo el link de recuperación en la URL y dispara este
+  // evento — ahí mostramos la pantalla de "elegí tu nueva contraseña".
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      mostrarVista('view-set-password');
     }
   });
+
+  // Si ya hay sesión activa, redirigir directamente — salvo que estemos en
+  // medio de un flujo de recuperación (si no, te manda al panel/instructor
+  // antes de darte la chance de elegir la contraseña nueva).
+  const esRecuperacion = window.location.hash.includes('type=recovery');
+  if (!esRecuperacion) {
+    sb.auth.getSession().then(({ data }) => {
+      if (data?.session) {
+        const rol = localStorage.getItem('vertex_rol');
+        if (rol === 'instructor') {
+          window.location.href = 'vertex_instructor.html';
+        } else if (rol) {
+          window.location.href = 'vertex_panel.html';
+        }
+      }
+    });
+  }
 </script>
 </body>
 </html>
