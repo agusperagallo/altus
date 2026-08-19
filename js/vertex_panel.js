@@ -2524,17 +2524,19 @@ document.getElementById('p4-back').addEventListener('click',()=>irPaso(3));
 let niEscuelita = false;
 let niCerro = true;
 
+// Puente para código externo que llama toggleCerro()/toggleEscuelita() sin
+// argumentos (ej. abrirNuevoInstructorDesdeEscuelita) — el estado real y el
+// dibujado del switch ahora los maneja Alpine (setCerro/setEscuelita en
+// instructorTags()), esto solo delega ahí adentro.
 function toggleCerro() {
-  niCerro = !niCerro;
-  document.getElementById('ni-cerro-toggle').style.background = niCerro ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('ni-cerro-knob').style.left = niCerro ? '20px' : '2px';
+  const el = document.querySelector('#modal-inst .modal-body');
+  if (el && window.Alpine) { const d = Alpine.$data(el); d.setCerro(!d.cerro); }
 }
 window.toggleCerro = toggleCerro;
 
 function toggleEscuelita() {
-  niEscuelita = !niEscuelita;
-  document.getElementById('ni-escuelita-toggle').style.background = niEscuelita ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('ni-escuelita-knob').style.transform = niEscuelita ? 'translateX(18px)' : 'translateX(0)';
+  const el = document.querySelector('#modal-inst .modal-body');
+  if (el && window.Alpine) { const d = Alpine.$data(el); d.setEscuelita(!d.escuelita); }
 }
 window.toggleEscuelita = toggleEscuelita;
 
@@ -2557,12 +2559,80 @@ function toggleEscuelitaEdit() {
 window.toggleEscuelitaEdit = toggleEscuelitaEdit;
 window.editarInstructor = editarInstructor;
 
-document.querySelectorAll('#ni-nc .nivel-btn').forEach(btn=>btn.addEventListener('click',()=>{
-  document.querySelectorAll('#ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); nivelCert=btn.dataset.niv;
-}));
-['ni-disc','ni-niv','ni-rang','ni-idiomas'].forEach(id=>document.querySelectorAll(`#${id} .tag-btn`).forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active'))));
+// Los toggles de nivel/disciplinas/idiomas/niveles/rangos del modal "Nuevo
+// instructor" (ni-*) ahora los maneja Alpine (función instructorTags() más
+// abajo) — antes eran 2 bloques de addEventListener repitiendo casi lo mismo.
+// mei-idiomas es un modal DISTINTO ("Editar instructor"), no se toca acá.
 document.querySelectorAll('#mei-idiomas .tag-btn').forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active')));
+
+// El resto del flujo de alta (mostrarConfirmacion, el guardado real en
+// ni-save, el armado de preferencias) sigue leyendo estos valores exactamente
+// igual que antes — vía querySelectorAll('.tag-btn.active') para las
+// disciplinas/idiomas/niveles/rangos (Alpine pone y saca la clase .active del
+// DOM real, así que esas lecturas ni se enteran del cambio), y vía la
+// variable nivelCert de siempre para el nivel certificado (por eso
+// setNivel() la escribe también, además de su copia reactiva interna).
+function instructorTags() {
+  return {
+    discsOpciones: [
+      { val: 'Esqui', label: 'Esqui' },
+      { val: 'Snowboard', label: 'Snowboard' },
+      { val: 'Esqui Adaptado', label: 'Esquí Adaptado' },
+    ],
+    idiomasOpciones: [
+      { val: 'Inglés', label: 'Inglés' },
+      { val: 'Portugués', label: 'Portugués' },
+      { val: 'Francés', label: 'Francés' },
+      { val: 'Alemán', label: 'Alemán' },
+      { val: 'Italiano', label: 'Italiano' },
+    ],
+    nivsOpciones: [
+      { val: 'principiante', label: 'Principiante' },
+      { val: 'intermedio', label: 'Intermedio' },
+      { val: 'avanzado', label: 'Avanzado' },
+    ],
+    rangsOpciones: [
+      { val: 'ninos', label: 'Niños (4-12)' },
+      { val: 'adolescentes', label: 'Adolescentes (13-17)' },
+      { val: 'adultos', label: 'Adultos (18-60)' },
+      { val: 'mayores', label: 'Adultos mayores (60+)' },
+    ],
+    discs: [],
+    idiomas: [],
+    nivs: [],
+    rangs: [],
+    nivelCertLocal: null,
+    cerro: true,
+    escuelita: false,
+
+    toggleTag(arr, val) {
+      const i = this[arr].indexOf(val);
+      if (i === -1) this[arr].push(val); else this[arr].splice(i, 1);
+    },
+
+    setNivel(val) {
+      this.nivelCertLocal = val;
+      nivelCert = val; // variable externa — el resto del alta la sigue usando sin cambios
+    },
+
+    setCerro(val) {
+      this.cerro = val;
+      niCerro = val; // variable externa — igual que nivelCert
+    },
+
+    setEscuelita(val) {
+      this.escuelita = val;
+      niEscuelita = val;
+    },
+
+    resetTags() {
+      this.discs = []; this.idiomas = []; this.nivs = []; this.rangs = [];
+      this.nivelCertLocal = null;
+      this.cerro = true; this.escuelita = false;
+    }
+  };
+}
+
 function mostrarConfirmacion() {
   const nom   = document.getElementById('ni-nom').value.trim();
   const email = document.getElementById('ni-email').value.trim();
@@ -2677,14 +2747,14 @@ document.getElementById('ni-save').addEventListener('click', async()=>{
 
   closeModal('modal-inst');
   irPaso(1);
-  // Reset tags
-  document.querySelectorAll('#ni-disc .tag-btn, #ni-niv .tag-btn, #ni-rang .tag-btn, #ni-nc .nivel-btn').forEach(b=>b.classList.remove('active'));
+  // Reset tags — resetTags() limpia el estado de Alpine (discs/idiomas/nivs/
+  // rangs/nivelCertLocal), y Alpine se encarga solo de sacar la clase .active
+  // del DOM en consecuencia. nivelCert (la variable externa) se resetea aparte
+  // porque el resto del alta la sigue leyendo directo, sin pasar por Alpine.
+  const instTagsEl = document.querySelector('#modal-inst .modal-body');
+  if (instTagsEl && window.Alpine) Alpine.$data(instTagsEl).resetTags();
   nivelCert=null;
   niEscuelita=false; niCerro=true;
-  document.getElementById('ni-cerro-toggle').style.background='var(--accent)';
-  document.getElementById('ni-cerro-knob').style.left='20px';
-  document.getElementById('ni-escuelita-toggle').style.background='var(--line)';
-  document.getElementById('ni-escuelita-knob').style.transform='translateX(0)';
   btn.disabled=false; btn.innerHTML=originalText;
   toast(`${nom} agregado al sistema`);
   initInstStats();
