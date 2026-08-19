@@ -1415,12 +1415,13 @@ function toggleDark(force) {
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2v12M2 8h12"/></svg>
         Agregar niño
       </button>
+      <div x-data="programarSesionForm()" x-effect="actualizarPreview()">
       <div style="display:flex;gap:10px;margin-bottom:16px">
         <div style="flex:1">
           <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Hora inicio</label>
-          <select id="ses-hora" style="width:100%;height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none">
+          <select x-model="hora" style="width:100%;height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none">
             <option value="08:00">08:00</option><option value="08:30">08:30</option>
-            <option value="09:00" selected>09:00</option><option value="09:30">09:30</option>
+            <option value="09:00">09:00</option><option value="09:30">09:30</option>
             <option value="10:00">10:00</option><option value="10:30">10:30</option>
             <option value="11:00">11:00</option><option value="11:30">11:30</option>
             <option value="12:00">12:00</option><option value="13:00">13:00</option>
@@ -1431,9 +1432,9 @@ function toggleDark(force) {
         </div>
         <div style="flex:1">
           <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em">Duración</label>
-          <select id="ses-dur" style="width:100%;height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none">
+          <select x-model="dur" style="width:100%;height:38px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:#fff;outline:none">
             <option value="1">1 hora</option><option value="1.5">1.5 horas</option>
-            <option value="2" selected>2 horas</option><option value="2.5">2.5 horas</option>
+            <option value="2">2 horas</option><option value="2.5">2.5 horas</option>
             <option value="3">3 horas</option><option value="3.5">3.5 horas</option>
             <option value="4">4 horas</option><option value="4.5">4.5 horas</option>
             <option value="5">5 horas</option><option value="5.5">5.5 horas</option>
@@ -1445,34 +1446,41 @@ function toggleDark(force) {
       <!-- Tipo de programacion -->
       <div style="margin-bottom:14px">
         <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Programar para</label>
-        <div style="display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden">
-          <button id="ses-tipo-hoy" onclick="setSesTopo('hoy')" style="flex:1;height:36px;border:none;background:var(--navy);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s">Solo hoy</button>
-          <button id="ses-tipo-rango" onclick="setSesTopo('rango')" style="flex:1;height:36px;border:none;background:#fff;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s">Rango de fechas</button>
+        <div class="vtx-segment" style="background:var(--ice);border:1px solid var(--line)">
+          <button class="vtx-segment-btn" :class="tipo==='hoy' ? 'active' : ''" data-color="navy" @click="tipo='hoy'" style="flex:1">Solo hoy</button>
+          <button class="vtx-segment-btn" :class="tipo==='rango' ? 'active' : ''" data-color="navy" @click="tipo='rango'" style="flex:1">Rango de fechas</button>
         </div>
       </div>
 
       <!-- Rango de fechas (oculto por defecto) -->
-      <div id="ses-rango-panel" style="display:none;background:var(--ice);border-radius:8px;padding:14px;margin-bottom:14px">
+      <div x-show="tipo==='rango'" style="background:var(--ice);border-radius:8px;padding:14px;margin-bottom:14px">
         <div style="display:flex;gap:10px;margin-bottom:12px">
           <div style="flex:1">
             <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px">Desde</label>
-            <input type="date" id="ses-desde" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff">
+            <input type="date" x-model="desde" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff">
           </div>
           <div style="flex:1">
             <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px">Hasta</label>
-            <input type="date" id="ses-hasta" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff">
+            <input type="date" x-model="hasta" style="width:100%;height:36px;border:1px solid var(--line);border-radius:6px;padding:0 10px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;background:#fff">
           </div>
         </div>
         <label style="display:block;font-size:11px;font-weight:500;color:var(--muted);margin-bottom:8px">Días de la semana</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="ses-dias-container"></div>
-        <div style="font-size:11px;color:var(--silver);margin-top:8px" id="ses-preview">Seleccioná los días y las fechas</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <template x-for="(d,i) in diasLabels" :key="i">
+            <button type="button" @click="toggleDia(i)" x-text="d"
+              :style="diasSeleccionados.includes(i) ? 'background:var(--navy);color:#fff;border-color:var(--navy)' : 'background:#fff;color:var(--muted);border-color:var(--line)'"
+              style="width:38px;height:38px;border-radius:50%;border:1.5px solid;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s"></button>
+          </template>
+        </div>
+        <div style="font-size:11px;color:var(--silver);margin-top:8px" x-text="preview"></div>
       </div>
 
       <div style="display:flex;justify-content:flex-end">
-        <button onclick="programarSesion()" class="btn btn-primary" style="display:flex;align-items:center;gap:8px">
+        <button @click="programar()" :disabled="programando" :style="programando ? 'opacity:.6;cursor:not-allowed' : ''" class="btn btn-primary" style="display:flex;align-items:center;gap:8px">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
-          Programar sesión de hoy
+          <span x-text="programando ? 'Programando...' : 'Programar sesión de hoy'"></span>
         </button>
+      </div>
       </div>
     </div>
   </div>
