@@ -2,12 +2,6 @@
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;overscroll-behavior:none;min-height:100vh}
-:root{
-  --navy:#1A1F2E;--accent:#1D9E75;--accent2:#0F6E56;
-  --ice:#F0F2F5;--line:#E0E4EA;--silver:#8090A8;
-  --white:#FFFFFF;--text:#1A1F2E;--muted:#4A5568;
-  --danger:#E24B4A;--danger-bg:#FEE2E2;
-}
 body{font-family:'DM Sans',sans-serif;background:var(--ice);color:var(--text);display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
 .card{background:var(--white);border:1px solid var(--line);border-radius:14px;width:100%;max-width:480px;overflow:hidden;animation:fadeUp .3s ease}
 .card-header{background:var(--navy);padding:24px}
@@ -42,4 +36,3 @@ textarea:focus{border-color:var(--accent)}
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;gap:14px}
 .spinner{width:36px;height:36px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

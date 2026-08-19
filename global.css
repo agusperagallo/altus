@@ -1,0 +1,45 @@
+/* global.css — variables y reglas compartidas por las 5 páginas de Vertex
+   (panel, instructor, login, activar, reseña).
+
+   Qué vive acá: solo lo que era 100% idéntico (o el mismo color con otro
+   nombre) entre los 4 CSS de página. Se dejó afuera a propósito todo lo de
+   .modal/.modal-head/.modal-body — el modal de instructor es un bottom-sheet
+   mobile-first con valores propios (padding, align-items, hasta el nombre de
+   la clase difiere: .modal-header, no .modal-head), no es una duplicación,
+   es una diferencia de diseño intencional entre panel (desktop) e instructor
+   (mobile). Forzarlos a ser iguales rompería esa diferencia.
+
+   Nota de nombres: el gris de fondo vivía como --ice en panel/reseña y como
+   --ice2 en instructor/login — mismo color (#F0F2F5), dos nombres. Se
+   unificó todo a --ice; los .css de cada página ya no definen esta variable. */
+
+:root{
+  --navy:#1A1F2E;--navy2:#222840;
+  --ice:#F0F2F5;--line:#E0E4EA;--silver:#8090A8;
+  --accent:#1D9E75;--accent2:#0F6E56;
+  --white:#FFFFFF;--text:#1A1F2E;--muted:#4A5568;
+  --warn:#B45309;--warn-bg:#FEF3C7;
+  --danger:#E24B4A;--danger-bg:#FEE2E2;
+  --success-bg:#E1F5EE;
+  --sidebar:240px;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+
+/* Bloqueo de scroll de fondo mientras hay un modal (o el sidebar mobile) abierto */
+html.modal-lock body{overflow:hidden!important;position:fixed!important;width:100%!important}
+
+/* Skeleton de carga */
+.sk{background:linear-gradient(90deg,#f0f2f5 25%,#e4e7eb 50%,#f0f2f5 75%);background-size:1200px 100%;animation:shimmer 1.4s infinite;border-radius:6px;display:block}
+
+/* Toggle on/off — usado en modo oscuro, "clase requerida", Configurar ranking, etc. */
+.vtx-switch{position:relative;display:inline-flex;align-items:center;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.vtx-switch input{position:absolute;opacity:0;width:0;height:0;margin:0;cursor:pointer}
+.vtx-switch-track{position:absolute;inset:0;background:var(--line);border-radius:24px;transition:background .2s;pointer-events:none}
+.vtx-switch-dot{position:absolute;left:2px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);pointer-events:none}
+.vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}
+.vtx-switch input:checked + .vtx-switch-track .vtx-switch-dot{transform:translateX(18px)}
+.vtx-switch input:disabled + .vtx-switch-track{opacity:.5;cursor:not-allowed}
+body.dark .vtx-switch-track{background:#30363D}
+body.dark .vtx-switch input:checked + .vtx-switch-track{background:var(--accent)}

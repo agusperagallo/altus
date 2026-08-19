@@ -1,19 +1,9 @@
 /* Vertex Login */
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --navy:   #1A1F2E;
-      --accent: #1D9E75;
-      --ice2:   #F0F2F5;
-      --line:   #E0E4EA;
-      --silver: #8090A8;
-      --muted:  #4A5568;
-      --white:  #FFFFFF;
-      --danger: #E24B4A;
-    }
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--ice2);
+      background: var(--ice);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -132,10 +122,7 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* @keyframes fadeUp vive en global.css */
 
     .footer-txt {
       text-align: center;
@@ -147,7 +134,7 @@
 /* MODO OSCURO — estética GitHub Dark */
 body.dark {
   --ice:#0D1117;--line:#30363D;--white:#161B22;--text:#E6EDF3;
-  --muted:#8B949E;--silver:#6E7681;--ice2:#010409;
+  --muted:#8B949E;--silver:#6E7681;--ice:#010409;
   background:#0D1117;color:#E6EDF3;
 }
 body.dark .topbar{background:#010409;border-color:#30363D}

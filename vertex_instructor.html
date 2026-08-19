@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="global.css">
   <link rel="stylesheet" href="vertex_instructor.css">
   <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#1A1F2E">
@@ -188,7 +189,7 @@
     </div>
     <!-- Switch cerro/escuelita — solo visible si tiene ambos -->
     <div id="inst-modo-switch" style="display:none;padding:0 16px 12px">
-      <div style="display:flex;background:var(--ice2);border:1px solid var(--line);border-radius:20px;padding:3px;gap:2px">
+      <div style="display:flex;background:var(--ice);border:1px solid var(--line);border-radius:20px;padding:3px;gap:2px">
         <button id="inst-sw-cerro" onclick="setInstModo('cerro')" style="flex:1;padding:6px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:var(--navy);color:#fff">⛷ Escuela</button>
         <button id="inst-sw-escuelita" onclick="setInstModo('escuelita')" style="flex:1;padding:6px;border-radius:16px;border:none;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)">🎿 Escuelita</button>
       </div>
@@ -336,7 +337,7 @@
     </div>
     <div class="modal-body">
       <div style="font-size:10px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;font-weight:500">Email</div>
-      <div style="font-size:14px;color:var(--text);margin-bottom:20px;padding:10px 12px;background:var(--ice2);border-radius:6px" id="ipm-email-modal">—</div>
+      <div style="font-size:14px;color:var(--text);margin-bottom:20px;padding:10px 12px;background:var(--ice);border-radius:6px" id="ipm-email-modal">—</div>
 
       <hr style="border:none;border-top:1px solid var(--line);margin-bottom:20px">
 
@@ -371,7 +372,7 @@
     </div>
     <div class="modal-body">
       <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">Reportar tu ausencia con anticipación le permite al equipo reorganizarse. ¿Confirmás que no vas a poder asistir?</div>
-      <div style="background:var(--ice2);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:20px">
+      <div style="background:var(--ice);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin-bottom:20px">
         <div style="font-size:13px;font-weight:500" id="ausencia-info">—</div>
         <div style="font-size:12px;color:var(--silver);margin-top:2px" id="ausencia-meta">—</div>
       </div>
@@ -403,7 +404,7 @@
       </div>
 
       <!-- Detalle -->
-      <div style="background:var(--ice2);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:22px">
+      <div style="background:var(--ice);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:22px">
         <div style="display:flex;align-items:flex-start;gap:12px">
           <div style="width:38px;height:38px;border-radius:8px;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
             <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M5 3V1M11 3V1M1 7h14"/></svg>
