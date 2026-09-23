@@ -1847,15 +1847,11 @@ async function editarInstructor(id) {
   document.getElementById('mei-tel').value = data?.telefono || '';
   document.getElementById('mei-email').value = data?.email || '';
   document.getElementById('mei-nivel').value = data?.nivel_certificado || '';
-  meiEscuelita = !!data?.escuelita;
-  meiCerro = data?.activo_cerro !== false;
-  document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
-  document.getElementById('mei-cerro-toggle').style.background = meiCerro ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('mei-cerro-knob').style.left = meiCerro ? '20px' : '2px';
-  const idiomasActuales = data?.idiomas || [];
-  document.querySelectorAll('#mei-idiomas .tag-btn').forEach(b => {
-    b.classList.toggle('active', idiomasActuales.includes(b.dataset.val));
+  // Switches e idiomas los dibuja Alpine (editarInstructorForm) — acá solo se carga el estado
+  Alpine.$data(document.querySelector('#modal-edit-inst .modal-body')).cargar({
+    cerro: data?.activo_cerro !== false,
+    escuelita: !!data?.escuelita,
+    idiomas: data?.idiomas || []
   });
   openModal('modal-edit-inst');
 }
@@ -2555,30 +2551,52 @@ function toggleEscuelita() {
 }
 window.toggleEscuelita = toggleEscuelita;
 
-// Toggle escuelita — editar instructor
+// Toggles Escuela/Escuelita — editar instructor. El guardado (mei-save) sigue
+// leyendo estas globales y '#mei-idiomas .tag-btn.active' como siempre; los
+// setters de editarInstructorForm() las mantienen al día.
 let meiEscuelita = false;
 let meiCerro = true;
 
-function toggleCerroEdit() {
-  meiCerro = !meiCerro;
-  document.getElementById('mei-cerro-toggle').style.background = meiCerro ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('mei-cerro-knob').style.left = meiCerro ? '20px' : '2px';
-}
-window.toggleCerroEdit = toggleCerroEdit;
+function editarInstructorForm() {
+  return {
+    idiomasOpciones: [
+      { val: 'Inglés', label: 'Inglés' },
+      { val: 'Portugués', label: 'Portugués' },
+      { val: 'Francés', label: 'Francés' },
+      { val: 'Alemán', label: 'Alemán' },
+      { val: 'Italiano', label: 'Italiano' },
+    ],
+    idiomas: [],
+    cerro: true,
+    escuelita: false,
 
-function toggleEscuelitaEdit() {
-  meiEscuelita = !meiEscuelita;
-  document.getElementById('mei-escuelita-toggle').style.background = meiEscuelita ? 'var(--accent)' : 'var(--line)';
-  document.getElementById('mei-escuelita-knob').style.transform = meiEscuelita ? 'translateX(18px)' : 'translateX(0)';
+    toggleIdioma(val) {
+      const i = this.idiomas.indexOf(val);
+      if (i === -1) this.idiomas.push(val); else this.idiomas.splice(i, 1);
+    },
+
+    setCerro(val) {
+      this.cerro = val;
+      meiCerro = val; // variable externa — la lee mei-save
+    },
+
+    setEscuelita(val) {
+      this.escuelita = val;
+      meiEscuelita = val;
+    },
+
+    // Llamado desde editarInstructor() con los datos recién traídos
+    cargar({ cerro, escuelita, idiomas }) {
+      this.setCerro(cerro);
+      this.setEscuelita(escuelita);
+      this.idiomas = [...idiomas];
+    }
+  };
 }
-window.toggleEscuelitaEdit = toggleEscuelitaEdit;
-window.editarInstructor = editarInstructor;
 
 // Los toggles de nivel/disciplinas/idiomas/niveles/rangos del modal "Nuevo
 // instructor" (ni-*) ahora los maneja Alpine (función instructorTags() más
 // abajo) — antes eran 2 bloques de addEventListener repitiendo casi lo mismo.
-// mei-idiomas es un modal DISTINTO ("Editar instructor"), no se toca acá.
-document.querySelectorAll('#mei-idiomas .tag-btn').forEach(btn=>btn.addEventListener('click',()=>btn.classList.toggle('active')));
 
 // El resto del flujo de alta (mostrarConfirmacion, el guardado real en
 // ni-save, el armado de preferencias) sigue leyendo estos valores exactamente

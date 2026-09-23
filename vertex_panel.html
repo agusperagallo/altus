@@ -1101,7 +1101,7 @@
 <div class="modal-overlay" id="modal-edit-inst">
   <div class="modal" style="max-width:480px">
     <div class="modal-head"><span class="modal-title">Editar instructor</span><button class="modal-close" id="mei-close">&times;</button></div>
-    <div class="modal-body">
+    <div class="modal-body" x-data="editarInstructorForm()">
       <input type="hidden" id="mei-id">
       <div class="form-grid">
         <div class="fg"><label>Nombre</label><input type="text" id="mei-nom" placeholder="Nombre completo"></div>
@@ -1120,27 +1120,27 @@
           <div style="font-size:13px;font-weight:500;color:var(--text)">⛷ Habilitado para Escuela</div>
           <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a clases de la Escuela</div>
         </div>
-        <div id="mei-cerro-toggle" onclick="toggleCerroEdit()" style="width:40px;height:22px;border-radius:11px;background:var(--accent);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-          <div id="mei-cerro-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:20px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-        </div>
+        <label class="vtx-switch">
+          <input type="checkbox" id="mei-cerro" :checked="cerro" @change="setCerro($event.target.checked)">
+          <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+        </label>
       </div>
       <div style="margin-top:12px;padding:14px;background:var(--ice);border-radius:8px;display:flex;align-items:center;justify-content:space-between">
         <div>
           <div style="font-size:13px;font-weight:500;color:var(--text)">🎿 Habilitado para Escuelita</div>
           <div style="font-size:12px;color:var(--silver);margin-top:2px">Puede ser asignado a grupos de niños</div>
         </div>
-        <div id="mei-escuelita-toggle" onclick="toggleEscuelitaEdit()" style="width:40px;height:22px;border-radius:11px;background:var(--line);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0">
-          <div id="mei-escuelita-knob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-        </div>
+        <label class="vtx-switch">
+          <input type="checkbox" id="mei-escuelita" :checked="escuelita" @change="setEscuelita($event.target.checked)">
+          <span class="vtx-switch-track"><span class="vtx-switch-dot"></span></span>
+        </label>
       </div>
       <div style="margin-top:14px">
         <label style="display:block;margin-bottom:8px;font-size:13px;font-weight:500">Idiomas (además de español)</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap" id="mei-idiomas">
-          <button class="tag-btn" data-val="Inglés">Inglés</button>
-          <button class="tag-btn" data-val="Portugués">Portugués</button>
-          <button class="tag-btn" data-val="Francés">Francés</button>
-          <button class="tag-btn" data-val="Alemán">Alemán</button>
-          <button class="tag-btn" data-val="Italiano">Italiano</button>
+          <template x-for="o in idiomasOpciones" :key="o.val">
+            <button type="button" class="tag-btn" :class="{active: idiomas.includes(o.val)}" :data-val="o.val" @click="toggleIdioma(o.val)" x-text="o.label"></button>
+          </template>
         </div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
